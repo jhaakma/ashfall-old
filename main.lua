@@ -35,3 +35,9 @@ end
 --require ("mer.ashfall.faderController")
 
 event.register("initialized", initialized)
+
+local function registerModConfig()
+    local mcm = require ( "mer.ashfall.modConfig")
+	mwse.registerModConfig("Ashfall", mcm)
+end
+event.register("modConfigReady", registerModConfig)

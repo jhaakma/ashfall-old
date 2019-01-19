@@ -50,7 +50,16 @@ function this.calculateTemp(timerInterval)
     tempRaw = common.data.tempRaw or 0
     tempReal = common.data.tempReal or 0
     tempLimit = common.data.tempLimit or 0
-    tempPlayer = common.data.tempPlayer or 0
+    tempPlayer = common.data.temp or 0
+
+    if not common.data.mcmOptions.enableAshfall then
+        common.data.tempRaw = 0
+        common.data.tempReal = 0
+        common.data.tempLimit = 0
+        common.data.temp = 0
+        hud.updateHUD()
+        return
+    end
 
 
     --Environmental Factors -- additives
@@ -171,7 +180,7 @@ function this.calculateTemp(timerInterval)
 
     --set player temp
     tempPlayer = tempPlayer + ( ( tempPlayer < tempLimit) and playerChange or -playerChange )
-    common.data.tempPlayer = tempPlayer
+    common.data.temp = tempPlayer
     -----------------------------------------------
     hud.updateHUD()
 end

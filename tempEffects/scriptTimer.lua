@@ -38,7 +38,7 @@ local needs = {
 local scriptInterval = 0.0005
 
 local function callUpdates()
-    
+
     calcTemp.calculateTemp(scriptInterval)
     weather.calculateWeatherEffect()
     wetness.calcaulateWetTemp(scriptInterval)

@@ -5,8 +5,17 @@ local coldMulti = 2.0
 local hungerEffectMax = 1.5
 
 function this.calculate(scriptInterval)
+    --Check Ashfall disabled
+    local hungerEnabled = (
+        common.data.mcmOptions.enableHunger
+    )
+    if not hungerEnabled then
+        common.data.hunger = 0
+        return
+    end
+
     local hunger = common.data.hunger or 0
-    local temp = common.data.tempPlayer or 0
+    local temp = common.data.temp or 0
 
     --Colder it gets, the faster you grow hungry
     local coldEffect = math.clamp(temp, -100, 0)

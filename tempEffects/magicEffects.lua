@@ -36,12 +36,13 @@ local function calculateDamageTemp(e)
 
     --if e.target ~= tes3.player then return end
     if e.effectId == tes3.effect.fireDamage then
+
     elseif e.effectId == tes3.effect.frostDamage then
-        tes3.messageBox("Frost dam: %s", (e.effectInstance.magnitude))
-        mwse.log("Frost dam: %s", (e.effectInstance.magnitude))
+        tes3.messageBox("Frost dam: %s", (e.effect.magnitude))
+        mwse.log("Frost dam: %s", (e.effect.magnitude))
     end
 end
 
---event.register("spellTick", calculateDamageTemp)
+event.register("spellTick", calculateDamageTemp)
 
 return this

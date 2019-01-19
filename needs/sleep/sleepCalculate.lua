@@ -6,7 +6,9 @@ local gainSleepRate = 3.5
 local bedMultiplier = 3.0
 
 function this.calculate(scriptInterval)
-
+    if not common.data.mcmOptions.enableSleep then
+        common.data.sleep = 100
+    end
     local sleep = common.data.sleep or 100
 
     if tes3.mobilePlayer.sleeping then
@@ -18,7 +20,7 @@ function this.calculate(scriptInterval)
         else
             --mwse.log("Not using bed")
             --Not using bed, gain sleep slower and can't get above "Rested"
-            if sleep < common.sleepConditions.rested.max then
+            if sleep < common.conditions.sleep.rested.max then
                 sleep = sleep + ( scriptInterval * gainSleepRate )
             end
         end
@@ -26,7 +28,7 @@ function this.calculate(scriptInterval)
     elseif tes3.mobilePlayer.travelling then
         mwse.log("travelling")
         --Traveling: getting some rest but can't get above "Rested"
-        if sleep < common.sleepConditions.rested.max then
+        if sleep < common.conditions.sleep.rested.max then
             sleep = sleep + ( scriptInterval * gainSleepRate )
         end
     --Waiting

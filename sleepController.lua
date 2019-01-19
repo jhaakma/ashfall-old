@@ -2,8 +2,8 @@ local common = require("mer.ashfall.common")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local this = {}
 
-local coldRestLimit = common.tempConditions.veryCold.min
-local hotRestLimit = common.tempConditions.veryHot.max
+local coldRestLimit = common.conditions.temp.veryCold.min
+local hotRestLimit = common.conditions.temp.veryHot.max
 local interruptText = ""
 local isScripted
 local isWaiting
@@ -61,18 +61,23 @@ local function activateRestMenu (e)
     if temp < ( coldRestLimit ) or temp > ( hotRestLimit - common.data.bedTemp ) then
         labelText.text = interruptText
         hideSleepItems(restMenu)
-    elseif common.data.hunger > common.hungerConditions.starving.min then
+    elseif common.data.hunger > common.conditions.hunger.starving.min then
         labelText.text = "You are too hungry to " .. ( isWaiting and "wait." or "rest.")
         hideSleepItems(restMenu)
-    elseif common.data.thirst > common.thirstConditions.dehydrated.min then
+    elseif common.data.thirst > common.conditions.thirst.dehydrated.min then
         labelText.text = "You are too thirsty to " .. ( isWaiting and "wait." or "rest.")
         hideSleepItems(restMenu)
-    elseif common.data.sleep < common.sleepConditions.exhausted.max and isWaiting then
+    elseif common.data.sleep < common.conditions.sleep.exhausted.max and isWaiting then
         labelText.text = "You are too tired to wait."
         hideSleepItems(restMenu)
     end
 
-    needsUI.createSleepBlock(e)
+    local isResting = ( 
+        e.element:findChild( tes3ui.registerID("MenuRestWait_rest_button") ).visible 
+    )
+    if isResting then
+        needsUI.addNeedsBlockToMenu(e, "sleep")
+    end
 
     restMenu:updateLayout()
 end
@@ -103,13 +108,13 @@ function this.checkSleeping()
         local hunger = common.data.hunger or 0
         local thirst = common.data.thirst or 0
         local sleep = common.data.sleep or 100
-        if hunger > common.hungerConditions.starving.min then
+        if hunger > common.conditions.hunger.starving.min then
             tes3.runLegacyScript({ command = "WakeUpPC" })
             tes3.messageBox({ message = "You are starving.", buttons = { "Okay" } }) 
-        elseif thirst > common.thirstConditions.dehydrated.min then
+        elseif thirst > common.conditions.thirst.dehydrated.min then
             tes3.runLegacyScript({ command = "WakeUpPC" })
             tes3.messageBox({ message = "You are dehydrated.", buttons = { "Okay" } }) 
-        elseif sleep < common.sleepConditions.exhausted.max and isWaiting then
+        elseif sleep < common.conditions.sleep.exhausted.max and isWaiting then
             tes3.runLegacyScript({ command = "WakeUpPC" })
             tes3.messageBox({ message = "You are exhausted.", buttons = { "Okay" } }) 
         end

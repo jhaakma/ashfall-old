@@ -46,6 +46,7 @@ end
 ]]
 function this.updateArmorRatings()
     if not common.data then return end
+
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local warmthLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:WarmthRating"))
@@ -73,6 +74,11 @@ local IDs = {
     Insert ratings into Equipment tooltips
 ]]
 local function insertRatings(e)
+
+    if not common.data.mcmOptions.enableAshfall then
+        return
+    end
+
     local tooltip = e.tooltip
     if not e.tooltip then return end
     if not e.object then return end
@@ -107,9 +113,8 @@ local function insertRatings(e)
         ratingsBlock.flowDirection = "top_to_bottom"
         ratingsBlock.paddingTop = 0
         ratingsBlock.paddingBottom = 0
-        ratingsBlock.paddingLeft = 6
-        ratingsBlock.paddingRight = 6
-        ratingsBlock.width = 300
+        ratingsBlock.widthProportional = 1.0
+        ratingsBlock.autoWidth = true
         ratingsBlock.autoHeight = true
         
         local warmthBlock = ratingsBlock:createBlock({ id = IDs.warmthBlock })
@@ -148,5 +153,16 @@ local function insertRatings(e)
 end
 
 event.register("uiObjectTooltip", insertRatings )
+
+
+local function checkAshfallEnabled()
+    local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
+    if inventoryMenu then
+        local outerBlock = inventoryMenu:findChild(tes3ui.registerID("Ashfall:armorRatings"))
+        outerBlock.visible = common.data.mcmOptions.enableAshfall
+    end
+end
+
+event.register("menuEnter", checkAshfallEnabled )
 
 return this

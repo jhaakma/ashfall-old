@@ -4,50 +4,48 @@ local common = require("mer.ashfall.common")
 local this = {}
 
 local ignoreList = {
-    "fw_cond_warm"
+    "fw_cond_warm",
+    "fw_wetcond_soaked",
+    "fw_wetcond_wet",
+    "fw_wetcond_damp"
 }
 
 this.needsData = {
     temp = {
-        value = "tempPlayer",
+        value = "temp",
         default = "comfortable",
-        condition = "tempCondition",
-        conditionsList = common.tempConditions,
-        showMessageOption = "showTempMessages"
+        showMessageOption = common.MCMOptionIds.showTemp,
+        enableOption = common.MCMOptionIds.enableAshfall
     },
     hunger = {
         value = "hunger",
         default = "satiated",
-        condition = "hungerCondition",
-        conditionsList = common.hungerConditions,
-        showMessageOption = "showHungerMessages"
+        showMessageOption = common.MCMOptionIds.showHunger,
+        enableOption = common.MCMOptionIds.enableHunger
     },   
     thirst = {
         value = "thirst",
         default = "hydrated",
-        condition = "thirstCondition",
-        conditionsList = common.thirstConditions,
-        showMessageOption = "showThirstMessages"
+        showMessageOption = common.MCMOptionIds.showThirst,
+        enableOption = common.MCMOptionIds.enableThirst
     },   
     sleep =  {
         value = "sleep",
         default = "rested",
-        condition = "sleepCondition",
-        conditionsList = common.sleepConditions,
-        showMessageOption = "showSleepMessages"
+        showMessageOption = common.MCMOptionIds.showSleep,
+        enableOption = common.MCMOptionIds.enableSleep
     },
     wetness = {
         value = "wetness",
         default = "dry",
-        condition = "wetCondition",
-        conditionsList = common.wetConditions,
-        showMessageOption = "showWetMessages"        
+        showMessageOption = common.MCMOptionIds.showWetness,
+        enableOption = common.MCMOptionIds.enableAshfall
     }
 }
 
 --Update the spell strength to scale with player attributes/level
 local function scaleSpellValues(spellID)
-    mwse.log("Entering scaleSpellValues")
+    --mwse.log("Entering scaleSpellValues")
     --No effect for comfortable
     if not spellID then
         mwse.log("no spell ID sent")
@@ -55,6 +53,7 @@ local function scaleSpellValues(spellID)
     end
     
     local baseID = spellID .. "_BASE"
+    --mwse.log("BaseID : %s", baseID)
     local baseSpell = tes3.getObject(baseID)
     local realSpell = tes3.getObject(spellID)
     
@@ -90,36 +89,39 @@ function this.updateCondition(id)
     local c = this.needsData[id]
     if not common.data then return end
 
-    previousCondition = common.data[c.condition] or c.default
+    previousCondition = common.data.currentConditions[c.value] or c.default
     local currentValue = common.data[c.value] or 0
     local newCondition
 
-    for conditionType, conditionValues in pairs(c.conditionsList) do
+    for conditionType, conditionValues in pairs(common.conditions[c.value]) do
         if conditionValues.min <= currentValue and currentValue <= conditionValues.max then
             newCondition = conditionType
             if newCondition ~= previousCondition then
                 --Changing conditions, remove old, add new
-                for _, innerVal in pairs(c.conditionsList)  do
+                for _, innerVal in pairs(common.conditions[c.value])  do
                     local spellID = innerVal.spell
                     local playerHasCondition = 
                         innerVal.spell and 
                         tes3.player.object.spells:contains(spellID) 
                     if playerHasCondition then
-                        mwse.log("Removing spell: %s", spellID )
+                        --mwse.log("Removing spell: %s", spellID )
                         mwscript.removeSpell({ reference = tes3.player, spell = spellID })
                     end
                 end
-                
-                scaleSpellValues(c.conditionsList[newCondition].spell)
 
                 --Add new condition
-                if common.data[c.showMessageOption] then
-                    tes3.messageBox("You are " .. string.lower(c.conditionsList[ newCondition].text) )
+                local doShowMessage = (
+                    common.data.mcmOptions[c.showMessageOption] and
+                    common.data.mcmOptions[c.enableOption]
+                )
+                if doShowMessage then
+                    tes3.messageBox("You are " .. string.lower(common.conditions[c.value][ newCondition].text) )
                 end
                 if conditionValues.spell then
+                    scaleSpellValues(common.conditions[c.value][newCondition].spell)
                     mwscript.addSpell({ reference=tes3.player, spell = conditionValues.spell })
                 end
-                common.data[c.condition] = newCondition
+                common.data.currentConditions[c.value] = newCondition
             end
             break
         end
@@ -140,16 +142,21 @@ local function refreshAfterRestore(e)
         not string.startswith(e.source.id, "fw")
 
     if doRefresh then
-        mwse.log("checking refresh")
-        for name, conditionData in pairs(this.needsData) do
-            local condition = common.data[conditionData.condition]
-            if conditionData.conditionsList[condition] then
-                local spell = conditionData.conditionsList[condition].spell
+        --mwse.log("checking refresh")
+        for _, data in pairs(this.needsData) do
 
-                mwse.log("Spell = %s", spell)
+            local currentCondition = common.data.currentConditions[data.value]
+
+            local conditionData = common.conditions[data.value]
+
+            if conditionData and currentCondition then
+                mwse.log("Current Condition: %s", currentCondition)
+                local spell = conditionData[currentCondition].spell
+
+               -- mwse.log("Spell = %s", spell)
                 if spell and tes3.player.object.spells:contains(spell) then
-                    mwse.log("Refreshing spell: %s", spell)
-                    mwscript.removeSpell({ reference = tes3.player, spell = spell })
+                    --mwse.log("Refreshing spell: %s", spell)
+                    --mwscript.removeSpell({ reference = tes3.player, spell = spell })
                     mwscript.addSpell({ reference = tes3.player, spell = spell })
                 end
             end

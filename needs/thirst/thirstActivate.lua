@@ -7,6 +7,7 @@
 
 
 local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
+local common = require("mer.ashfall.common")
 local activators = require("mer.ashfall.activators")
 -- register UI Ids
 
@@ -93,9 +94,13 @@ local lookingAtWater
 --If player presses activate while looking at water source
 --(determined by presence of tooltip), then open the water menu
 local function onActivateWater()
+    local thirstActive = (
+        common.data and
+        common.data.mcmOptions.enableThirst
+    )
     local inputController = tes3.worldController.inputController
     local keyTest = inputController:keybindTest(tes3.keybind.activate)
-    if (keyTest) then
+    if (keyTest and thirstActive) then
         if lookingAtWater then
             callWatermenu()
         end
@@ -105,7 +110,11 @@ end
 
 --Use rayTest to see if the player is looking at a water source
 local function checkForWater()
-    if not tes3.menuMode() then
+    local thirstActive = (
+        common.data and
+        common.data.mcmOptions.enableThirst
+    )
+    if thirstActive and not tes3.menuMode() then
         local activator = activators.currentActivator
         lookingAtWater =
         (

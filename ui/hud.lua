@@ -3,36 +3,58 @@ local this = {}
 local common = require("mer.ashfall.common")
 local tooltips = require("mer.ashfall.ui.hudTooltips")
 
-local outerFrame
-local tempIndicatorBlock
-local conditionLabel
-local condIcon
-
-local leftTempPlayerBar
-local leftTempLimitBar
-
-local rightTempPlayerBar
-local rightTempLimitBar
-
-local wetnessBar
-
 local IDs = {
     mainHUDBlock = tes3ui.registerID("Ashfall:HUD_mainHUDBlock"),
+    outerBlock = tes3ui.registerID("Ashfall:HUD_outerBlock"),
     topHUDBlock = tes3ui.registerID("Ashfall:HUD_topHUDBlock"),
     wetnessBlock = tes3ui.registerID("Ashfall:HUD_wetnessBlock"),
-    conditionLabelBlock = tes3ui.registerID("Ashfall:conditionLabelBlock"),
+    wetnessBar = tes3ui.registerID("Ashfall:HUD_wetnessBar"),
+    conditionLabelBlock = tes3ui.registerID("Ashfall:HUD_conditionLabelBlock"),
+    conditionLabel = tes3ui.registerID("Ashfall:HUD_conditionLabel"),
+    conditionIcon = tes3ui.registerID("Ashfall:HUD_conditionIcon"),
+    leftTempPlayerBar = tes3ui.registerID("Ashfall:HUD_leftTempPlayerBar"),
+    rightTempPlayerBar = tes3ui.registerID("Ashfall:HUD_rightTempPlayerBar"),
+    leftTempLimitBar = tes3ui.registerID("Ashfall:HUD_leftTempLimitBar"),
+    rightTempLimitBar = tes3ui.registerID("Ashfall:HUD_rightTempLimitBar"),
 }
+
+local function findHUDElement(id)
+    local multiMenu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
+    return multiMenu:findChild( id )
+end
 
 function this.updateHUD()
     if not common.data then return end
-    if outerFrame and leftTempPlayerBar and conditionLabel then
-        local tempPlayer = math.clamp(common.data.tempPlayer, -100, 100) or 0
+    local mainHUDBlock = findHUDElement(IDs.mainHUDBlock)
+
+    --Hide HUD if Ashfall is disabled
+    if not common.data.mcmOptions.enableAshfall then
+        if mainHUDBlock then
+            mainHUDBlock.visible = false
+            return
+        end
+    else
+        if not mainHUDBlock.visible then
+            mainHUDBlock.visible = true
+        end
+    end
+    local outerBlock = findHUDElement(IDs.outerBlock)
+    if outerBlock then
+        --Get values
+        local tempPlayer = math.clamp(common.data.temp, -100, 100) or 0
         local tempLimit =  math.clamp(common.data.tempLimit, -100, 100) or 0
-        local condition = common.tempConditions[( common.data.tempCondition  or "comfortable" )].text
+        local condition = common.conditions.temp[( common.data.currentConditions.temp  or "comfortable" )].text
         local wetness = common.data.wetness or 0
         wetness = math.clamp(wetness, 0, 100) or 0
 
+
+        local conditionLabel = findHUDElement(IDs.conditionLabel)
         conditionLabel.text = condition
+
+
+        --Update Temp Player bars
+        local leftTempPlayerBar = findHUDElement(IDs.leftTempPlayerBar)
+        local rightTempPlayerBar = findHUDElement(IDs.rightTempPlayerBar)
         --Cold
         if tempPlayer < 0 then
 
@@ -50,6 +72,9 @@ function this.updateHUD()
             bar.width = 0
         end
 
+        --Update Temp Limit bars
+        local leftTempLimitBar = findHUDElement(IDs.leftTempLimitBar)
+        local rightTempLimitBar = findHUDElement(IDs.rightTempLimitBar)
         if tempLimit < 0 then
             leftTempLimitBar.widget.fillColor = {0.3, 0.5, (0.75 + tempLimit/400)} --Bluish
             leftTempLimitBar.widget.current = tempLimit
@@ -65,9 +90,10 @@ function this.updateHUD()
             bar.width = 0
         end
 
+        local wetnessBar = findHUDElement(IDs.wetnessBar)
         wetnessBar.widget.current = wetness
 
-        outerFrame:updateLayout()
+        outerBlock:updateLayout()
     end
 end
 
@@ -93,16 +119,16 @@ local function createHUD(e)
 
     -- Find the UI element that holds the sneak icon indicator.
     local mainBlock = multiMenu:findChild(tes3ui.registerID("MenuMulti_weapon_layout")).parent.parent.parent
-    local bottomLeftBar = mainBlock:createBlock({id = IDs.mainHUDBlock})
+    local mainHUDBlock = mainBlock:createBlock({id = IDs.mainHUDBlock})
     mainBlock:reorderChildren(1, -1, 1)
     
-    bottomLeftBar = quickFormat(bottomLeftBar, 2)
-    --bottomLeftBar.layoutOriginFractionX = 0
-    bottomLeftBar.flowDirection = "top_to_bottom"
+    mainHUDBlock = quickFormat(mainHUDBlock, 2)
+    --mainHUDBlock.layoutOriginFractionX = 0
+    mainHUDBlock.flowDirection = "top_to_bottom"
 
     ---\s
         ---TOPBLOCK - Wetness Indicator and Condition state---
-        local topBlock = bottomLeftBar:createBlock({id = IDs.topHUDBlock})
+        local topBlock = mainHUDBlock:createBlock({id = IDs.topHUDBlock})
 
         topBlock.flowDirection = "left_to_right"
         topBlock = quickFormat(topBlock, 0)
@@ -119,7 +145,7 @@ local function createHUD(e)
                 wetnessBackground.layoutOriginFractionX = 0.0
             
             ---\
-                wetnessBar = wetnessBlock:createFillBar({current = 50, max = 100})
+                local wetnessBar = wetnessBlock:createFillBar({id = IDs.wetnessBar, current = 50, max = 100})
                 wetnessBar.widget.fillColor = {0.5, 1.0, 1.0}
                 wetnessBar.widget.showText = false
                 wetnessBar.height = 20
@@ -140,26 +166,26 @@ local function createHUD(e)
             conditionLabelBlock = quickFormat(conditionLabelBlock, 0)
             conditionLabelBlock.paddingLeft = 2
             ---\
-                conditionLabel = conditionLabelBlock:createLabel({text = "Comfortable" })
+                local conditionLabel = conditionLabelBlock:createLabel({id = IDs.conditionLabel, text = "Comfortable" })
                 --register tooltip
                 conditionLabel:register("help", tooltips.conditionIndicator )
 
                 
     ---\        
         ---OUTER FRAME - sits below wetness and condition, houses temperature fillbars---
-        outerFrame = bottomLeftBar:createThinBorder()
-        outerFrame.flowDirection = "top_to_bottom"
-        outerFrame = quickFormat(outerFrame, 0)
+        outerBlock = mainHUDBlock:createThinBorder({id = IDs.outerBlock})
+        outerBlock.flowDirection = "top_to_bottom"
+        outerBlock = quickFormat(outerBlock, 0)
 
         ---\
-            --fill background of outerframe with blackj
-            local colorBlock = outerFrame:createRect({color = tes3ui.getPalette("black_color")})
+            --fill background of outerBlock with blackj
+            local colorBlock = outerBlock:createRect({color = tes3ui.getPalette("black_color")})
             colorBlock.flowDirection = "top_to_bottom"
             colorBlock = quickFormat(colorBlock, 0)
         
             ---\
                 ---MID BLOCK
-                tempIndicatorBlock = colorBlock:createBlock()
+                local tempIndicatorBlock = colorBlock:createBlock()
                 tempIndicatorBlock.flowDirection = "left_to_right"
                 tempIndicatorBlock = quickFormat(tempIndicatorBlock, 0)
                 ---\    
@@ -168,7 +194,7 @@ local function createHUD(e)
                     leftTempIndicatorBlock = quickFormat(leftTempIndicatorBlock, 0)
                     ---\
                         --Left Player Bar
-                        leftTempPlayerBar = leftTempIndicatorBlock:createFillBar({current = 50, max = 100})
+                        local leftTempPlayerBar = leftTempIndicatorBlock:createFillBar({id = IDs.leftTempPlayerBar, current = 50, max = 100})
                         leftTempPlayerBar:register( "help", tooltips.playerLeftIndicator )
                         leftTempPlayerBar.widget.showText = false
                         leftTempPlayerBar.height = tempBarHeight
@@ -181,7 +207,7 @@ local function createHUD(e)
                         
                     ---\    
                         --Left tempLimit bar
-                        leftTempLimitBar = leftTempIndicatorBlock:createFillBar({current = 50, max = 100})
+                        local leftTempLimitBar = leftTempIndicatorBlock:createFillBar({id = IDs.leftTempLimitBar, current = 50, max = 100})
                         leftTempLimitBar:register( "help", tooltips.limitLeftIndicator )
                         leftTempLimitBar.widget.showText = false
                         leftTempLimitBar.height = limitBarHeight
@@ -197,18 +223,18 @@ local function createHUD(e)
                     centretempIndicatorBlock = quickFormat(centretempIndicatorBlock, 2)
                     
                     --cond icon: color based on player condition
-                    condIcon = centretempIndicatorBlock:createImage({path="Textures/Ashfall/indicators/chilly.tga"})
-                    condIcon.height = tempBarHeight + limitBarHeight - 4
-                    condIcon.width = 5
-                    condIcon.scaleMode = true
+                    local conditionIcon = centretempIndicatorBlock:createImage({id = IDs.conditionIcon, path="Textures/Ashfall/indicators/chilly.tga"})
+                    conditionIcon.height = tempBarHeight + limitBarHeight - 4
+                    conditionIcon.width = 5
+                    conditionIcon.scaleMode = true
                     
                 ---\        
-                    local righttempIndicatorBlock = tempIndicatorBlock:createBlock({tes3ui.registerID("Ashfall:righttempIndicatorBlock")})
+                    local righttempIndicatorBlock = tempIndicatorBlock:createBlock()
                     righttempIndicatorBlock.flowDirection = "top_to_bottom"
                     righttempIndicatorBlock = quickFormat(righttempIndicatorBlock, 0)        
                     ---\
                         --Right Color Bar
-                        rightTempPlayerBar = righttempIndicatorBlock:createFillBar({max = 100})
+                        local rightTempPlayerBar = righttempIndicatorBlock:createFillBar({id = IDs.rightTempPlayerBar, max = 100})
                         rightTempPlayerBar:register( "help", tooltips.playerRightIndicator )
                         rightTempPlayerBar.widget.showText = false
                         rightTempPlayerBar.height = tempBarHeight
@@ -217,7 +243,7 @@ local function createHUD(e)
                         
                     --\    
                         --Right tempLimit bar
-                        rightTempLimitBar = righttempIndicatorBlock:createFillBar({current = 50, max = 100})
+                        local rightTempLimitBar = righttempIndicatorBlock:createFillBar({id = IDs.rightTempLimitBar , current = 50, max = 100})
                         rightTempLimitBar:register( "help", tooltips.limitRightIndicator )
                         rightTempLimitBar.widget.showText = false
                         rightTempLimitBar.height = limitBarHeight

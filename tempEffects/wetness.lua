@@ -11,9 +11,9 @@ local thunderEffect = 300
 local dryingMultiplier = 75 --dry per hour at max heat
 
 --Boundaries for wetEffects
-this.dampLevel = common.wetConditions.damp.min
-this.wetLevel = common.wetConditions.wet.min
-this.soakedLevel = common.wetConditions.soaked.min
+this.dampLevel = common.conditions.wetness.damp.min
+this.wetLevel = common.conditions.wetness.wet.min
+this.soakedLevel = common.conditions.wetness.soaked.min
 
 --Height at which Player gets wetEfects
 local dampHeight = 50
@@ -59,6 +59,12 @@ end
 function this.calcaulateWetTemp(timeSinceLastRan)
     if not common.data then return end
 
+    --Check if Ashfall is disabled
+    if not common.data.mcmOptions.enableAshfall then
+        common.data.wetness = 0
+        return
+    end
+
     local currentWetness = common.data and common.data.wetness or 0
 
     
@@ -90,7 +96,7 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     -- wetness decreased by coverage
     local weather = tes3.getCurrentWeather()
     if not weather then return end
-    local tempMultiplier = 0.5 + ( ( common.data.tempPlayer + 100 ) / 400 ) --between 0.5 and 1.0
+    local tempMultiplier = 0.5 + ( ( common.data.temp + 100 ) / 400 ) --between 0.5 and 1.0
     local armorCoverage = common.data.armorCoverage or 0.0
     local clothingCoverage = common.data.clothingCoverage or 0.0
     local coverage = math.clamp( ( armorCoverage + clothingCoverage ), 0, 0.85 )    

@@ -36,6 +36,8 @@ function this.calculateHazards()
         end
     end
     --tes3.messageBox("%s", totalHeat)
+    totalHeat = math.min( 100, totalHeat)
+
     common.data.hazardTemp = totalHeat
 end
 

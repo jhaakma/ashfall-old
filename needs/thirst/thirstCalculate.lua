@@ -8,8 +8,16 @@ local thirstRate = 4.0
 local heatMulti = 2.0
 local thirstEffectMax = 1.5
 function this.calculate(scriptInterval)
+    local thirstActive = (
+        common.data and
+        common.data.mcmOptions.enableThirst
+    )
+    if not thirstActive then
+        common.data.thirst = 0
+    end
+
     local thirst = common.data.thirst or 0
-    local temp = common.data.tempPlayer or 0
+    local temp = common.data.temp or 0
 
     --Hotter it gets the faster you become thirsty
     local heatEffect = math.clamp(temp, 0, 100 )

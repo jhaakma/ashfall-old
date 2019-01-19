@@ -20,6 +20,10 @@ function this.getFoodValue(thisFoodId)
 end
 
 function this.eatAmount( amount ) 
+    if not common.data.mcmOptions.enableHunger then
+        return
+    end
+
     local currentHunger = common.data.hunger or  0
     common.data.hunger = math.max( (currentHunger - amount), 0 )
     conditionsCommon.updateCondition("hunger")

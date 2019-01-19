@@ -1,8 +1,13 @@
 
 local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
+local common = require("mer.ashfall.common")
 
 local function onEquip(e)
-    if e.item.objectType == tes3.objectType.alchemy then
+    local doDrink = (
+        common.data.mcmOptions.enableThirst and
+        e.item.objectType == tes3.objectType.alchemy
+    )
+    if doDrink then
         local newContainerId 
         --bottles
         local bottles = thirstCommon.containerList.filledBottles
