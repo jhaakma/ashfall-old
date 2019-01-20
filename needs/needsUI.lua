@@ -3,13 +3,14 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common")
+local optionData = require("mer.ashfall.MCM.optionData")
 
 local UIData = {
     hunger = {
         blockID = tes3ui.registerID("Ashfall:hungerUIBlock"),
         fillBarID = tes3ui.registerID("Ashfall:hungerFillBar"),
         conditionID = tes3ui.registerID("Ashfall:hungerConditionId"),
-        mcmEnable = common.MCMOptionIds.enableHunger,
+        mcmEnable = "enableHunger",
         conditionTypes = common.conditions.hunger,
         defaultCondition = "satiated",
         conditionValueDataField = "hunger",
@@ -18,7 +19,7 @@ local UIData = {
         blockID = tes3ui.registerID("Ashfall:thirstUIBlock"),
         fillBarID = tes3ui.registerID("Ashfall:thirstFillBar"),
         conditionID = tes3ui.registerID("Ashfall:thirstConditionId"),
-        mcmEnable = common.MCMOptionIds.enableThirst,
+        mcmEnable = "enableThirst",
         conditionTypes = common.conditions.thirst,
         defaultCondition = "hydrated",
         conditionValueDataField = "thirst",
@@ -27,7 +28,7 @@ local UIData = {
         blockID = tes3ui.registerID("Ashfall:sleepUIBlock"),
         fillBarID = tes3ui.registerID("Ashfall:sleepFillBar"),
         conditionID = tes3ui.registerID("Ashfall:sleepConditionId"),
-        mcmEnable = common.MCMOptionIds.enableSleep,
+        mcmEnable = "enableSleep",
         conditionTypes = common.conditions.sleep,
         defaultCondition = "rested",
         conditionValueDataField = "sleep",
@@ -200,37 +201,18 @@ function this.addNeedsBlockToMenu(e, need)
     block.maxWidth = 250
     block.borderTop = 10
 
-    local fillBar = block:createFillBar({current = 100, max = 100})
+    local sleepValue = common.data[need]
+    local fillBar = block:createFillBar({current = sleepValue, max = 100})
     setupNeedsBar(fillBar)
 
     fillBar.widget.fillColor = barColors[need]
 
-    local conditionText = common.conditions[need].text
+    local conditionText = common.conditions[need][common.data.currentConditions[need]].text
 
-end
+    local conditionLabel = block:createLabel({ id = UIData[need].conditionID, text = conditionText})
+    setupConditionLabel(conditionLabel)
+    updateNeedsBlock(e.element, UIData[need])
 
-function this.addRestMenuSleepBlock(e)
-
-    if common.data.mcmOptions.enableSleep  then
-
-
-        local sleepBlock = e.element:createBlock()
-        setupNeedsElementBlock(sleepBlock)
-
-        sleepBlock.maxWidth = 250
-        sleepBlock.borderTop = 10
-
-        local sleepBar = sleepBlock:createFillBar({ id = UIData.sleep.fillBarID, current = 100, max = 100})
-        setupNeedsBar(sleepBar)
-
-        sleepBar.widget.fillColor = barColors.sleep
-
-        local conditionText =  common.conditions.sleep[common.data.currentCondition.sleep].text
-        local sleepConditionLabel = sleepBlock:createLabel({ id = UIData.sleep.conditionID, text = conditionText})
-        setupConditionLabel(sleepConditionLabel)
-
-        updateNeedsBlock(e.element, UIData.sleep)
-    end
 end
 
 event.register("uiCreated", createNeedsUI, { filter = "MenuInventory" } )

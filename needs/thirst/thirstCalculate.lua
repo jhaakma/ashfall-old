@@ -25,7 +25,8 @@ function this.calculate(scriptInterval)
 
     --Calculate thirst
     thirst = thirst + ( scriptInterval * thirstRate * heatEffect )
-    thirst = math.clamp(thirst, 0, 100)
+    thirst = math.clamp(thirst, 0, 100) 
+
     common.data.thirst = thirst
 
     --The thirstier you are, the more extreme heat temps are

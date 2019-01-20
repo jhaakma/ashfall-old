@@ -1,7 +1,7 @@
 --Common
 local this = {}
 local skillModule = include("OtherSkills.skillModule")
-
+local optionData = require("mer.ashfall.MCM.optionData")
 --COMMON FUNCTIONS
 function this.hourToClockTime ( time )
     local gameTime = time or tes3.getGlobal("GameHour")
@@ -80,24 +80,6 @@ this.conditions = {
 }
 
 
---In-game MCM OPTION IDS--
-this.MCMOptionIds = {
-    --enable mechanics
-    enableAshfall = "enableAshfall",
-    enableHunger = "enableHunger",
-    enableThirst = "enableThirst",
-    enableSleep = "enableSleep",
-    
-
-    --show updates
-    showTemp = "showTempMessages",
-    showHunger = "showHungerMessages",
-    showThirst = "showThirstMessages",
-    showSleep = "showSleepMessages",
-    showWetness = "showWetMessages",
-}
-
-
 
 --INITIALISE SKILLS--
 local function onSkillsReady()
@@ -126,19 +108,24 @@ local function onLoaded()
 
     -- create a public shortcut
     this.data = data.Ashfall
-    this.data.mcmOptions = this.data.mcmOptions or 
-    {   
-        enableAshfall = true,
-        enableHunger = true, 
-        enableThirst = true,
-        enableSleep = true
-    }
-    this.data.currentConditions = this.data.currentConditions or {}
-    mwse.log("Ashfall: Common.lua loaded successfully")
-    
 
+    --Initialise MCM options
+    if not this.data.mcmOptions  then
+        this.data.mcmOptions = {}
+        for _, category in pairs(optionData) do
+            for _, option in pairs(category.options) do
+                mwse.log(option.id)
+                this.data.mcmOptions[option.id] = option.defaultSetting
+            end
+        end
+    end
+
+    this.data.currentConditions = this.data.currentConditions or {}
+
+    mwse.log("Ashfall: Common.lua loaded successfully")
     event.trigger("Ashfall:dataLoaded")
 end
+
 event.register("loaded", onLoaded)
 
 return this

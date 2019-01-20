@@ -18,7 +18,8 @@ function this.calculate(scriptInterval)
     local temp = common.data.temp or 0
 
     --Colder it gets, the faster you grow hungry
-    local coldEffect = math.clamp(temp, -100, 0)
+    local coldEffect = math.clamp(temp, -100, 0) 
+    
     coldEffect = math.remap( coldEffect, -100, 0, coldMulti, 1.0)
 
     --calculate hunger

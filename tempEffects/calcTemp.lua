@@ -14,8 +14,8 @@ local hud = require("mer.ashfall.ui.hud")
 local limitRate = 50
 
 --Determines how fast tempPlayer catches up to tempLimit
-local playerRate = 3.5
-local minPlayerDiff = 20
+local playerRate = 2.5
+local minPlayerDiff = 10
 
 --"Region" temp when inside
 local interiorWeatherMultiplier = 0.4
@@ -52,16 +52,6 @@ function this.calculateTemp(timerInterval)
     tempLimit = common.data.tempLimit or 0
     tempPlayer = common.data.temp or 0
 
-    if not common.data.mcmOptions.enableAshfall then
-        common.data.tempRaw = 0
-        common.data.tempReal = 0
-        common.data.tempLimit = 0
-        common.data.temp = 0
-        hud.updateHUD()
-        return
-    end
-
-
     --Environmental Factors -- additives
     local weatherTemp = common.data.weatherTemp or 0
     local wetTemp = common.data.wetTemp or 0
@@ -96,6 +86,16 @@ function this.calculateTemp(timerInterval)
         tempRaw =  weatherTemp
     end
     common.data.tempRaw = tempRaw
+
+    --[[if not common.data.mcmOptions.enableTemperatureEffects then
+        common.data.tempReal = 0
+        common.data.tempLimit = 0
+        common.data.temp = 0
+        hud.updateHUD()
+        return
+    end]]--
+
+
     tempReal = (
         tempRaw  + wetTemp
                  + torchTemp
@@ -161,6 +161,11 @@ function this.calculateTemp(timerInterval)
 
     ]]--------------------------------------
     local playerDiff = math.abs( tempLimit - tempPlayer )
+    if playerDiff < minPlayerDiff then
+        --mwse.log("Using min difference of %d", minPlayerDiff)
+    else
+        --mwse.log("Using calculated difference of %d", playerDiff)
+    end
     playerDiff = ( playerDiff < minPlayerDiff ) and minPlayerDiff or playerDiff
 
     local playerChange = playerDiff * playerRate * timerInterval
@@ -196,14 +201,14 @@ local function onKeyG(e)
 
             gameHour = tes3.getGlobal("GameHour")
             --local currentTime = common.hourToClockTime(gameHour)
-            tes3.messageBox(
+           --[[ tes3.messageBox(
                 "Total Warmth = " .. ( common.data.armorTemp + common.data.clothingTemp )
             )
             tes3.messageBox(
                 "Total Coverage = " .. ( common.data.armorCoverage + common.data.clothingCoverage )
             )
-
-            --tes3.messageBox("TempRaw: %.2f, tempReal: %.2f, tempLimit: %.2f", tempRaw, tempReal,tempLimit )
+]]--
+            tes3.messageBox("TempRaw: %.2f, tempReal: %.2f, tempLimit: %.2f", tempRaw, tempReal,tempLimit )
             --tes3.messageBox("RegionTemp: %.2f \n weatherTemp: %.2f \n WetTemp: %.2f",
                 --common.data.regionTemp, common.data.weatherTemp, common.data.wetTemp)
             --tes3.messageBox("Armor coverage: %.2f, Clothing coverage: %.2f",
@@ -216,7 +221,7 @@ local function onKeyG(e)
 end
 
 
---event.register("key", onKeyG, {filter = 34})
+event.register("key", onKeyG, {filter = tes3.scanCode.g})
 return this
 
 

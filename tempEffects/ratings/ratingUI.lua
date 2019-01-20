@@ -75,7 +75,7 @@ local IDs = {
 ]]
 local function insertRatings(e)
 
-    if not common.data.mcmOptions.enableAshfall then
+    if not common.data.mcmOptions.enableTemperatureEffects then
         return
     end
 
@@ -159,7 +159,7 @@ local function checkAshfallEnabled()
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local outerBlock = inventoryMenu:findChild(tes3ui.registerID("Ashfall:armorRatings"))
-        outerBlock.visible = common.data.mcmOptions.enableAshfall
+        outerBlock.visible = common.data.mcmOptions.enableTemperatureEffects
     end
 end
 

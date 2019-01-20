@@ -1,6 +1,8 @@
 --Updates condition spell effect strength based on player stats
 --Uses base version of spell as a reference to get attribute  values without multiplier
 local common = require("mer.ashfall.common")
+local optionData = require("mer.ashfall.MCM.optionData")
+
 local this = {}
 
 local ignoreList = {
@@ -14,32 +16,32 @@ this.needsData = {
     temp = {
         value = "temp",
         default = "comfortable",
-        showMessageOption = common.MCMOptionIds.showTemp,
-        enableOption = common.MCMOptionIds.enableAshfall
+        showMessageOption = "showTemp",
+        enableOption = "enableTemperatureEffects"
     },
     hunger = {
         value = "hunger",
         default = "satiated",
-        showMessageOption = common.MCMOptionIds.showHunger,
-        enableOption = common.MCMOptionIds.enableHunger
+        showMessageOption = "showHunger",
+        enableOption = "enableHunger"
     },   
     thirst = {
         value = "thirst",
         default = "hydrated",
-        showMessageOption = common.MCMOptionIds.showThirst,
-        enableOption = common.MCMOptionIds.enableThirst
+        showMessageOption = "showThirst",
+        enableOption = "enableThirst"
     },   
     sleep =  {
         value = "sleep",
         default = "rested",
-        showMessageOption = common.MCMOptionIds.showSleep,
-        enableOption = common.MCMOptionIds.enableSleep
+        showMessageOption = "showSleep",
+        enableOption = "enableSleep"
     },
     wetness = {
         value = "wetness",
         default = "dry",
-        showMessageOption = common.MCMOptionIds.showWetness,
-        enableOption = common.MCMOptionIds.enableAshfall
+        showMessageOption = "showWetness",
+        enableOption = "enableTemperatureEffects"
     }
 }
 
@@ -150,7 +152,6 @@ local function refreshAfterRestore(e)
             local conditionData = common.conditions[data.value]
 
             if conditionData and currentCondition then
-                mwse.log("Current Condition: %s", currentCondition)
                 local spell = conditionData[currentCondition].spell
 
                -- mwse.log("Spell = %s", spell)

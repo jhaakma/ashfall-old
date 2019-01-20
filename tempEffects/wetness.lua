@@ -60,7 +60,7 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     if not common.data then return end
 
     --Check if Ashfall is disabled
-    if not common.data.mcmOptions.enableAshfall then
+    if not common.data.mcmOptions.enableTemperatureEffects then
         common.data.wetness = 0
         return
     end
@@ -96,7 +96,8 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     -- wetness decreased by coverage
     local weather = tes3.getCurrentWeather()
     if not weather then return end
-    local tempMultiplier = 0.5 + ( ( common.data.temp + 100 ) / 400 ) --between 0.5 and 1.0
+    local playerTemp = common.data.temp or 0
+    local tempMultiplier = 0.5 + ( ( playerTemp + 100 ) / 400 ) --between 0.5 and 1.0
     local armorCoverage = common.data.armorCoverage or 0.0
     local clothingCoverage = common.data.clothingCoverage or 0.0
     local coverage = math.clamp( ( armorCoverage + clothingCoverage ), 0, 0.85 )    

@@ -85,7 +85,7 @@ end
 --Wake up if sleeping and ENVIRONMENT is too cold/hot
 function this.checkSleeping()
     --whether waiting or sleeping, wake up
-    if tes3.menuMode() then
+    if tes3.menuMode() and common.data.mcmOptions.enableTemperatureEffects then
         if isScripted then
             --mwse.log("using bed")
             common.data.usingBed = true

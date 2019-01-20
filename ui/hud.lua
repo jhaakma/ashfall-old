@@ -28,7 +28,7 @@ function this.updateHUD()
     local mainHUDBlock = findHUDElement(IDs.mainHUDBlock)
 
     --Hide HUD if Ashfall is disabled
-    if not common.data.mcmOptions.enableAshfall then
+    if not common.data.mcmOptions.enableTemperatureEffects then
         if mainHUDBlock then
             mainHUDBlock.visible = false
             return
@@ -40,9 +40,11 @@ function this.updateHUD()
     end
     local outerBlock = findHUDElement(IDs.outerBlock)
     if outerBlock then
+        local temp = common.data.temp or 0
+        local tempLimit = common.data.tempLimit
         --Get values
-        local tempPlayer = math.clamp(common.data.temp, -100, 100) or 0
-        local tempLimit =  math.clamp(common.data.tempLimit, -100, 100) or 0
+        local tempPlayer = math.clamp(temp, -100, 100) or 0
+        local tempLimit = math.clamp(tempLimit, -100, 100) or 0
         local condition = common.conditions.temp[( common.data.currentConditions.temp  or "comfortable" )].text
         local wetness = common.data.wetness or 0
         wetness = math.clamp(wetness, 0, 100) or 0

@@ -51,12 +51,12 @@ function this.conditionIndicator()
     createTooltip(headerText, labelText)
 end
 function this.playerLeftIndicator()
-    local headerText = string.format("Player Temperature: %.2f", common.data.temp)
+    local headerText = string.format("Player Temperature: %.2f", common.data.temp )
     local labelText = "The player's current temperature. This directly determines hot and cold condition effects."
     createTooltip(headerText, labelText)
 end
 function this.playerRightIndicator()
-    local headerText = string.format("Player Temperature: %.2f", common.data.temp)
+    local headerText = string.format("Player Temperature: %.2f", common.data.temp  )
     local labelText = "Directly determines hot and cold condition effects."
     createTooltip(headerText, labelText)  
 end

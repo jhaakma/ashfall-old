@@ -37,7 +37,7 @@ end
 event.register("initialized", initialized)
 
 local function registerModConfig()
-    local mcm = require ( "mer.ashfall.modConfig")
+    local mcm = require ( "mer.ashfall.MCM.modConfig")
 	mwse.registerModConfig("Ashfall", mcm)
 end
 event.register("modConfigReady", registerModConfig)
