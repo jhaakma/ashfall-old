@@ -1,4 +1,4 @@
-# ashfall
+# Ashfall
 Ashfall is a Survival Needs mod for Morrowind written in Lua
 
 Features:
