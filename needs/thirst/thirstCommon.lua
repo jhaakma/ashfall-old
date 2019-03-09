@@ -3,6 +3,7 @@ local this = {}
 local common = require("mer.ashfall.common")
 local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
+local hud = require("mer.ashfall.ui.hud")
 this.containerList = {
     bottles = {
         "misc_com_bottle_01",
@@ -43,12 +44,28 @@ this.containerList = {
     }
 }
 
+function this.isDrink(foodObject)
+    local config = mwse.loadConfig("ashfall/config")
+    if not config then 
+        mwse.log("Error: no config found")
+    end
+    local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
+    return (
+        foodObject.objectType == tes3.objectType.alchemy and
+        not config.blocked[foodObject.id] and
+        not config.blocked[mod]
+    )
+end
 
 function this.drinkAmount( amount )
     local currentThirst = common.data.thirst or 0
     common.data.thirst = math.max( ( currentThirst - amount ), 0 )
     conditionsCommon.updateCondition("thirst")
     needsUI.updateNeedsUI()
+    hud.updateHUD()
+    if common.data.thirst <= 0.001 then
+        tes3.messageBox("You are fully hydrated.")
+    end
 end
 
 return this

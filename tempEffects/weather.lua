@@ -27,25 +27,25 @@ local weatherValues = {
 
 --Alter min/max weather values 
 local regionValues = {
-    ["Moesring Mountains Region"]    = {    min    = -40 , max =  -20 },
-    ["Felsaad Coast Region"]        = {    min    = -40 , max =  -20 },
-    ["Isinfier Plains Region"]         = {    min    = -40 , max =  -20 },
-    ["Brodir Grove Region"]             = {    min    = -40 , max =  -15 },
-    ["Thirsk Region"]                = {    min    = -35 , max =  -10 },
-    ["Hirstaang Forest Region"]        = {    min    = -35 , max =  -10 },
+    ["Moesring Mountains Region"]    = {    min    = -60 , max =  -20 },
+    ["Felsaad Coast Region"]        = {    min    = -60 , max =  -20 },
+    ["Isinfier Plains Region"]         = {    min    = -60 , max =  -20 },
+    ["Brodir Grove Region"]             = {    min    = -55 , max =  -15 },
+    ["Thirsk Region"]                = {    min    = -55 , max =  -10 },
+    ["Hirstaang Forest Region"]        = {    min    = -50 , max =  -10 },
     --Vvardenfell
     --Cold
-    ["Sheogorad"]                     = {    min    = -30 , max =  -10 },
-    ["Azura's Coast Region"]        = {    min    = -20 , max =  10 },
+    ["Sheogorad"]                     = {    min    = -45 , max =  -10 },
+    ["Azura's Coast Region"]        = {    min    = -30 , max =  10 },
     --Normal
-    ["Ascadian Isles Region"]        = {    min    = -10 , max =  10 }, --Perfectly normal weather here
-    ["Grazelands Region"]            = {    min    = -20 , max =  20 },-- gets cold at night, warm in day
+    ["Ascadian Isles Region"]        = {    min    = -20 , max =  10 }, --Perfectly normal weather here
+    ["Grazelands Region"]            = {    min    = -30 , max =  20 },-- gets cold at night, warm in day
     --Hot
-    ["Bitter Coast Region"]            = {    min    = 0 , max =  10 }, 
-    ["West Gash Region"]             = {    min    = 0 , max =  20 },
+    ["Bitter Coast Region"]            = {    min    = -20 , max =  10 }, 
+    ["West Gash Region"]             = {    min    = -20 , max =  20 },
     ["Ashlands Region"]                = {    min    = 10 , max =  25 },
-    ["Molag Mar Region"]            = {    min    = 40 , max =  30 },
-    ["Red Mountain Region"]            = {    min    = 50 , max =  35 },
+    ["Molag Mar Region"]            = {    min    = 20 , max =  30 },
+    ["Red Mountain Region"]            = {    min    = 20 , max =  35 },
 }
 
 --Keyword search in interior names for cold caves etc

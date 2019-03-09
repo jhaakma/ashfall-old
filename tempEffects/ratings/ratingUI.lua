@@ -75,7 +75,7 @@ local IDs = {
 ]]
 local function insertRatings(e)
 
-    if not common.data.mcmOptions.enableTemperatureEffects then
+    if not common.data.mcmSettings.enableTemperatureEffects then
         return
     end
 
@@ -113,17 +113,17 @@ local function insertRatings(e)
         ratingsBlock.flowDirection = "top_to_bottom"
         ratingsBlock.paddingTop = 0
         ratingsBlock.paddingBottom = 0
-        ratingsBlock.widthProportional = 1.0
+        ratingsBlock.childAlignX  = 0.5
         ratingsBlock.autoWidth = true
         ratingsBlock.autoHeight = true
         
         local warmthBlock = ratingsBlock:createBlock({ id = IDs.warmthBlock })
         warmthBlock.flowDirection = "left_to_right"
-        warmthBlock.widthProportional = 1.0
+        warmthBlock.autoWidth = true
         warmthBlock.childAlignX  = 0.5
         warmthBlock.autoHeight = true
         
-        local warmthHeader = warmthBlock:createLabel({ id = IDs.warmthHeader, text = "Warmth Rating: " })
+        local warmthHeader = warmthBlock:createLabel({ id = IDs.warmthHeader, text = "Warmth: " })
         quickFormat(warmthHeader)
         --warmthHeader.color = tes3ui.getPalette("header_color")
         
@@ -134,11 +134,11 @@ local function insertRatings(e)
         
         local coverageBlock = ratingsBlock:createBlock({ id = IDs.coverageBlock })
         coverageBlock.flowDirection = "left_to_right"
-        coverageBlock.widthProportional = 1.0
+        coverageBlock.autoWidth = true
         coverageBlock.childAlignX  = 0.5
         coverageBlock.autoHeight = true
         
-        local coverageHeader = coverageBlock:createLabel({ id = IDs.coverageHeader, text = "Coverage Rating: " })
+        local coverageHeader = coverageBlock:createLabel({ id = IDs.coverageHeader, text = "Coverage: " })
         quickFormat(coverageHeader)
         --coverageHeader.color = tes3ui.getPalette("header_color")
         
@@ -159,7 +159,7 @@ local function checkAshfallEnabled()
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local outerBlock = inventoryMenu:findChild(tes3ui.registerID("Ashfall:armorRatings"))
-        outerBlock.visible = common.data.mcmOptions.enableTemperatureEffects
+        outerBlock.visible = common.data.mcmSettings.enableTemperatureEffects
     end
 end
 

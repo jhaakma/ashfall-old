@@ -12,20 +12,14 @@ local function initialized()
         -- load modules
         require ("mer.ashfall.common")
         
-        --temp effect modules
         require ("mer.ashfall.tempEffects.scriptTimer")
         require("mer.ashfall.tempEffects.ratings.ratingEffects")
-        
-        
         require("mer.ashfall.needs.needs")
-
         require("mer.ashfall.harvest_wood")
         require("mer.ashfall.ui.hud")
-
-        require("mer.ashfall.activators.bedroll")
-        
+        require("mer.ashfall.cooking.cooking")
         require("mer.ashfall.frostbreath")
-
+        require("mer.ashfall.keybinds")
         mwse.log("[Ashfall: INFO] Initialized Ashfall")
     end
 end
@@ -36,8 +30,12 @@ end
 
 event.register("initialized", initialized)
 
+
+--MCM settings
 local function registerModConfig()
-    local mcm = require ( "mer.ashfall.MCM.modConfig")
-	mwse.registerModConfig("Ashfall", mcm)
+    local easyMCM = require("easyMCM.modConfig")
+    local mcmData = require ("mer.ashfall.MCM.mcmData")
+    local mcm = easyMCM.registerModData( mcmData ) 
+    mwse.registerModConfig("Ashfall", mcm)
 end
 event.register("modConfigReady", registerModConfig)

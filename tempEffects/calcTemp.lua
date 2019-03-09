@@ -87,7 +87,7 @@ function this.calculateTemp(timerInterval)
     end
     common.data.tempRaw = tempRaw
 
-    --[[if not common.data.mcmOptions.enableTemperatureEffects then
+    --[[if not common.data.mcmSettings.enableTemperatureEffects then
         common.data.tempReal = 0
         common.data.tempLimit = 0
         common.data.temp = 0
@@ -221,7 +221,7 @@ local function onKeyG(e)
 end
 
 
-event.register("key", onKeyG, {filter = tes3.scanCode.g})
+--event.register("key", onKeyG, {filter = tes3.scanCode.g})
 return this
 
 

@@ -6,7 +6,7 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common")
-
+local activators = require("mer.ashfall.activators.activatorController")
 ---CONFIGS----------------------------------------
 --max distance where fire has an effect
 local heatValues = {
@@ -16,13 +16,14 @@ local heatValues = {
     chandelier = 3,
     sconce = 10,
     torch = 15,
-    flame = 20
+    fire = 15,
+    flame = 20,
 }
 
 
 
 local heatDefault = 5
-local heatFirepit = 40
+local heatFirepit = 25
 local maxDistance = 350
 --Multiplier when warming hands next to firepit
 local warmHandsBonus = 1.4
@@ -44,11 +45,7 @@ end
 
 --Check Ids to see if this light is a firepit of some kind
 local function checkForFirePit(id)
-    local patterns = {
-        "firepit",
-        "pitfire",
-        "logpile"
-    }
+    local patterns = activators.activatorList.fire.ids
     for _, pattern in pairs(patterns) do
         if string.find( string.lower(id), pattern) then
             return true

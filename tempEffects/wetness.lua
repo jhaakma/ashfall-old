@@ -11,9 +11,9 @@ local thunderEffect = 300
 local dryingMultiplier = 75 --dry per hour at max heat
 
 --Boundaries for wetEffects
-this.dampLevel = common.conditions.wetness.damp.min
-this.wetLevel = common.conditions.wetness.wet.min
-this.soakedLevel = common.conditions.wetness.soaked.min
+this.dampLevel = common.conditions.wetness.states.damp.min
+this.wetLevel = common.conditions.wetness.states.wet.min
+this.soakedLevel = common.conditions.wetness.states.soaked.min
 
 --Height at which Player gets wetEfects
 local dampHeight = 50
@@ -60,7 +60,7 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     if not common.data then return end
 
     --Check if Ashfall is disabled
-    if not common.data.mcmOptions.enableTemperatureEffects then
+    if not common.data.mcmSettings.enableTemperatureEffects then
         common.data.wetness = 0
         return
     end

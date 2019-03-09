@@ -8,19 +8,18 @@ local function setupOuterBlock(e)
     e.paddingBottom = 0
     e.paddingLeft = 6
     e.paddingRight = 6
-    e.widthProportional = 1.0
+    e.autoWidth = true
     e.autoHeight = true
     e.childAlignX  = 0.5
 end
 
 
 local function createFoodTooltip(e)
-    if common.data.mcmOptions.enableHunger then
-
+    if common.data.mcmSettings.enableHunger then
         local tooltip = e.tooltip
         if not e.tooltip then return end
         if not e.object then return end   
-        if e.object.objectType == tes3.objectType.ingredient then 
+        if hungerCommon.isFood(e.object) then 
             local foodValue = hungerCommon.getFoodValue(e.object.id)
             if foodValue ~= 0 then
                 --Get main block inside tooltip

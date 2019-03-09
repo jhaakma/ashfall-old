@@ -8,8 +8,9 @@
 
 local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
 local common = require("mer.ashfall.common")
-local activators = require("mer.ashfall.activators")
--- register UI Ids
+local activators = require("mer.ashfall.activators.activatorController")
+
+
 
 
 local function refillContainer(bottleId)
@@ -17,7 +18,7 @@ local function refillContainer(bottleId)
     
     local newContainer
     if string.find(string.lower(bottleId), "flask") then
-        
+
         newContainer = "fw_water_flask_full"
     else
         newContainer = "fw_water_bottle_full"
@@ -90,41 +91,23 @@ local function callWatermenu()
         callback = activateWaterMenu
     }
 end
-local lookingAtWater
+
 --If player presses activate while looking at water source
 --(determined by presence of tooltip), then open the water menu
-local function onActivateWater()
+local function onActivateWater(e)
     local thirstActive = (
         common.data and
-        common.data.mcmOptions.enableThirst
+        common.data.mcmSettings.enableThirst
     )
-    local inputController = tes3.worldController.inputController
-    local keyTest = inputController:keybindTest(tes3.keybind.activate)
-    if (keyTest and thirstActive) then
-        if lookingAtWater then
-            callWatermenu()
-        end
-    end
-end
-
-
---Use rayTest to see if the player is looking at a water source
-local function checkForWater()
-    local thirstActive = (
-        common.data and
-        common.data.mcmOptions.enableThirst
-    )
-    if thirstActive and not tes3.menuMode() then
-        local activator = activators.currentActivator
-        lookingAtWater =
-        (
-               activator == activators.activatorList.water 
-            or activator == activators.activatorList.well
-            or activator == activators.activatorList.keg
-        )
+    if ( thirstActive ) then
+        callWatermenu()
     end
 end
 
 --Register events
-event.register("keyDown", onActivateWater )
-event.register("enterFrame", checkForWater)
+event.register(
+    "Ashfall:Activated", 
+    onActivateWater, 
+    { filter = activators.activatorTypes.waterSource } 
+)
+

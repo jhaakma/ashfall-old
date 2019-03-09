@@ -1,18 +1,21 @@
 local common = require("mer.ashfall.common")
 local this = {}
-local hungerRate = 3.0
+
 local coldMulti = 2.0
 local hungerEffectMax = 1.5
-
+local restMultiplier = 1.0
 function this.calculate(scriptInterval)
+    
     --Check Ashfall disabled
     local hungerEnabled = (
-        common.data.mcmOptions.enableHunger
+        common.data.mcmSettings.enableHunger
     )
     if not hungerEnabled then
         common.data.hunger = 0
         return
     end
+
+    local hungerRate = common.data.mcmSettings.hungerRate / 10
 
     local hunger = common.data.hunger or 0
     local temp = common.data.temp or 0
@@ -23,7 +26,15 @@ function this.calculate(scriptInterval)
     coldEffect = math.remap( coldEffect, -100, 0, coldMulti, 1.0)
 
     --calculate hunger
-    hunger = hunger + ( scriptInterval * hungerRate * coldEffect )
+    local resting = (
+        tes3.mobilePlayer.sleeping or
+        tes3.menuMode()
+    )
+    if resting then
+        hunger = hunger + ( scriptInterval * hungerRate * coldEffect * restMultiplier )
+    else
+        hunger = hunger + ( scriptInterval * hungerRate * coldEffect )
+    end
     hunger = math.clamp( hunger, 0, 100 )
     common.data.hunger = hunger
 

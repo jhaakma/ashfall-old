@@ -35,23 +35,22 @@ local needs = {
 
 
 --How often the script should run in gameTime
-local scriptInterval = 0.0005
+local scriptInterval = 0.0005 --gameHour
+local heavyScriptInterval = 0.2 --seconds
 
 local function callUpdates()
-
     calcTemp.calculateTemp(scriptInterval)
     weather.calculateWeatherEffect()
     wetness.calcaulateWetTemp(scriptInterval)
-    
     sleepController.checkSleeping()
-    
-
     --Needs:
     for _, script in pairs(needs) do
         script.calculate(scriptInterval)
     end
+end
 
-    --For heavy scripts and those that don't need to be run while sleeping
+local function callHeavyUpdates()
+    --For heavy scripts and those that aren't dependent on time keeping
     if tes3.menuMode() == false then
         tentController.checkTent()
         --temp effects
@@ -61,24 +60,32 @@ local function callUpdates()
         magicEffects.calculateMagicEffects()
         hazardEffects.calculateHazards()
 
-        --conditions
-        --[[for _, script in pairs(conditions) do
-            script.updateCondition()
-        end]]--
 
         conditions.updateConditions()
         --visuals
         frostBreath.doFrostBreath()
         needsUI.updateNeedsUI()
     end
-    
 end
 
 local function dataLoaded()
     callUpdates()
-    timer.delayOneFrame(function()
-        timer.start({duration = scriptInterval, callback = callUpdates, type = timer.game, iterations = -1})
-    end)
+    timer.delayOneFrame(
+        function()
+            timer.start({
+                duration = scriptInterval, 
+                callback = callUpdates, 
+                type = timer.game, 
+                iterations = -1})
+            timer.start({ 
+                duration = heavyScriptInterval,
+                callback = callHeavyUpdates, 
+                type = timer.real,
+                iterations = -1
+            })
+
+        end
+    )
 end
 
 --Register functions
