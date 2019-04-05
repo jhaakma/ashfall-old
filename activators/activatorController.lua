@@ -3,59 +3,28 @@ local this = {}
 --[[
     This script creates tooltips when looking at Ashfall activators.
     Other scripts can see what the player is looking at by checking]
-    this.currentActivator
+    this.current
 ]]--
 
 local common = require("mer.ashfall.common")
 
-this.currentActivator = nil
-local activatorList = require("mer.Ashfall.activators.activatorList")
-this.activatorList = activatorList.list
-this.activatorTypes = activatorList.types
 
+local activatorList = require("mer.Ashfall.activators.activatorList")
+this.list = activatorList.list
+this.current = nil
+this.currentRef = nil
+
+function this.getCurrentActivator()
+    return this.list[this.current]
+end
 
 local id_indicator = tes3ui.registerID("Ashfall:activatorTooltip")
 local id_label = tes3ui.registerID("Ashfall:activatorTooltipLabel")
 
 
-local tabCount = tabCount or 0
-local function printElementTree(e)
-	tabCount = tabCount + 1
-	for i=1, #e.children do
-		local child = e.children[i]
-		local printString = ""
-		for i=1, tabCount do
-			printString = "  " .. printString
-		end
-		printString = printString .. "- " .. child.name .. ", ID: " .. child.id
-		mwse.log(printString)
-		printElementTree(child)
-		tabCount = tabCount - 1
-	end
-end
-
---Create water/well tooltip if it doesn't exist
-local function createTooltip()
-    local text = this.currentActivator.name
-    local tooltip = tes3ui.findMenu(id_indicator)
-    if not tooltip then
-        tooltip = tes3ui.createMenu{id = id_indicator, fixedFrame = true}
-        printElementTree(tooltip)
-        tooltip.positionX = 200
-        tooltip.absolutePosAlignY  = 0.02
-        tooltip.autoHeight = true
-        tooltip.autoWidth = true
-
-        local label = tooltip.parent:createLabel{ id=id_label, text = text}
-        label.autoHeight = true
-        label.autoWidth = true
-        label.wrapText = true
-        label.justifyText = "center"
-        
-        lookingAtWater = true
-    end
-end
-
+--[[
+    Create a tooltip when looking at an activator
+]]--
 local function createActivatorIndicator()
     
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
@@ -63,9 +32,9 @@ local function createActivatorIndicator()
         local mainBlock = menu:findChild(id_indicator)
         
         if (
-            this.currentActivator and 
+            this.current and 
             not tes3.menuMode() and 
-            common.data.mcmSettings[this.currentActivator.mcmSetting] 
+            common.data.mcmSettings[this.list[this.current].mcmSetting] 
         )then
             if not mainBlock then
 
@@ -87,7 +56,7 @@ local function createActivatorIndicator()
                 labelBorder.autoWidth = true
                 labelBorder.paddingAllSides = 10
 
-                local text = this.currentActivator.name
+                local text = this.list[this.current].name
                 local label = labelBorder:createLabel{ id=id_label, text = text}
                 label.autoHeight = true
                 label.autoWidth = true
@@ -108,8 +77,8 @@ end
     a static activator
 ]]--
 local function callRayTest()
-    this.currentActivator = nil
-
+    this.current = nil
+    this.currentRef = nil
     --Figure out camera position
     local rayPosition
     local rayDirection
@@ -145,11 +114,12 @@ local function callRayTest()
                 local targetRef = result.reference
                 if targetRef then
                     --mwse.log("Looking at: %s", targetRef.id)
-                    for _, activator in pairs(this.activatorList) do
+                    for activatorId, activator in pairs(this.list) do
                         for _, pattern in ipairs(activator.ids) do
                             if string.find(string.lower(targetRef.id), pattern) then
                                 --mwse.log("Returning activator")
-                                this.currentActivator = activator
+                                this.current = activatorId
+                                this.currentRef = targetRef
                             end
                         end
                     end
@@ -169,7 +139,7 @@ local function callRayTest()
                 local cameraIsAboveWater = rayPosition.z > waterLevel
                 local isLookingAtWater = intersection.z < waterLevel
                 if cameraIsAboveWater and isLookingAtWater and not blockedBySomething then
-                    this.currentActivator = this.activatorList.water
+                    this.current = "water"
                 end 
             end
         end
@@ -186,11 +156,12 @@ event.register("simulate", callRayTest)
 local function triggerActivate(e)
     local inputController = tes3.worldController.inputController
     local keyTest = inputController:keybindTest(tes3.keybind.activate)
-    if (keyTest and not tes3.menuMode() and this.currentActivator ) then
+    if (keyTest and not tes3.menuMode() and this.current ) then
         local eventData = {
-            activator = this.currentActivator
+            activator = this.list[this.current],
+            ref = this.currentRef
         }
-        event.trigger("Ashfall:Activated", eventData, { filter = eventData.activator.type }) 
+        event.trigger("Ashfall:ActivatorActivated", eventData, { filter = eventData.activator.type }) 
     end
 end
 event.register("keyDown", triggerActivate )

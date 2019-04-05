@@ -5,6 +5,8 @@ local this = {}
 --[[
     Returns human-readable formatted time from gameHour
 ]]--
+
+
 function this.hourToClockTime ( time )
     local gameTime = time or tes3.getGlobal("GameHour")
     local formattedTime
@@ -35,6 +37,10 @@ end
 
 function this.messageBox(params)
 
+    --[[
+        Button = { text, callback}
+    ]]--
+
     local message = params.message
     local buttons = params.buttons
 
@@ -64,23 +70,26 @@ end
     Fades out, passes time then runs callback when finished
 ]]--
 function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
-    local function fadeTimeIn(hoursPassed, callback)
-        tes3.fadeIn({ duration = 0.5 })
+    local function fadeTimeIn()
+        mwse.log("CALLBACK")
         tes3.runLegacyScript({command = "EnablePlayerControls"})
         callback()
+        this.data.muteConditionMessages = false
     end
 
+    this.data.muteConditionMessages = true
     tes3.fadeOut({ duration = 0.5 })
     tes3.runLegacyScript({command = "DisablePlayerControls"})
     --Halfway through, advance gamehour
+    local iterations = 10
     timer.start({
         type = timer.real,
-        iterations = 5,
-        duration = (secondsTaken / 5 ),
+        iterations = iterations,
+        duration = ( secondsTaken / iterations ),
         callback = (
             function()
                 local gameHour = tes3.findGlobal("gameHour")
-                gameHour.value = gameHour.value + (hoursPassed/5)
+                gameHour.value = gameHour.value + (hoursPassed/iterations)
             end
         )
     })
@@ -88,10 +97,18 @@ function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
     timer.start({
         type = timer.real,
         iterations = 1,
-        duration = (secondsTaken ),
+        duration = secondsTaken,
         callback = (
             function()
-                fadeTimeIn(hoursPassed, callback)
+                mwse.log("fade back")
+                local fadeBackTime = 1
+                tes3.fadeIn({ duration = fadeBackTime })
+                timer.start({
+                    type = timer.real,
+                    iterations = 1,
+                    duration = fadeBackTime, 
+                    callback = fadeTimeIn
+                })
             end
         )
     })

@@ -18,7 +18,7 @@ local fireEffect = require("mer.ashfall.tempEffects.fireEffect")
 local magicEffects = require("mer.ashfall.tempEffects.magicEffects")
 local hazardEffects = require("mer.ashfall.tempEffects.hazardEffects")
 
-local frostBreath = require("mer.ashfall.frostBreath")
+local frostBreath = require("mer.ashfall.effects.frostBreath")
 
 
 --Survival stuff
@@ -32,7 +32,7 @@ local needs = {
     hunger = require("mer.ashfall.needs.hunger.hungerCalculate"),
     sleep = require("mer.ashfall.needs.sleep.sleepCalculate")
 }
-
+local hungerCommon = require("mer.ashfall.needs.hunger.hungerCommon")
 
 --How often the script should run in gameTime
 local scriptInterval = 0.0005 --gameHour
@@ -43,6 +43,7 @@ local function callUpdates()
     weather.calculateWeatherEffect()
     wetness.calcaulateWetTemp(scriptInterval)
     sleepController.checkSleeping()
+    hungerCommon.processMealBuffs(scriptInterval)
     --Needs:
     for _, script in pairs(needs) do
         script.calculate(scriptInterval)
@@ -62,6 +63,7 @@ local function callHeavyUpdates()
 
 
         conditions.updateConditions()
+        
         --visuals
         frostBreath.doFrostBreath()
         needsUI.updateNeedsUI()

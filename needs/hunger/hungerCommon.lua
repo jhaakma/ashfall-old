@@ -36,4 +36,17 @@ function this.eatAmount( amount )
     hud.updateHUD()
 end
 
+function this.processMealBuffs(scriptInterval)
+    --decrement buff time
+    if common.data.mealTime and common.data.mealTime > 0 then
+        common.data.mealTime = math.max(common.data.mealTime - scriptInterval, 0)
+
+    --Time's up, remove buff
+    elseif common.data.mealBuff then
+        mwse.log("Removing meal buff")
+        mwscript.removeSpell({ reference = tes3.player, spell = common.data.mealBuff })
+        common.data.mealBuff = nil
+    end
+end
+
 return this

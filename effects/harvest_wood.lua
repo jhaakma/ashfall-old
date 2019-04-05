@@ -21,8 +21,8 @@ local function onAttack(e)
     - Number of wood collected is based on the size of swing and axe attack power
 ]]--
     local lookingAtWood = (
-        activators.currentActivator and 
-        activators.currentActivator.type == activators.activatorTypes.woodSource
+        activators.current and 
+        activators.list[activators.current].type == activators.types.woodSource
     )
     local isPlayer = e.mobile.reference == tes3.player
     --attacker is player and looking at wood

@@ -8,7 +8,7 @@
 
 local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
 local common = require("mer.ashfall.common")
-local activators = require("mer.ashfall.activators.activatorController")
+local Activator = require("mer.ashfall.objects.Activator")
 
 
 
@@ -106,8 +106,8 @@ end
 
 --Register events
 event.register(
-    "Ashfall:Activated", 
+    "Ashfall:ActivatorActivated", 
     onActivateWater, 
-    { filter = activators.activatorTypes.waterSource } 
+    { filter = Activator.types.waterSource } 
 )
 

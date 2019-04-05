@@ -70,7 +70,8 @@ function this.updateCondition(id)
                 common.data.currentStates[id] = newState
                 local doShowMessage = (
                     common.data.mcmSettings[conditionData.showMessageOption] and
-                    common.data.mcmSettings[conditionData.enableOption]
+                    common.data.mcmSettings[conditionData.enableOption] and 
+                    not common.data.muteConditionMessages 
                 )
                 if doShowMessage then
                     tes3.messageBox("You are " .. string.lower(common.conditions[id].states[newState].text) .. "." )

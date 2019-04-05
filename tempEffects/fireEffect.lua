@@ -45,7 +45,7 @@ end
 
 --Check Ids to see if this light is a firepit of some kind
 local function checkForFirePit(id)
-    local patterns = activators.activatorList.fire.ids
+    local patterns = activators.list.fire.ids
     for _, pattern in pairs(patterns) do
         if string.find( string.lower(id), pattern) then
             return true

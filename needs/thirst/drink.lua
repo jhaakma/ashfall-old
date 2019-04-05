@@ -23,7 +23,7 @@ local function onEquip(e)
         elseif e.item.id == flasks.flaskLow then
             newContainerId = thirstCommon.containerList.flasks[ math.random( #thirstCommon.containerList.flasks) ]
         end
-        --water
+        --drink
         if newContainerId then
             thirstCommon.drinkAmount(35)
             timer.frame.delayOneFrame(
