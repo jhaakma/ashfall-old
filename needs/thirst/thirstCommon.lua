@@ -1,9 +1,11 @@
 
 local this = {}
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
+
 this.containerList = {
     bottles = {
         "misc_com_bottle_01",
@@ -47,7 +49,7 @@ this.containerList = {
 function this.isDrink(foodObject)
     local config = mwse.loadConfig("ashfall/config")
     if not config then 
-        mwse.log("Error: no config found")
+        logger.info("Error: no config found")
     end
     local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
     return (

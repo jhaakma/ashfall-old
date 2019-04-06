@@ -3,13 +3,14 @@ local common = require("mer.ashfall.common")
 local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
+local logger = require("mer.ashfall.logger")
 
 local defaultFoodValue = 5
  
 function this.isFood(foodObject)
     local config = mwse.loadConfig("ashfall/config")
     if not config then 
-        mwse.log("Error: no config found")
+        logger.info("Error: no config found")
     end
     local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
     return (
@@ -43,7 +44,7 @@ function this.processMealBuffs(scriptInterval)
 
     --Time's up, remove buff
     elseif common.data.mealBuff then
-        mwse.log("Removing meal buff")
+        logger.info("Removing meal buff")
         mwscript.removeSpell({ reference = tes3.player, spell = common.data.mealBuff })
         common.data.mealBuff = nil
     end

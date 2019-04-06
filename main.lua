@@ -1,6 +1,7 @@
 --[[
     Plugin: ashfall.esp
 --]]
+
 local function onLoaded()
     -- set global to disable mwscripts
     tes3.setGlobal("a_lua_enabled", 1)
@@ -12,7 +13,7 @@ local function initialized()
         -- load modules
         require ("mer.ashfall.common")
         
-        require ("mer.ashfall.tempEffects.scriptTimer")
+        require ("mer.ashfall.scriptTimer")
         require("mer.ashfall.tempEffects.ratings.ratingEffects")
         require("mer.ashfall.needs.needs")
         require("mer.ashfall.effects.harvest_wood")
@@ -23,7 +24,7 @@ local function initialized()
 
         require("mer.ashfall.camping.campfire")
 
-        mwse.log("[Ashfall: INFO] Initialized Ashfall")
+        mwse.log("Initialized Ashfall")
     end
 end
 
@@ -35,10 +36,24 @@ event.register("initialized", initialized)
 
 
 --MCM settings
-local function registerModConfig()
-    local easyMCM = require("easyMCM.modConfig")
-    local mcmData = require ("mer.ashfall.MCM.mcmData")
-    local mcm = easyMCM.registerModData( mcmData ) 
-    mwse.registerModConfig("Ashfall", mcm)
+local mcmDataPath = "mer.ashfall.MCM.mcmData"
+local function placeholderMCM(element)
+    element:createLabel{text="This mod requires the EasyMCM library to be installed."}
+    local link = element:createTextSelect{text="Go to EasyMCM Nexus Page"}
+    link.color = tes3ui.getPalette("link_color")
+    link.widget.idle = tes3ui.getPalette("link_color")
+    link.widget.over = tes3ui.getPalette("link_over_color")
+    link.widget.pressed = tes3ui.getPalette("link_pressed_color")
+    link:register("mouseClick", function()
+        os.execute("start https://www.nexusmods.com/morrowind/mods/46427?tab=files")
+    end)
 end
+
+local function registerModConfig()
+    local easyMCM = include("easyMCM.modConfig")
+    local mcmData = require(mcmDataPath)
+    local modData = easyMCM and easyMCM.registerModData(mcmData)
+    mwse.registerModConfig(mcmData.name, modData or {onCreate=placeholderMCM})
+end
+
 event.register("modConfigReady", registerModConfig)

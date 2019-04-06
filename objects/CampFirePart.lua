@@ -3,6 +3,8 @@
     such as firewood or a cooking utensil.
 ]]--
 
+local logger = require("mer.ashfall.logger")
+
 local CampFirePart = {}
 CampFirePart.name = "CampFirePart"
 CampFirePart.nifId = nil
@@ -28,13 +30,13 @@ function CampFirePart:attach(reference)
     if node then
         local nif = self:loadMesh()  
         if nif then
-            mwse.log("attaching nif")
+            logger.info("attaching nif")
             node:attachChild(nif, true)
             reference:updateSceneGraph()
             reference.sceneNode:updateNodeEffects()
         end
     else
-        mwse.log("No 'attach' node found for %s", reference.id)
+        logger.info("No 'attach' node found for %s", reference.id)
     end
 end
 

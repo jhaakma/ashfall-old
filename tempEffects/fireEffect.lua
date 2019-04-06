@@ -6,6 +6,7 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 local activators = require("mer.ashfall.activators.activatorController")
 ---CONFIGS----------------------------------------
 --max distance where fire has an effect
@@ -79,7 +80,7 @@ function this.calculateFireEffect()
                             if string.find(string.lower(ref.object.id), pattern) then
                                 common.data.fireType = pattern
                                 maxHeat = heatValue
-                                --mwse.log("Fire source: %s", ref.object.id)
+                                --logger.info("Fire source: %s", ref.object.id)
                             end
                         end
                     end

@@ -2,6 +2,7 @@
 local common = require("mer.ashfall.common")
 local recipes = require("mer.ashfall.cooking.recipes")
 local utensils = require("mer.ashfall.cooking.utensils")
+local logger = require("mer.ashfall.logger")
 
 local CookingMenu = {}
 CookingMenu.name = "Cooking Menu"
@@ -49,7 +50,7 @@ end
 
 
 function CookingMenu:createMenu()
-    mwse.log("Creating Cooking menu")
+    logger.info("Creating Cooking menu")
     local menu = tes3ui.createMenu{ id = self.menuUID, fixedFrame = true }
     tes3ui.enterMenuMode(self.menuUID)
     self.elements.menu = menu
@@ -105,7 +106,7 @@ end
 
 
 function CookingMenu:createRecipeSelect(parentBlock, recipe)
-    mwse.log("recipeID on create: %s", recipe.id)
+    logger.info("recipeID on create: %s", recipe.id)
     local background = parentBlock:createRect({ id = tes3ui.registerID(recipe.id)})
     background.widthProportional = 1.0
     background.autoHeight = true
@@ -129,7 +130,7 @@ function CookingMenu:createRecipeList(parentBlock)
     recipeList.autoHeight = true
     self.elements.recipeList = recipeList
 
-    mwse.log("%s type = %s", self.utensil.name, self.utensil.recipeType)
+    logger.info("%s type = %s", self.utensil.name, self.utensil.recipeType)
     for _, recipe in pairs(self.recipes) do
         self:createRecipeSelect(recipeList, recipe )
     end
@@ -242,7 +243,7 @@ function CookingMenu:createEffectsList(parentBlock, recipe)
                 end
             end
         else
-            mwse.log("Spell not found")
+            logger.info("Spell not found")
         end
     end
 
@@ -399,7 +400,7 @@ function CookingMenu:cookMeal()
                 local numToRemove = math.min(count, itemsLeft)
                 mwscript.removeItem({ reference = tes3.player, item = id, count = numToRemove})
                 itemsLeft = itemsLeft - numToRemove
-                mwse.log("Removed %s %s", numToRemove, id)
+                logger.info("Removed %s %s", numToRemove, id)
             end    
         end
     end

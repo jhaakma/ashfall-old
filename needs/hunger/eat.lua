@@ -7,7 +7,6 @@ local function applyFoodBuff(foodId)
             meal:applyBuff()
         end
     end
-    mwse.log("Regular ingredient")
 end
 
 local function onEquip(e)    

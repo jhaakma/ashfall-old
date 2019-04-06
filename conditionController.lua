@@ -1,6 +1,7 @@
 --Updates condition spell effect strength based on player stats
 --Uses base version of spell as a reference to get attribute  values without multiplier
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 
 local this = {}
 
@@ -13,15 +14,15 @@ local ignoreList = {
 
 --Update the spell strength to scale with player attributes/level
 local function scaleSpellValues(spellID)
-    --mwse.log("Entering scaleSpellValues")
+    --logger.info("Entering scaleSpellValues")
     --No effect for comfortable
     if not spellID then
-        mwse.log("[Asfhall ERROR] no spell ID sent")
+        logger.info("[Asfhall ERROR] no spell ID sent")
         return
     end
     
     local baseID = spellID .. "_BASE"
-    --mwse.log("BaseID : %s", baseID)
+    --logger.info("BaseID : %s", baseID)
     local baseSpell = tes3.getObject(baseID)
     local realSpell = tes3.getObject(spellID)
     
@@ -48,7 +49,7 @@ local function scaleSpellValues(spellID)
                 effect.min = baseEffect.min * ( tes3.player.object.level / 20 )
                 effect.max = effect.min
             end
-            --mwse.log("%s: %s", spellID, effect.min)
+            --logger.info("%s: %s", spellID, effect.min)
         end
     end
 end
@@ -109,7 +110,7 @@ local function refreshAfterRestore(e)
         not string.startswith(e.source.id, "fw")
     )
     if doRefresh then
-        --mwse.log("checking refresh")
+        --logger.info("checking refresh")
         for id, data in pairs(common.conditions) do
 
             local currentCondition = common.data.currentStates[id]
@@ -119,9 +120,9 @@ local function refreshAfterRestore(e)
             if conditionData and currentCondition then
                 local spell = conditionData[currentCondition].spell
 
-               -- mwse.log("Spell = %s", spell)
+               -- logger.info("Spell = %s", spell)
                 if spell and tes3.player.object.spells:contains(spell) then
-                    --mwse.log("Refreshing spell: %s", spell)
+                    --logger.info("Refreshing spell: %s", spell)
                     --mwscript.removeSpell({ reference = tes3.player, spell = spell })
                     mwscript.addSpell({ reference = tes3.player, spell = spell })
                 end

@@ -1,4 +1,6 @@
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
+
 local this = {}
 
 function this.calculate(scriptInterval)
@@ -17,10 +19,10 @@ function this.calculate(scriptInterval)
 
         local usingBed = common.data.usingBed or false
         if usingBed then
-            --mwse.log("Using bed")
+            --logger.info("Using bed")
             sleep = sleep + ( scriptInterval * gainSleepBed )
         else
-            --mwse.log("Not using bed")
+            --logger.info("Not using bed")
             --Not using bed, gain sleep slower and can't get above "Rested"
             if sleep < common.conditions.sleep.states.rested.max then
                 sleep = sleep + ( scriptInterval * gainSleepRate )
@@ -28,7 +30,7 @@ function this.calculate(scriptInterval)
         end
     --TODO: traveling isn't working for some reason
     elseif tes3.mobilePlayer.travelling then
-        --mwse.log("travelling")
+        --logger.info("travelling")
         --Traveling: getting some rest but can't get above "Rested"
         if sleep < common.conditions.sleep.states.rested.max then
             sleep = sleep + ( scriptInterval * gainSleepRate )

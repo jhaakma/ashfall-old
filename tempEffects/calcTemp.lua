@@ -7,6 +7,8 @@
 local this = {}
 
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
+
 local hud = require("mer.ashfall.ui.hud")
 -------------------------------------CONFIG VALUES-------------------------------------
 
@@ -162,9 +164,9 @@ function this.calculateTemp(timerInterval)
     ]]--------------------------------------
     local playerDiff = math.abs( tempLimit - tempPlayer )
     if playerDiff < minPlayerDiff then
-        --mwse.log("Using min difference of %d", minPlayerDiff)
+        --logger.info("Using min difference of %d", minPlayerDiff)
     else
-        --mwse.log("Using calculated difference of %d", playerDiff)
+        --logger.info("Using calculated difference of %d", playerDiff)
     end
     playerDiff = ( playerDiff < minPlayerDiff ) and minPlayerDiff or playerDiff
 

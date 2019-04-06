@@ -1,0 +1,14 @@
+{
+    "name": "Ashfall",
+    "version": 2.5,
+    "buildDate": "20190405",
+    "repository": "https://github.com/jhaakma/ashfall",
+    "plugins": [
+        "Ashfall.ESP" 
+    ],
+    "assets": [
+        "meshes\\someThing.nif",
+        "meshes\\ashfall\\smokepuffs.nif",
+        "meshes\\ashfall\\someOtherthing.nif"
+    ]
+}

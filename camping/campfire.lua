@@ -1,11 +1,18 @@
 local Campfire = require("mer.ashfall.objects.CampFire")
 local Activator = require("mer.ashfall.objects.Activator")
-
+local common = require ("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 local function onActivateCampfire(e)
-    mwse.log("creating campfire")
-    local campfire = Campfire:new({ reference = e.ref })
-    mwse.log("calling menu")
-    campfire:showMenu()
+    local campingEnabled = (
+        common.data and
+        common.data.mcmSettings.enableCooking
+    )
+    if campingEnabled then
+        logger.info("creating campfire")
+        local campfire = Campfire:new({ reference = e.ref })
+        logger.info("calling menu")
+        campfire:showMenu()
+    end
 end
 
 event.register(

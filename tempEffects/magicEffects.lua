@@ -6,6 +6,7 @@
 
 local this = {}
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 
 --multiplier at 100% resist
 local maxEffect = 0.5
@@ -39,7 +40,7 @@ local function calculateDamageTemp(e)
 
     elseif e.effectId == tes3.effect.frostDamage then
         tes3.messageBox("Frost dam: %s", (e.effect.magnitude))
-        --mwse.log("Frost dam: %s", (e.effect.magnitude))
+        --logger.info("Frost dam: %s", (e.effect.magnitude))
     end
 end
 

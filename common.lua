@@ -1,5 +1,6 @@
 --Common
 local this = {}
+local logger = require("mer.ashfall.logger")
 --COMMON FUNCTIONS
 
 --[[
@@ -71,7 +72,6 @@ end
 ]]--
 function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
     local function fadeTimeIn()
-        mwse.log("CALLBACK")
         tes3.runLegacyScript({command = "EnablePlayerControls"})
         callback()
         this.data.muteConditionMessages = false
@@ -100,7 +100,7 @@ function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
         duration = secondsTaken,
         callback = (
             function()
-                mwse.log("fade back")
+                logger.info("fade back")
                 local fadeBackTime = 1
                 tes3.fadeIn({ duration = fadeBackTime })
                 timer.start({
@@ -206,7 +206,7 @@ local function onSkillsReady()
         description     =         "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively.",
         specialization     =         tes3.specialization.stealth
     })
-    mwse.log("Ashfall skills registered")
+    logger.info("Ashfall skills registered")
 end
 
 if skillModule then
@@ -218,14 +218,14 @@ end
 
 --Setup local configs. 
 local function initialiseCategory(category)
-    --mwse.log("initialising category %s", category.id)
+    --logger.info("initialising category %s", category.id)
     for _, component in pairs(category.components or {}) do
         if component.class == "Category" then
             initialiseCategory(component)
         else
             if component.variable.id and this.data.mcmSettings[component.variable.id] == nil then
                 this.data.mcmSettings[component.variable.id] = component.variable.defaultSetting
-                mwse.log( "Initialising local config %s to %s", component.variable.id, component.variable.defaultSetting )
+                logger.info( "Initialising local config %s to %s", component.variable.id, component.variable.defaultSetting )
             end
         end
     end
@@ -255,7 +255,7 @@ local function onLoaded()
     local mcmData = require ("mer.ashfall.MCM.mcmData")
     initialiseLocalSettings(mcmData)
 
-    mwse.log("Ashfall: Common.lua loaded successfully")
+    logger.info("Ashfall: Common.lua loaded successfully")
     event.trigger("Ashfall:dataLoaded")
 end
 event.register("loaded", onLoaded)

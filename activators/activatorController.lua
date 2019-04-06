@@ -7,7 +7,7 @@ local this = {}
 ]]--
 
 local common = require("mer.ashfall.common")
-
+local logger = require("mer.ashfall.logger")
 
 local activatorList = require("mer.Ashfall.activators.activatorList")
 this.list = activatorList.list
@@ -106,18 +106,18 @@ local function callRayTest()
     if result then
         if (result and result.reference ) then 
 
-            --mwse.log(result.reference.id)
+            --logger.info(result.reference.id)
             local distance = rayPosition:distance(result.intersection)
 
             --Look for activators from list
             if distance < 200 then
                 local targetRef = result.reference
                 if targetRef then
-                    --mwse.log("Looking at: %s", targetRef.id)
+                    --logger.info("Looking at: %s", targetRef.id)
                     for activatorId, activator in pairs(this.list) do
                         for _, pattern in ipairs(activator.ids) do
                             if string.find(string.lower(targetRef.id), pattern) then
-                                --mwse.log("Returning activator")
+                                --logger.info("Returning activator")
                                 this.current = activatorId
                                 this.currentRef = targetRef
                             end

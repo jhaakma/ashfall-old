@@ -1,5 +1,6 @@
 
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 local CampFirePart = require("mer.ashfall.objects.CampFirePart")
 local Utensil = require("mer.ashfall.objects.Utensil")
 local utensils = require("mer.ashfall.cooking.utensils")
@@ -20,7 +21,7 @@ end
 
 function Campfire:addFirewood()
 
-    mwse.log("adding firewood")
+    logger.info("adding firewood")
     local wood = CampFirePart:new{
         name = "Wood",
         nifId = "ashfall\\fp\\u\\wood.nif"
@@ -42,7 +43,7 @@ function Campfire:lightFire()
     end   
 
     for _, part in ipairs(self.parts) do
-        mwse.log("part = %s", part.name)
+        logger.info("part = %s", part.name)
         table.insert(newRef.data.campfire.parts, part)
         part:attach(newRef)    
     end

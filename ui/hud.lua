@@ -243,6 +243,16 @@ local function createTempHUD(parent)
 end
 
 local function createVerticalNeedsBar(parent, need)
+
+    local function darkenColor(color)
+        local multi = 0.8
+        return { 
+            color[1] * multi, 
+            color[2] * multi, 
+            color[3] * multi,
+        }
+    end
+
     local data = needsUI.UIData[need]
     local block = parent:createBlock()
     block.flowDirection = "top_to_bottom"
@@ -254,18 +264,18 @@ local function createVerticalNeedsBar(parent, need)
     fillbar.heightProportional = 1.0
     fillbar.paddingAllSides = 2
 
-    local filler = fillbar:createRect({ id = IDs[need], color = data.color})
-    filler.color = data.color
-    filler.width = 10
+    local filler = fillbar:createRect({ id = IDs[need] })
+    filler.color = darkenColor(data.color)
+    filler.width = 5
     filler.absolutePosAlignY = 1.0
     filler.height = 0
 
-    local shadow = fillbar:createImage({ path = "icons/ashfall/UI/vertical_shadow.dds"})
+    --[[local shadow = fillbar:createImage({ path = "icons/ashfall/UI/vertical_shadow.dds"})
     shadow.absolutePosAlignY = 0.0
     shadow.absolutePosAlignX = 0.0
     shadow.heightProportional = true
     shadow.widthProportional = true
-    shadow.scaleMode = true
+    shadow.scaleMode = true]]--
 end
 
 

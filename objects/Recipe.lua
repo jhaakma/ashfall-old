@@ -1,4 +1,5 @@
 local common = require("mer.ashfall.cooking.common")
+local logger = require("mer.ashfall.logger")
 
 local Recipe = {}
 Recipe.name = "Meal"
@@ -26,9 +27,9 @@ end
 function Recipe:checkIngredient(ingredient)
     local needed = ingredient.count
     local count =  self:getPlayerIngredientCount(ingredient)
-    --mwse.log("check ingredient %s. Have: %s/%s", ingredient.name, count, needed )
+    --logger.info("check ingredient %s. Have: %s/%s", ingredient.name, count, needed )
     local hasEnough =  ( count >= needed )
-    --mwse.log(hasEnough)
+    --logger.info(hasEnough)
     return hasEnough
 end
 
@@ -37,7 +38,7 @@ function Recipe:checkIngredients(ingredient)
     local hasIngredients = true
     for _, ingredient in ipairs(self.ingredients) do
         local hasThisIngredient = self:checkIngredient(ingredient)
-        --mwse.log("Has %s: %s", ingredient.name, hasThisIngredient)
+        --logger.info("Has %s: %s", ingredient.name, hasThisIngredient)
         if not hasThisIngredient then
             hasIngredients = false
         end

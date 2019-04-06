@@ -103,6 +103,22 @@ local this = {
                                 defaultSetting = true,
                             },
                         },
+                        {  
+                            label = "Enable Cooking (In Development)",
+                            class = "YesNoButton",
+                            description = (
+                                "This mechanic is a WIP and should remain disabled"
+                            ),
+                            variable = {
+                                id = "enableCooking",                                
+                                path = playerDataPath,
+                                class = "PlayerData",
+                                defaultSetting = false,
+                            },
+                            postCreate = function(self)
+                                self:disable()--Visible only, can still be toggles
+                            end
+                        },
                     }
                 },
                 {
@@ -186,7 +202,6 @@ local this = {
                                 defaultSetting = true,
                             },
                         },
-
                         --[[{
                             label = "Player Name",
                             class = "TextField",
@@ -250,18 +265,9 @@ local this = {
                             max = 50,
                             step = 1,
                             jump = 5,
-                            
-
-                            --[[callback = (
-                                function (newValue)
-                                    mwse.log("Setting timescale to %s", newValue)
-                                    tes3.findGlobal("TimeScale").value = newValue
-                                end
-                            ),]]--
                             variable = {
                                 id = "timeScale",
                                 class = "Global",
-                                --defaultSetting = tes3.findGlobal("TimeScale").value,
                             },
                         },
                     }
@@ -384,7 +390,7 @@ local this = {
             } ,
         },
         --Page 3
-        {
+        --[[{
             class = "SideBarPage",
             label = "Key Bindings",
             sidebarComponents = sidebar,
@@ -403,7 +409,7 @@ local this = {
                     },
                 },
             },
-        },
+        },]]--
         --Page 4
         {
             id = "exclusions",
@@ -438,7 +444,33 @@ local this = {
                     objectType = tes3.objectType.alchemy   
                 }
             }
+        },
+        {
+            id = "devOptions",
+            label = "Development Options",
+            class = "SideBarPage",
+            description = "Tools for debugging etc. Don't touch unless you know what you're doing.",
+            components = {
+                {
+                    label = "Log level",
+                    class = "Dropdown",
+                    description = "Set the level of logging to appear in MWSELog.txt for Ashfall",
+                    options = {
+                        { label = "DEBUG", value = "DEBUG"},
+                        { label = "INFO", value = "INFO"},
+                        { label = "ERROR", value = "ERROR"},
+                        { label = "NONE", value = "NONE"},
+                    },
+                    variable = {
+                        id = "logLevel",
+                        class = "ConfigVariable",
+                        path = configPath,
+                        defaultSetting = "INFO"
+                    }
+                },
+            }
         }
+
     },--/categories
 
 }

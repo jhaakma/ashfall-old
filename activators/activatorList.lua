@@ -85,7 +85,7 @@ this.list = {
     fire = Activator:new{ 
         name = "Fire", 
         type = Activator.types.fire,
-        mcmSetting = "enableHunger",
+        mcmSetting = "enableCooking",
         ids = {
             "firepit_f",
             "firepit_lit",
@@ -97,7 +97,7 @@ this.list = {
     campfire = Activator:new{
         name = "Campfire", 
         type = Activator.types.campfire,
-        mcmSetting = "enableHunger",
+        mcmSetting = "enableCooking",
         ids = {
             "ashfall_campfire",   
         }
@@ -105,7 +105,7 @@ this.list = {
     cookingPot = Activator:new{ 
         name = "Cooking Pot", 
         type = Activator.types.cookingUtensil,
-        mcmSetting = "enableHunger",
+        mcmSetting = "enableCooking",
         ids = {
             "furn_com_cauldron",
         }

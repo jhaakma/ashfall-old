@@ -29,15 +29,21 @@ local actions = {
 
 local function keyPressed(e)
     local config = mwse.loadConfig("ashfall/config")
-    for var, callback in pairs(actions) do
-        local correctCombo = (
-            e.keyCode == config[var].keyCode and
-            e.isShiftDown == config[var].isShiftDown and
-            e.isAltDown == config[var].isAltDown and
-            e.isControlDown == config[var].isControlDown
-        )
-        if correctCombo then
-            callback()
+    local doCrafting = (
+        common.data and
+        common.data.mcmSettings.enableCrafting
+    )    
+    if doCrafting then
+        for var, callback in pairs(actions) do
+            local correctCombo = (
+                e.keyCode == config[var].keyCode and
+                e.isShiftDown == config[var].isShiftDown and
+                e.isAltDown == config[var].isAltDown and
+                e.isControlDown == config[var].isControlDown
+            )
+            if correctCombo then
+                callback()
+            end
         end
     end
 end

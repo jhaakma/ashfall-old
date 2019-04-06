@@ -107,7 +107,7 @@ end
 --Register events
 event.register(
     "Ashfall:ActivatorActivated", 
-    onActivateWater, 
+    callWatermenu, 
     { filter = Activator.types.waterSource } 
 )
 

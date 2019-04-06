@@ -1,4 +1,5 @@
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local this = {}
 
@@ -87,12 +88,12 @@ function this.checkSleeping()
     --whether waiting or sleeping, wake up
     if tes3.menuMode() and common.data.mcmSettings.enableTemperatureEffects then
         if isScripted then
-            --mwse.log("using bed")
+            --logger.info("using bed")
             common.data.usingBed = true
             common.data.bedTemp = bedTemp
         --not using a bed at all
         else
-           -- mwse.log("not using bed")
+           -- logger.info("not using bed")
             common.data.usingBed = false
         end
 
