@@ -1,5 +1,6 @@
 local skillModule = require("OtherSkills.skillModule")
 local activators = require("mer.ashfall.activators.activatorController")
+local Activator = require("mer.ashfall.objects.Activator")
 local common = require("mer.ashfall.common")
 local lastRef
 ----CONFIGS-----------------------------------------
@@ -20,9 +21,13 @@ local function onAttack(e)
     - Number of swings is based on the size of your swing
     - Number of wood collected is based on the size of swing and axe attack power
 ]]--
+    if not common.data.mcmSettings.enableTemperatureEffects then
+        return
+    end
+
     local lookingAtWood = (
         activators.current and 
-        activators.list[activators.current].type == activators.types.woodSource
+        activators.list[activators.current].type == Activator.types.woodSource
     )
     local isPlayer = e.mobile.reference == tes3.player
     --attacker is player and looking at wood

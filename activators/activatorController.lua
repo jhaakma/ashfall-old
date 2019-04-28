@@ -76,7 +76,7 @@ end
     Every frame, check whether the player is looking at 
     a static activator
 ]]--
-local function callRayTest()
+function this.callRayTest()
     this.current = nil
     this.currentRef = nil
     --Figure out camera position
@@ -106,7 +106,7 @@ local function callRayTest()
     if result then
         if (result and result.reference ) then 
 
-            --logger.info(result.reference.id)
+            logger.debug(result.reference.id)
             local distance = rayPosition:distance(result.intersection)
 
             --Look for activators from list
@@ -123,30 +123,32 @@ local function callRayTest()
                             end
                         end
                     end
+                    createActivatorIndicator()
+                    return
                 end
             end
-        else
-            --Special case for looking at water
-            local cell =  tes3.player.cell
-            local waterLevel = cell.waterLevel or 0
-            local intersection = result.intersection
-            local adjustedIntersection = tes3vector3.new( intersection.x, intersection.y, waterLevel )
-            local adjustedDistance = rayPosition:distance(adjustedIntersection)
-            if adjustedDistance < 300 and cell.hasWater then
-                local blockedBySomething =
-                    result.reference and
-                    result.reference.object.objectType ~= tes3.objectType.static
-                local cameraIsAboveWater = rayPosition.z > waterLevel
-                local isLookingAtWater = intersection.z < waterLevel
-                if cameraIsAboveWater and isLookingAtWater and not blockedBySomething then
-                    this.current = "water"
-                end 
-            end
+        end
+
+        --Special case for looking at water
+        local cell =  tes3.player.cell
+        local waterLevel = cell.waterLevel or 0
+        local intersection = result.intersection
+        local adjustedIntersection = tes3vector3.new( intersection.x, intersection.y, waterLevel )
+        local adjustedDistance = rayPosition:distance(adjustedIntersection)
+        if adjustedDistance < 300 and cell.hasWater then
+            local blockedBySomething =
+                result.reference and
+                result.reference.object.objectType ~= tes3.objectType.static
+            local cameraIsAboveWater = rayPosition.z > waterLevel
+            local isLookingAtWater = intersection.z < waterLevel
+            if cameraIsAboveWater and isLookingAtWater and not blockedBySomething then
+                this.current = "water"
+            end 
         end
     end
     createActivatorIndicator()
 end
-event.register("simulate", callRayTest)
+--event.register("simulate", callRayTest)
 
 --[[
     triggerActivate:

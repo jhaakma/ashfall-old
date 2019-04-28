@@ -57,8 +57,11 @@ end
 function this.updateCondition(id)
     
     if not common.data then return end
-
     local conditionData = common.conditions[id]
+    
+    if common.data.currentStates[id] == nil then
+        common.data.currentStates[id] = conditionData.default
+    end
 
     previousState = common.data.currentStates[id] or conditionData.default
     local currentValue = common.data[id] or 0
@@ -75,6 +78,7 @@ function this.updateCondition(id)
                     not common.data.muteConditionMessages 
                 )
                 if doShowMessage then
+                    mwse.log("Changing condition")
                     tes3.messageBox("You are " .. string.lower(common.conditions[id].states[newState].text) .. "." )
                 end
             end  

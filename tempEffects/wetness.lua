@@ -129,7 +129,9 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     common.data.wetTemp = (currentWetness / 100) * wetTempMax
 
     --Check if there's anything above the player's head        
-    checkForShelter()
+    if not tes3.menuMode() then
+        checkForShelter()
+    end
 end
 
 local function onLoad()

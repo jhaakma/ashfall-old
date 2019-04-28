@@ -34,26 +34,12 @@ end
 
 event.register("initialized", initialized)
 
-
---MCM settings
-local mcmDataPath = "mer.ashfall.MCM.mcmData"
-local function placeholderMCM(element)
-    element:createLabel{text="This mod requires the EasyMCM library to be installed."}
-    local link = element:createTextSelect{text="Go to EasyMCM Nexus Page"}
-    link.color = tes3ui.getPalette("link_color")
-    link.widget.idle = tes3ui.getPalette("link_color")
-    link.widget.over = tes3ui.getPalette("link_over_color")
-    link.widget.pressed = tes3ui.getPalette("link_pressed_color")
-    link:register("mouseClick", function()
-        os.execute("start https://www.nexusmods.com/morrowind/mods/46427?tab=files")
-    end)
-end
-
+--MCM setting
 local function registerModConfig()
-    local easyMCM = include("easyMCM.modConfig")
-    local mcmData = require(mcmDataPath)
-    local modData = easyMCM and easyMCM.registerModData(mcmData)
-    mwse.registerModConfig(mcmData.name, modData or {onCreate=placeholderMCM})
+    local easyMCM = require("easyMCM.modConfig")
+    easyMCM.registerMCM(require("mer.ashfall.MCM.mcmData"))
 end
 
 event.register("modConfigReady", registerModConfig)
+
+require("mer.ashfall.MCM.mcm")

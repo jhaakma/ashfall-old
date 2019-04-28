@@ -1,9 +1,13 @@
 
 local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
 local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 
 local function onEquip(e)
+
     if common.data.mcmSettings.enableThirst and thirstCommon.isDrink(e.item) then
+
+        logger.debug("onEquip, setting: %s", common.data.mcmSettings.enableThirst )
         local newContainerId 
         --bottles
         local bottles = thirstCommon.containerList.filledBottles

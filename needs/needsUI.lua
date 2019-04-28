@@ -8,12 +8,34 @@ local function rgbToColor(r, g, b)
 end
 
 
+
+function this.showThirst()
+    return (
+        common.data.mcmSettings.enableThirst and 
+        common.data.mcmSettings.thirstRate > 0
+    )
+end
+
+function this.showHunger()
+    return (
+        common.data.mcmSettings.enableHunger and 
+        common.data.mcmSettings.hungerRate > 0
+    )
+end
+
+function this.showSleep()
+    return (
+        common.data.mcmSettings.enableSleep and 
+        common.data.mcmSettings.loseSleepRate > 0
+    )
+end
+
 this.UIData = {
     hunger = {
         blockID = tes3ui.registerID("Ashfall:hungerUIBlock"),
         fillBarID = tes3ui.registerID("Ashfall:hungerFillBar"),
         conditionID = tes3ui.registerID("Ashfall:hungerConditionId"),
-        mcmEnable = "enableHunger",
+        showUIFunction = this.showThirst,
         conditionTypes = common.conditions.hunger.states,
         defaultCondition = "satiated",
         conditionValueDataField = "hunger",
@@ -23,7 +45,7 @@ this.UIData = {
         blockID = tes3ui.registerID("Ashfall:thirstUIBlock"),
         fillBarID = tes3ui.registerID("Ashfall:thirstFillBar"),
         conditionID = tes3ui.registerID("Ashfall:thirstConditionId"),
-        mcmEnable = "enableThirst",
+        showUIFunction = this.showThirst,
         conditionTypes = common.conditions.thirst.states,
         defaultCondition = "hydrated",
         conditionValueDataField = "thirst",
@@ -33,7 +55,7 @@ this.UIData = {
         blockID = tes3ui.registerID("Ashfall:sleepUIBlock"),
         fillBarID = tes3ui.registerID("Ashfall:sleepFillBar"),
         conditionID = tes3ui.registerID("Ashfall:sleepConditionId"),
-        mcmEnable = "enableSleep",
+        showUIFunction = this.showThirst,
         conditionTypes = common.conditions.sleep.states,
         defaultCondition = "rested",
         conditionValueDataField = "sleep",
@@ -47,7 +69,7 @@ local function updateNeedsBlock(menu, data)
 
     local block = menu:findChild(data.blockID)
     
-    if not common.data.mcmSettings[data.mcmEnable] then
+    if not data.showUIFunction() then
         block.visible = false
     else
         if block and block.visible == false then
@@ -191,13 +213,13 @@ end
 
 function this.addNeedsBlockToMenu(e, need)
     local data = this.UIData[need]
-    if not common.data.mcmSettings[data.mcmEnable] then
+    if not data.showUIFunction() then
         --this need is disabled
         return
     end
 
     local block = e.element:createBlock()
-    setupNeedsElementBlock(block)
+    setupNeedsElementBlock(block) 
     block.maxWidth = 250
     block.borderTop = 10
 
@@ -207,6 +229,7 @@ function this.addNeedsBlockToMenu(e, need)
 
     fillBar.widget.fillColor = this.UIData[need].color
 
+    mwse.log("current state: %s", common.data.currentStates[need] )
     local conditionText = common.conditions[need].states[common.data.currentStates[need]].text
 
     local conditionLabel = block:createLabel({ id = this.UIData[need].conditionID, text = conditionText})

@@ -223,7 +223,7 @@ local function initialiseCategory(category)
         if component.class == "Category" then
             initialiseCategory(component)
         else
-            if component.variable.id and this.data.mcmSettings[component.variable.id] == nil then
+            if component.variable and component.variable.id and this.data.mcmSettings[component.variable.id] == nil then
                 this.data.mcmSettings[component.variable.id] = component.variable.defaultSetting
                 logger.info( "Initialising local config %s to %s", component.variable.id, component.variable.defaultSetting )
             end

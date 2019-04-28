@@ -29,8 +29,8 @@ local sidebar = {
 }
 
 
-local this = {
-    name = "Ashfall",
+local mcmData = {
+    name = "Old Ashfall",
     headerImagePath = "textures/ashfall/MCMHeader.tga",
     pages = {
         --Page 1
@@ -202,33 +202,6 @@ local this = {
                                 defaultSetting = true,
                             },
                         },
-                        --[[{
-                            label = "Player Name",
-                            class = "TextField",
-                            --lengthLimit = 20,
-                            variable = {
-                                id = "setPlayerName",
-                                class = "Custom",
-                                inGameOnly = true,
-                                getter = (
-                                    function(self)
-                                        return tes3.player.object.name
-                                    end
-                                ),
-                                setter = (
-                                    function(self, newValue)
-                                        tes3.player.object.name = newValue
-                                    end
-                                ),
-                                defaultSetting = "Enter New Name",
-                            },
-                            callback = (
-                                function(self)
-                                    tes3.messageBox("New Player name: \"%s\"", self.variable.value)
-                                end
-                            ),
-                        },]]--
-
                         { 
                             label = "Harvest Wood in Wilderness Only",
                             class = "YesNoButton",
@@ -462,16 +435,42 @@ local this = {
                         { label = "NONE", value = "NONE"},
                     },
                     variable = {
-                        id = "logLevel",
+                        id = "logLevel2",
                         class = "ConfigVariable",
                         path = configPath,
                         defaultSetting = "INFO"
                     }
                 },
+                {
+                    label = "Script values",
+                    class = "Category",
+                    components = {
+
+                    }
+                }
             }
-        }
+        },
 
     },--/categories
 
 }
-return this
+--return mcmData
+
+
+
+local easyMCM = require("easyMCM.EasyMCM")
+
+local template = easyMCM:createTemplate({  name = "Ashfall" })
+
+local settingsPage = template:createPage({ label = "Settings" })
+settingsPage:createButton({ buttonText = "Button" })
+settingsPage:createButton({ buttonText = "Another Button" })
+settingsPage:createSlider({ 
+    label = "slider",
+    variable = easyMCM.createGlobal({id = "timeScale"}),
+})
+
+local secondPage = template:createPage({ label = "Other Settings" })
+settingsPage:createButton({ buttonText = "A third Button" })
+
+return mcmData

@@ -30,6 +30,9 @@ local function findHUDElement(id)
     return multiMenu:findChild( id )
 end
 
+
+
+
 function this.updateHUD()
     if not common.data then return end
     local mainHUDBlock = findHUDElement(IDs.mainHUDBlock)
@@ -116,7 +119,7 @@ function this.updateHUD()
             --HUNGER
             local hungerBar = findHUDElement(IDs.hunger)
             local hunger = common.data.hunger or 0
-            if common.data.mcmSettings.enableHunger then
+            if needsUI.showHunger() then
                 local newHunger = ( ( 1 - hunger / 100 ) * hungerBar.parent.height)
                 hungerBar.height = newHunger
                 hungerBar.parent.visible = true
@@ -127,7 +130,7 @@ function this.updateHUD()
             --THIRST
             local thirstBar = findHUDElement(IDs.thirst)
             local thirst = common.data.thirst or 0
-            if common.data.mcmSettings.enableThirst then
+            if needsUI.showThirst()  then
                 local newThirst = ( (1 - thirst / 100 ) * thirstBar.parent.height)
                 thirstBar.height = newThirst
                 thirstBar.parent.visible = true
@@ -138,7 +141,7 @@ function this.updateHUD()
             --SLEEP
             local sleepBar = findHUDElement(IDs.sleep)
             local sleep = common.data.sleep or 100
-            if common.data.mcmSettings.enableSleep then
+            if needsUI.showSleep() then
                 local newSleep = ( ( sleep / 100 ) * sleepBar.parent.height)
                 sleepBar.height = newSleep
                 sleepBar.parent.visible = true
@@ -332,7 +335,7 @@ local function createHUD(e)
             wetnessBlock:register("help", tooltips.wetnessIndicator )
             wetnessBlock = quickFormat(wetnessBlock, 0)
             ---\
-                local wetnessBackground = wetnessBlock:createRect({color = {0.0, 0.3, 0.3} })
+                local wetnessBackground = wetnessBlock:createRect({color = {0.0, 0.05, 0.1} })
                 wetnessBackground.height = 20
                 wetnessBackground.width = 36
                 wetnessBackground.layoutOriginFractionX = 0.0

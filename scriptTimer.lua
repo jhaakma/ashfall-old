@@ -1,3 +1,5 @@
+local common = require("mer.ashfall.common")
+local logger = require("mer.ashfall.logger")
 --[[ Timer function for weather updates]]--
 
 local calcTemp = require("mer.ashfall.tempEffects.calcTemp")
@@ -24,6 +26,7 @@ local frostBreath = require("mer.ashfall.effects.frostBreath")
 --Survival stuff
 local sleepController = require("mer.ashfall.sleepController")    
 local tentController = require("mer.ashfall.tentController")
+local activators = require("mer.ashfall.activators.activatorController")
 
 --Needs
 local needsUI = require("mer.ashfall.needs.needsUI")
@@ -33,12 +36,13 @@ local needs = {
     sleep = require("mer.ashfall.needs.sleep.sleepCalculate")
 }
 local hungerCommon = require("mer.ashfall.needs.hunger.hungerCommon")
-
+local config = mwse.loadConfig("Ashfall/config")
 --How often the script should run in gameTime
-local scriptInterval = 0.0005 --gameHour
-local heavyScriptInterval = 0.2 --seconds
 
+local heavyScriptInterval = 0.2 --seconds
+local scriptInterval = 0.0005
 local function callUpdates()
+    
     calcTemp.calculateTemp(scriptInterval)
     weather.calculateWeatherEffect()
     wetness.calcaulateWetTemp(scriptInterval)
@@ -51,8 +55,10 @@ local function callUpdates()
 end
 
 local function callHeavyUpdates()
+    
     --For heavy scripts and those that aren't dependent on time keeping
     if tes3.menuMode() == false then
+        activators.callRayTest()
         tentController.checkTent()
         --temp effects
         raceEffects.calculateRaceEffects()
@@ -75,7 +81,7 @@ local function dataLoaded()
     timer.delayOneFrame(
         function()
             timer.start({
-                duration = scriptInterval, 
+                duration =  scriptInterval, 
                 callback = callUpdates, 
                 type = timer.game, 
                 iterations = -1})
