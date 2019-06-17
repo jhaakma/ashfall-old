@@ -1,6 +1,7 @@
 local this = {}
 local common = require("mer.ashfall.common")
-local ratingsCommon = require("mer.ashfall.tempEffects.ratings.ratingsCommon")
+local ratingsCommon = require("mer.ashfall.tempEffects.ratings.ratings")
+
 
 local function quickFormat(element, padding)
     element.paddingAllSides = padding
@@ -12,7 +13,7 @@ end
 --[[
     Create warmth and coverage ratings inside the Character Box in the inventory menu
 ]]
-function this.createArmorRatings()
+local function createRatingsUI()
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if not inventoryMenu then
         return
@@ -40,27 +41,29 @@ function this.createArmorRatings()
         inventoryMenu:updateLayout()
     end
 end
+event.register("uiCreated", createRatingsUI, { filter = "MenuInventory" } )
 
 --[[
     Update the warmth/coverage ratings in character box
 ]]
-function this.updateArmorRatings()
+function this.updateRatingsUI()
     if not common.data then return end
 
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local warmthLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:WarmthRating"))
-        local warmthValue = math.floor( common.data.armorTempRating + common.data.clothingTempRating )
+        local warmthValue = ratingsCommon.getAdjustedWarmth( common.data.warmthRating )
         warmthLabel.text = "Warmth: " .. warmthValue .. "    "
 
         local coverageLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:CoverageRating"))
-        local coverageValue = math.floor( common.data.armorCoverageRating + common.data.clothingCoverageRating )
+        local coverageValue = ratingsCommon.getAdjustedCoverage(  common.data.coverageRating )
         coverageValue = math.clamp( coverageValue, 0, 100 )
         coverageLabel.text = "Coverage: " .. coverageValue
 
         inventoryMenu:updateLayout()
     end
 end
+
 local IDs = {
     ratingsBlock = tes3ui.registerID("Ashfall:ratingsBlock"),
     warmthBlock = tes3ui.registerID("Ashfall:ratings_warmthBlock"),
@@ -73,7 +76,7 @@ local IDs = {
 --[[
     Insert ratings into Equipment tooltips
 ]]
-local function insertRatings(e)
+local function insertRatingsTooltips(e)
 
     if not common.data.mcmSettings.enableTemperatureEffects then
         return
@@ -86,11 +89,9 @@ local function insertRatings(e)
     local isValidSlot
 
     if e.object.objectType == tes3.objectType.armor then
-        slot = ratingsCommon.armorSlotDict[e.object.slot]
-        isValidSlot = ratingsCommon.isValidArmorSlot( tes3.armorSlot[slot] )
+        isValidSlot = ratingsCommon.isValidArmorSlot( e.object.slot )
     elseif e.object.objectType == tes3.objectType.clothing then
-        slot = ratingsCommon.clothingSlotDict[e.object.slot]
-        isValidSlot = ratingsCommon.isValidClothingSlot( tes3.clothingSlot[slot] )
+        isValidSlot = ratingsCommon.isValidClothingSlot( e.object.slot )
     end
     if isValidSlot then
         local partmenuID = tes3ui.registerID("PartHelpMenu_main")
@@ -127,7 +128,7 @@ local function insertRatings(e)
         quickFormat(warmthHeader)
         --warmthHeader.color = tes3ui.getPalette("header_color")
         
-        local warmth = " " .. ratingsCommon.getWarmthRating( ratingsCommon.calculateItemWarmth( e.object ) )
+        local warmth = " " .. ratingsCommon.getAdjustedWarmth( ratingsCommon.getItemWarmth( e.object ) )
         local warmthValue = warmthBlock:createLabel({ id = IDs.warmthValue, text = warmth })
         warmthValue.autoHeight = true
         warmthValue.autoWidth = true
@@ -142,7 +143,7 @@ local function insertRatings(e)
         quickFormat(coverageHeader)
         --coverageHeader.color = tes3ui.getPalette("header_color")
         
-        local coverage = " " .. ratingsCommon.getCoverageRating( ratingsCommon.calculateItemCoverage( e.object ) )
+        local coverage = " " .. ratingsCommon.getAdjustedCoverage( ratingsCommon.getItemCoverage( e.object ) )
         local coverageValue = coverageBlock:createLabel({ id = IDs.coverageValue, text = coverage })
         coverageValue.autoHeight = true
         coverageValue.autoWidth = true            
@@ -152,7 +153,7 @@ local function insertRatings(e)
     end
 end
 
-event.register("uiObjectTooltip", insertRatings )
+event.register("uiObjectTooltip", insertRatingsTooltips )
 
 
 local function checkAshfallEnabled()

@@ -6,7 +6,6 @@ end
 local playerDataPath = "Ashfall.mcmSettings"
 
 local function registerModConfig()
-    local EasyMCM = require("easyMCM.EasyMCM")
 
     
     
@@ -33,12 +32,11 @@ local function registerModConfig()
 
     end
 
-
-    local template = EasyMCM.createTemplate{ name = "Ashfall", headerImagePath = "textures/ashfall/MCMHeader.tga" }
+    local template = mwse.mcm.createTemplate{ name = "Ashfall", headerImagePath = "textures/ashfall/MCMHeader.tga" }
     template:saveOnClose(configPath, config)
 
     local function createplayerVar(id, default)
-        return EasyMCM:createPlayerData{
+        return mwse.mcm.createPlayerData{
             id = id,
             path = playerDataPath,
             defaultSetting = default
@@ -180,7 +178,7 @@ local function registerModConfig()
                 max = 50,
                 step = 1,
                 jump = 5,
-                variable = EasyMCM:createGlobal{ id = "timeScale"}
+                variable = mwse.mcm:createGlobal{ id = "timeScale"}
             }
         end --\Time category
 
@@ -274,7 +272,7 @@ local function registerModConfig()
                 "This page provides an interface to accomplish that. " ..
                 "Using the lists below you can easily view or edit which objects are to be blocked and which are to be allowed."
             ),
-            variable = EasyMCM.createTableVariable{ id = "blocked", table = config},
+            variable = mwse.mcm.createTableVariable{ id = "blocked", table = config},
             filters = {
                 {
                     label = "Plugins",
@@ -309,12 +307,12 @@ local function registerModConfig()
                 { label = "ERROR", value = "ERROR"},
                 { label = "NONE", value = "NONE"},
             },
-            variable = EasyMCM.createTableVariable{ id = "logLevel", table = config }
+            variable = mwse.mcm.createTableVariable{ id = "logLevel", table = config }
         }
 
     end --\Dev Options
 
-    EasyMCM.register(template)
+    template:register()
 end
 
 event.register("modConfigReady", registerModConfig)

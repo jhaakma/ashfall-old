@@ -27,7 +27,7 @@ local wetTempMax = -25
 local lastX
 local lastY
 
-local function checkForShelter()
+function this.checkForShelter()
     local newPlayerPos = tes3.mobilePlayer.position
     local newX = math.floor(newPlayerPos.x)
     local newY = math.floor(newPlayerPos.y)
@@ -56,7 +56,7 @@ end
 --[[ 
     Called by tempTimer
 ]]--
-function this.calcaulateWetTemp(timeSinceLastRan)
+function this.calculateWetTemp(timeSinceLastRan)
     if not common.data then return end
 
     --Check if Ashfall is disabled
@@ -98,9 +98,7 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     if not weather then return end
     local playerTemp = common.data.temp or 0
     local tempMultiplier = 0.5 + ( ( playerTemp + 100 ) / 400 ) --between 0.5 and 1.0
-    local armorCoverage = common.data.armorCoverage or 0.0
-    local clothingCoverage = common.data.clothingCoverage or 0.0
-    local coverage = math.clamp( ( armorCoverage + clothingCoverage ), 0, 0.85 )    
+    local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
     if weather.rainActive and not cell.isInterior then    
         --Raining
@@ -128,17 +126,7 @@ function this.calcaulateWetTemp(timeSinceLastRan)
     common.data.wetness = currentWetness
     common.data.wetTemp = (currentWetness / 100) * wetTempMax
 
-    --Check if there's anything above the player's head        
-    if not tes3.menuMode() then
-        checkForShelter()
-    end
 end
-
-local function onLoad()
-    checkForShelter()
-end
-
-event.register("Ashfall:dataLoaded", onLoad)
 
 return this
 

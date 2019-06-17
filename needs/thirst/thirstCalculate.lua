@@ -4,7 +4,7 @@
 
 local common = require("mer.ashfall.common")
 local this = {}
-
+ 
 local heatMulti = 2.0
 local thirstEffectMax = 1.5
 local restMultiplier = 1.0
@@ -47,5 +47,7 @@ function this.calculate(scriptInterval)
     local thirstEffect = math.remap(thirst, 0, 100, 1.0, thirstEffectMax)
     common.data.thirstEffect = thirstEffect
 end
+
+
 
 return this

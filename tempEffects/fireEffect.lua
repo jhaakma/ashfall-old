@@ -16,15 +16,15 @@ local heatValues = {
     candle = 5, 
     chandelier = 3,
     sconce = 10,
-    torch = 15,
-    fire = 15,
-    flame = 20,
+    torch = 20,
+    fire = 25,
+    flame = 30,
 }
 
 
 
 local heatDefault = 5
-local heatFirepit = 25
+local heatFirepit = 50
 local maxDistance = 350
 --Multiplier when warming hands next to firepit
 local warmHandsBonus = 1.4

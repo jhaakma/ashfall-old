@@ -66,11 +66,14 @@ function this.updateCondition(id)
     previousState = common.data.currentStates[id] or conditionData.default
     local currentValue = common.data[id] or 0
     local newState
+    local conditionChanging = false
+
     for stateId, stateData in pairs(conditionData.states) do
 
         if stateData.min <= currentValue and currentValue <= stateData.max then
             newState = stateId
             if newState ~= previousState then--we have changed states
+                conditionChanging = true
                 common.data.currentStates[id] = newState
                 local doShowMessage = (
                     common.data.mcmSettings[conditionData.showMessageOption] and
@@ -78,9 +81,9 @@ function this.updateCondition(id)
                     not common.data.muteConditionMessages 
                 )
                 if doShowMessage then
-                    mwse.log("Changing condition")
                     tes3.messageBox("You are " .. string.lower(common.conditions[id].states[newState].text) .. "." )
                 end
+
             end  
         end
 
@@ -90,13 +93,33 @@ function this.updateCondition(id)
 
         local isCurrentState = common.data.currentStates[id] == stateId
 
-        if not isCurrentState then
-            mwscript.removeSpell({ reference = tes3.player, spell = spellId })
-        end
-        if not hasSpell and isCurrentState then
-            mwscript.addSpell({ reference = tes3.player, spell = spellId })
-        end
+        if spellId then
+            if isCurrentState then
+                scaleSpellValues(spellId)
+                mwscript.addSpell({ reference = tes3.player, spell = spellId })
+            else
+                mwscript.removeSpell({ reference = tes3.player, spell = spellId })
+            end
+        end   
     end
+
+    if conditionChanging then
+        local previousFatigue = tes3.mobilePlayer.fatigue.current
+        timer.start{
+            type = timer.real,
+            iterations = 1,
+            duration = 0.01,
+
+            callback = function()
+                local newFatigue = tes3.mobilePlayer.fatigue.current
+                if previousFatigue >= 0 and newFatigue < 0 then
+                    tes3.mobilePlayer.fatigue.current = previousFatigue
+                end
+            end
+            }
+    end
+
+    
 end
 
 --Update all conditions - called by the script timer

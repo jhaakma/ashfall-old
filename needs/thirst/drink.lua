@@ -2,48 +2,39 @@
 local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
 local common = require("mer.ashfall.common")
 local logger = require("mer.ashfall.logger")
+local standardSipSize = 35
 
 local function onEquip(e)
+    local itemData = e.itemData and e.itemData.data
+    local liquidLevel = (
+        itemData and
+        itemData.currentWaterAmount
+    )
+    local doDrink = (
+        common.data.mcmOptions.enableThirst and
+        liquidLevel
+    )
+    if doDrink then
 
-    if common.data.mcmSettings.enableThirst and thirstCommon.isDrink(e.item) then
+        local thisSipSize = standardSipSize
 
-        logger.debug("onEquip, setting: %s", common.data.mcmSettings.enableThirst )
-        local newContainerId 
-        --bottles
-        local bottles = thirstCommon.containerList.filledBottles
-        local flasks = thirstCommon.containerList.filledFlasks
-        if e.item.id == bottles.bottleFull then
-            newContainerId = bottles.bottleHalf
-        elseif e.item.id == bottles.bottleHalf then
-            newContainerId = bottles.bottleLow
-        elseif e.item.id == bottles.bottleLow then
-            newContainerId = thirstCommon.containerList.bottles[ math.random( #thirstCommon.containerList.bottles) ]
+        --Only drink as much in bottle
+        thisSipSize = math.min( thisSipSize, liquidLevel )
 
-        --flasks
-        elseif e.item.id == flasks.flaskFull then
-            newContainerId = flasks.flaskHalf
-        elseif e.item.id == flasks.flaskHalf then
-            newContainerId = flasks.flaskLow
-        elseif e.item.id == flasks.flaskLow then
-            newContainerId = thirstCommon.containerList.flasks[ math.random( #thirstCommon.containerList.flasks) ]
+        --Only drink as much as player needs
+        local hydrationNeeded = common.data.thirst
+        thisSipSize = math.min( hydrationNeeded, thisSipSize)
+
+        --Reduce liquid in bottle
+        itemData.currentWaterAmount = liquidLevel - thisSipSize
+        if itemData.currentWaterAmount <= 0 then
+            itemData.currentWaterAmount = nil
         end
-        --drink
-        if newContainerId then
-            thirstCommon.drinkAmount(35)
-            timer.frame.delayOneFrame(
-                function ()
-                    mwscript.addItem({reference = tes3.player, item = newContainerId})
-                    --tes3.messageBox("%s has been added to your inventory", tes3.getObject(newContainerId).name)
-                end
-            )
-        --not water but still a drink
-        else   
-            thirstCommon.drinkAmount(10)
-        end
+
+        thirstCommon.drinkAmount(thisSipSize)
     end
 end
-event.register("equip", onEquip, {filter = tes3.player } )
-
+event.register("equip", onEquip, { filter = tes3.player } )
 
 --[[
     If player is outside, with nothing above them, 
@@ -81,11 +72,12 @@ local function checkDrinkRain()
         common.data.drinkingRain = true
         common.fadeTimeOut( 0.25, 2, 
             function()
-                tes3.playSound({ reference=tes3.player, sound="Swallow" })
                 common.data.drinkingRain = false
-                thirstCommon.drinkAmount(10)
+                thirstCommon.drinkAmount(30)
             end
         )
     end
 end
-event.register("keyDown", checkDrinkRain )
+--event.register("keyDown", checkDrinkRain )
+
+

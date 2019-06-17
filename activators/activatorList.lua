@@ -20,6 +20,7 @@ this.list = {
         mcmSetting = "enableThirst",
         ids = {
             "ex_nord_well",
+            "furn_well00"
         }
     },
     keg = Activator:new{ 

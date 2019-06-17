@@ -23,6 +23,9 @@ local minPlayerDiff = 10
 local interiorWeatherMultiplier = 0.4
 --All effects reduced slightly when inside
 local interiorRealTempMultiplier = 0.7
+
+--rate of temp change multiplier at max coverage
+local maxCoverageMultiplier = 0.25
 ----------------------------------------------------------------------------------------
 
 --temperature variables
@@ -62,8 +65,7 @@ function this.calculateTemp(timerInterval)
     local hazardTemp = common.data.hazardTemp or 0
     local fireDamTemp = common.data.fireDamTemp or 0
     local frostDamTemp = common.data.frostDamTemp or 0
-    local clothingTemp = common.data.clothingTemp or 0
-    local armorTemp = common.data.armorTemp or 0
+    local warmthRating = common.data.warmthRating or 0
     local bedTemp = common.data.bedTemp or 0
     local tentTemp = common.data.tentTemp or 0
     local furTemp = common.data.furTemp or 0
@@ -89,13 +91,13 @@ function this.calculateTemp(timerInterval)
     end
     common.data.tempRaw = tempRaw
 
-    --[[if not common.data.mcmSettings.enableTemperatureEffects then
+    if not common.data.mcmSettings.enableTemperatureEffects then
         common.data.tempReal = 0
         common.data.tempLimit = 0
         common.data.temp = 0
         hud.updateHUD()
         return
-    end]]--
+    end
 
 
     tempReal = (
@@ -105,8 +107,7 @@ function this.calculateTemp(timerInterval)
                  + hazardTemp
                  + fireDamTemp
                  + frostDamTemp
-                 + clothingTemp
-                 + armorTemp
+                 + warmthRating
                  + furTemp
     )
     common.data.tempRaw = tempRaw
@@ -182,6 +183,13 @@ function this.calculateTemp(timerInterval)
     local wetMulti = math.remap( wetness, 0, 100, 1.0, wetTempEffect )
     playerChange = playerChange * wetMulti
 
+    --High coverage reduces rate of change
+    local coverage = common.data.coverageRating
+    local coverageMulti = math.remap(coverage, 0, 1, 1, maxCoverageMultiplier )
+
+    playerChange = playerChange * coverageMulti
+
+
     --prevent overshoot
     playerChange = math.clamp( playerChange, 0, playerDiff )
 
@@ -204,7 +212,7 @@ local function onKeyG(e)
             gameHour = tes3.getGlobal("GameHour")
             --local currentTime = common.hourToClockTime(gameHour)
            --[[ tes3.messageBox(
-                "Total Warmth = " .. ( common.data.armorTemp + common.data.clothingTemp )
+                "Total Warmth = " .. ( common.data.warmthRating )
             )
             tes3.messageBox(
                 "Total Coverage = " .. ( common.data.armorCoverage + common.data.clothingCoverage )

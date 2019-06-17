@@ -43,3 +43,5 @@ end
 event.register("modConfigReady", registerModConfig)
 
 require("mer.ashfall.MCM.mcm")
+
+

@@ -106,7 +106,7 @@ function this.callRayTest()
     if result then
         if (result and result.reference ) then 
 
-            logger.debug(result.reference.id)
+            --logger.debug(result.reference.id)
             local distance = rayPosition:distance(result.intersection)
 
             --Look for activators from list

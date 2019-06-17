@@ -40,61 +40,67 @@ local config = mwse.loadConfig("Ashfall/config")
 --How often the script should run in gameTime
 
 local heavyScriptInterval = 0.2 --seconds
-local scriptInterval = 0.0005
+local realInterval = 0.001
+local pauseInterval = 1.0
+
+local lastTime
 local function callUpdates()
     
-    calcTemp.calculateTemp(scriptInterval)
+    local hoursPassed = ( tes3.worldController.daysPassed.value * 24 ) + tes3.worldController.hour.value
+    lastTime = lastTime or hoursPassed
+    local interval = hoursPassed - lastTime
+    lastTime = hoursPassed
+
+
+    calcTemp.calculateTemp(interval)
     weather.calculateWeatherEffect()
-    wetness.calcaulateWetTemp(scriptInterval)
+    wetness.calculateWetTemp(interval)
     sleepController.checkSleeping()
-    hungerCommon.processMealBuffs(scriptInterval)
+    hungerCommon.processMealBuffs(interval)
     --Needs:
     for _, script in pairs(needs) do
-        script.calculate(scriptInterval)
+        script.calculate(interval)
     end
-end
 
-local function callHeavyUpdates()
+    --Heavy scripts
+    activators.callRayTest()
+    tentController.checkTent()
+    --temp effects
+    raceEffects.calculateRaceEffects()
+    torch.calculateTorchTemp()
+    fireEffect.calculateFireEffect()
+    magicEffects.calculateMagicEffects()
+    hazardEffects.calculateHazards()
+
+    wetness.checkForShelter()
+    conditions.updateConditions()
     
-    --For heavy scripts and those that aren't dependent on time keeping
-    if tes3.menuMode() == false then
-        activators.callRayTest()
-        tentController.checkTent()
-        --temp effects
-        raceEffects.calculateRaceEffects()
-        torch.calculateTorchTemp()
-        fireEffect.calculateFireEffect()
-        magicEffects.calculateMagicEffects()
-        hazardEffects.calculateHazards()
-
-
-        conditions.updateConditions()
-        
-        --visuals
-        frostBreath.doFrostBreath()
-        needsUI.updateNeedsUI()
-    end
+    --visuals
+    frostBreath.doFrostBreath()
+    needsUI.updateNeedsUI()
 end
 
+event.register("simulate", callUpdates)
+
+
+--Use game timer when sleeping
 local function dataLoaded()
-    callUpdates()
     timer.delayOneFrame(
         function()
             timer.start({
-                duration =  scriptInterval, 
-                callback = callUpdates, 
+                duration =  1, 
+                callback = function()
+                    if tes3.player and tes3.menuMode() then
+                        callUpdates()
+                    end 
+                end, 
                 type = timer.game, 
-                iterations = -1})
-            timer.start({ 
-                duration = heavyScriptInterval,
-                callback = callHeavyUpdates, 
-                type = timer.real,
                 iterations = -1
             })
-
         end
     )
 end
+
 
 --Register functions
 event.register("Ashfall:dataLoaded", dataLoaded)

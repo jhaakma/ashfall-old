@@ -200,8 +200,8 @@ local skillModule = include("OtherSkills.skillModule")
 local function onSkillsReady()
     skillModule.registerSkill("Survival", 
     {    name             =        "Survival", 
-        icon             =        "Icons/ashfall/survival.dds", 
-        id            =         30,
+        icon             =        "Icons/ashfall/survival.dds",
+        value = 25,
         attribute         =        tes3.attribute.endurance,
         description     =         "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively.",
         specialization     =         tes3.specialization.stealth
@@ -230,6 +230,7 @@ local function initialiseCategory(category)
         end
     end
 end
+
 local function initialiseLocalSettings(modData )
     --set up tables on player data
     this.data.mcmSettings = this.data.mcmSettings or {}
