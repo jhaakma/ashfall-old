@@ -251,6 +251,7 @@ local function onLoaded()
     this.data = data.Ashfall
 
     this.data.currentStates = this.data.currentStates or {}
+    this.data.wateredCells = this.data.wateredCells or {}
     this.data.mcmSettings = this.data.mcmSettings or {}
     --initialise mod config
     local mcmData = require ("mer.ashfall.MCM.mcmData")

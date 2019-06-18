@@ -50,15 +50,14 @@ end
 
 
 --Adds fillbar showing how much water is left in a bottle. 
+--Height of fillbar border based on capacity of bottle.
 local function updateWaterIndicatorValues(e)
 
-    local bottleData = thirstCommon.bottleList[e.item.id]
+    local bottleData = thirstCommon.getBottleData(e.item.id)
 
     if bottleData then
         local liquidLevel =  e.itemData and e.itemData.data.currentWaterAmount or 0
-
         local capacity = bottleData.capacity
-
         local maxHeight = 32 * ( capacity / thirstCommon.capacities.MAX)
 
         local indicatorBlock = e.element:createThinBorder()
@@ -68,8 +67,6 @@ local function updateWaterIndicatorValues(e)
         indicatorBlock.width = 8
         indicatorBlock.height = maxHeight
         indicatorBlock.paddingAllSides = 2
-        --mwse.log("capacity = %s", capacity)
-        --mwse.log("height = %d", indicatorBlock.height)
 
         local levelIndicator = indicatorBlock:createImage({ path = "textures/menu_bar_blue.dds" })
         levelIndicator.consumeMouseEvents = false
@@ -105,7 +102,7 @@ local function createNeedsTooltip(e)
     end
 
     if common.data.mcmOptions.enableThirst then
-        local bottleData = thirstCommon.bottleList[e.object.id]
+        local bottleData = thirstCommon.getBottleData(e.object.id)
         if bottleData then
             local liquidLevel = e.itemData and e.itemData.data.currentWaterAmount or 0
             labelText = string.format('Water: %d / %d', liquidLevel, bottleData.capacity)
