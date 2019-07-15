@@ -52,7 +52,7 @@ function this.updateRatingsUI()
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local warmthLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:WarmthRating"))
-        local warmthValue = ratingsCommon.getAdjustedWarmth( common.data.warmthRating )
+        local warmthValue = math.floor(common.data.warmthRating)
         warmthLabel.text = "Warmth: " .. warmthValue .. "    "
 
         local coverageLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:CoverageRating"))
@@ -73,6 +73,7 @@ local IDs = {
     coverageHeader = tes3ui.registerID("Ashfall:ratings_coverageHeader"),
     coverageValue = tes3ui.registerID("Ashfall:ratings_coverageValue")
 }
+
 --[[
     Insert ratings into Equipment tooltips
 ]]
@@ -128,7 +129,7 @@ local function insertRatingsTooltips(e)
         quickFormat(warmthHeader)
         --warmthHeader.color = tes3ui.getPalette("header_color")
         
-        local warmth = " " .. ratingsCommon.getAdjustedWarmth( ratingsCommon.getItemWarmth( e.object ) )
+        local warmth = " " .. ratingsCommon.getItemWarmth( e.object )
         local warmthValue = warmthBlock:createLabel({ id = IDs.warmthValue, text = warmth })
         warmthValue.autoHeight = true
         warmthValue.autoWidth = true
@@ -152,7 +153,6 @@ local function insertRatingsTooltips(e)
         innerBlock:updateLayout()
     end
 end
-
 event.register("uiObjectTooltip", insertRatingsTooltips )
 
 

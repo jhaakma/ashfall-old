@@ -3,8 +3,8 @@ local this = {}
 
 this.list = {
     water = Activator:new{ 
-        name = "Water", 
-        type = Activator.types.waterSource,
+        name = "Water (Dirty)", 
+        type = Activator.types.dirtyWaterSource,
         mcmSetting = "enableThirst",
         ids = {
             "ex_vivec_waterfall_01",
@@ -98,11 +98,12 @@ this.list = {
     campfire = Activator:new{
         name = "Campfire", 
         type = Activator.types.campfire,
-        mcmSetting = "enableCooking",
+        mcmSetting = "enableTemperatureEffects",
         ids = {
-            "ashfall_campfire",   
+           "ashfall_campfire",
         }
     },
+
     cookingPot = Activator:new{ 
         name = "Cooking Pot", 
         type = Activator.types.cookingUtensil,

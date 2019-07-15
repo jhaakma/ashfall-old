@@ -58,18 +58,35 @@ end
 function this.calculateFireEffect()
     local totalHeat = 0
     local closeEnough
-    common.data.fireType = "none"
     for _, cell in pairs( tes3.getActiveCells() ) do
         for ref in cell:iterateReferences(tes3.objectType.light) do
+            if not ref.disabled then
             --if ref.object.isFire then
                 local distance = mwscript.getDistance({reference = "player", target = ref})
                 if distance < maxDistance then
                     local maxHeat = heatDefault
                     --Firepits have special logic for hand warming
-                    if checkForFirePit(ref.object.id) then
-                        common.data.fireType = "firepit"
-                        closeEnough = true
+                    if ref.object.id == "ashfall_campfire_01" then
+                        if ref.data.isLit then
+                            local fuel = ref.data.fuelLevel
+                            if fuel then
+                                maxHeat = math.clamp(math.remap(fuel, 0, 10, 20, 60), 0, 60)
+                                closeEnough = true
+                        
+                                checkWarmHands()
+                                if warmingHands then
+                                    maxHeat = maxHeat * warmHandsBonus
+                                end
+                            else 
+                                maxHeat = 0
+                            end
+                        else
+                            maxHeat = 0
+                        end
+                    elseif checkForFirePit(ref.object.id) then
                         maxHeat = heatFirepit
+                        closeEnough = true
+                        
                         checkWarmHands()
                         if warmingHands then
                             maxHeat = maxHeat * warmHandsBonus
@@ -78,7 +95,6 @@ function this.calculateFireEffect()
                     else
                         for pattern, heatValue in pairs(heatValues) do
                             if string.find(string.lower(ref.object.id), pattern) then
-                                common.data.fireType = pattern
                                 maxHeat = heatValue
                                 --logger.info("Fire source: %s", ref.object.id)
                             end
@@ -87,7 +103,7 @@ function this.calculateFireEffect()
                     local heat = math.remap( distance, maxDistance, 0,  0, maxHeat )
                     totalHeat = totalHeat + heat
                 end
-            --end
+            end
         end
     end
     if not closeEnough then

@@ -1,7 +1,12 @@
 local configPath = "Ashfall/config"
 local config = mwse.loadConfig(configPath)
 if not config then 
-    config = {}
+    mwse.log("IM MAKING THE FUCKIN CONFIG FILE YA FUCK")
+    config = {
+        blocked = {},
+        logLevel = "INFO"
+    }
+    mwse.saveConfig(configPath, config)
 end
 local playerDataPath = "Ashfall.mcmSettings"
 
@@ -190,12 +195,12 @@ local function registerModConfig()
 
             categoryTime:createSlider{
                 label = "Hunger Rate",
-                description = "Determines how much hunger you gain per hour. When set to 10, you gain 1% hunger every hour (not taking into account temperature effects). The default hunger rate is 28 (i.e hunger goes from 0% to 100% in 36 hours).",
+                description = "Determines how much hunger you gain per hour. When set to 10, you gain 1% hunger every hour (not taking into account temperature effects). The default hunger rate is 20.",
                 min = 0,
                 max = 100,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("hungerRate", 28)
+                variable = createplayerVar("hungerRate", 20)
             }
         end --\Hunger category
 
@@ -207,12 +212,12 @@ local function registerModConfig()
 
             categoryThirst:createSlider{
                 label = "Thirst Rate",
-                description = "Determines how much thirst you gain per hour. When set to 10, you gain 1% thirst every hour (not taking into account temperature effects). The default thirst rate is 42 (i.e thirst goes from 0% to 100% in 24 hours).",
+                description = "Determines how much thirst you gain per hour. When set to 10, you gain 1% thirst every hour (not taking into account temperature effects). The default thirst rate is 30.",
                 min = 0,
                 max = 100,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("thirstRate", 42)
+                variable = createplayerVar("thirstRate", 30)
             }
         end--\Thirst Category
 
@@ -224,40 +229,42 @@ local function registerModConfig()
 
             categorySleep:createSlider{
                 label = "Sleep Loss Rate",
-                description = "Determines how much sleep you lose per hour. When set to 10, you lose 1% sleep every hour. The default lose sleep rate is 56 (i.e sleep goes from 100% to 0% in 18 hours).",
+                description = (
+                    "Determines how much sleep you lose per hour. When set to 10, you lose 1% sleep every hour. The default lose sleep rate is 50."
+                ),
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("loseSleepRate", 56)
+                variable = createplayerVar("loseSleepRate", 50)
             }
             categorySleep:createSlider{
                 label =  "Sleep Loss Rate (Waiting)",
-                description = "Determines how much sleep you lose per hour while waiting. When set to 10, you lose 1% sleep every hour. The default rate is 28 (i.e sleep goes from 100% to 0% in 36 hours).",
+                description = "Determines how much sleep you lose per hour while waiting. When set to 10, you lose 1% sleep every hour. The default rate is 28 (i.e sleep goes from 100% to 0% in 30.",
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("loseSleepWaiting", 28)
+                variable = createplayerVar("loseSleepWaiting", 30)
             }
 
             categorySleep:createSlider{
                 label = "Gain Sleep Rate",
-                description = "Determines how much sleep you gain per hour while resting on the ground. When set to 10, you gain 1% sleep every hour. The default gain sleep rate is 83 (i.e sleep goes from 100% to 0% in 12 hours).",
+                description = "Determines how much sleep you gain per hour while resting on the ground. When set to 10, you gain 1% sleep every hour. The default gain sleep rate is 80.",
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("gainSleepRate", 83)
+                variable = createplayerVar("gainSleepRate", 80)
             }
             categorySleep:createSlider{
                 label = "Gain Sleep Rate (Bed)",
-                description = "Determines how much sleep you gain per hour while resting while using a bed. When set to 10, you gain 1% sleep every hour. The default gain sleep rate is 125 (i.e sleep goes from 100% to 0% in 8 hours).",
+                description = "Determines how much sleep you gain per hour while resting while using a bed. When set to 10, you gain 1% sleep every hour. The default gain sleep rate is 120.",
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("gainSleepBed", 125)
+                variable = createplayerVar("gainSleepBed", 120)
             }
         end --\Sleep Category
 

@@ -23,32 +23,10 @@ local soakedHeight = 110
 --How Cold 100% wetness is
 local wetTempMax = -25
 
---Keep track of player position to save on rayTests
-local lastX
-local lastY
-
 function this.checkForShelter()
-    local newPlayerPos = tes3.mobilePlayer.position
-    local newX = math.floor(newPlayerPos.x)
-    local newY = math.floor(newPlayerPos.y)
-    
-    
-    if  lastX ~= newX or lastY ~= newY then
-        lastX = newX
-        lastY = newY
-        
-        local result = tes3.rayTest{
-            position = newPlayerPos,
-            direction = {0, 0, 1},
-            --useBackTriangles = true
-        }
-        if result and result.reference and result.reference.object and result.reference.object.objectType == tes3.objectType.static then 
-            --tes3.messageBox("sheltered")
-            common.data.isSheltered = true
-        else
-            --tes3.messageBox("not sheltered")
-            common.data.isSheltered = false
-        end
+    local sheltered = common.checkRefSheltered()
+    if sheltered ~= nil then
+        common.data.isSheltered = sheltered  
     end
 end
 
@@ -100,11 +78,11 @@ function this.calculateWetTemp(timeSinceLastRan)
     local tempMultiplier = 0.5 + ( ( playerTemp + 100 ) / 400 ) --between 0.5 and 1.0
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
-    if weather.rainActive and not cell.isInterior then    
+    if weather.rainActive and not cell.isInterior then
         --Raining
         if weather.index == tes3.weather.rain and common.data.isSheltered == false then
             currentWetness = currentWetness + rainEffect * timeSinceLastRan * ( 1.0 - coverage )
-        
+    
         --Thunder
         elseif weather.index == tes3.weather.thunder and common.data.isSheltered == false then
             currentWetness = currentWetness + thunderEffect * timeSinceLastRan * ( 1.0 - coverage )

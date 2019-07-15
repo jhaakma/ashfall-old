@@ -8,11 +8,12 @@ local this = {}
 
 local common = require("mer.ashfall.common")
 local logger = require("mer.ashfall.logger")
-
+local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
 local activatorList = require("mer.Ashfall.activators.activatorList")
 this.list = activatorList.list
 this.current = nil
 this.currentRef = nil
+this.parentNode = nil
 
 function this.getCurrentActivator()
     return this.list[this.current]
@@ -21,10 +22,24 @@ end
 local id_indicator = tes3ui.registerID("Ashfall:activatorTooltip")
 local id_label = tes3ui.registerID("Ashfall:activatorTooltipLabel")
 
-
 --[[
     Create a tooltip when looking at an activator
 ]]--
+
+function this.getActivatorTooltip()
+    local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
+    if menu then
+        return menu:findChild(id_indicator)
+    end
+end
+
+local function centerText(element)
+    element.autoHeight = true
+    element.autoWidth = true
+    element.wrapText = true
+    element.justifyText = "center" 
+end
+
 local function createActivatorIndicator()
     
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
@@ -34,38 +49,51 @@ local function createActivatorIndicator()
         if (
             this.current and 
             not tes3.menuMode() and 
-            common.data.mcmSettings[this.list[this.current].mcmSetting] 
+            common.data.mcmSettings[this.list[this.current].mcmSetting]
+            --and not this.list[this.current].hideTooltip
         )then
-            if not mainBlock then
-
-                mainBlock = menu:createBlock({id = id_indicator })
-                
-                mainBlock.absolutePosAlignX = 0.5
-                mainBlock.absolutePosAlignY = 0.01
-                mainBlock.autoHeight = true
-                mainBlock.autoWidth = true
-
-               
-                local labelBackground = mainBlock:createRect({color = {0, 0, 0}})
-                --labelBackground.borderTop = 4
-                labelBackground.autoHeight = true
-                labelBackground.autoWidth = true
-
-                local labelBorder = labelBackground:createThinBorder({})
-                labelBorder.autoHeight = true
-                labelBorder.autoWidth = true
-                labelBorder.paddingAllSides = 10
-
-                local text = this.list[this.current].name
-                local label = labelBorder:createLabel{ id=id_label, text = text}
-                label.autoHeight = true
-                label.autoWidth = true
-                label.wrapText = true
-                label.justifyText = "center"
-            end
-        else
             if mainBlock then
                 mainBlock:destroy()
+            end
+
+            mainBlock = menu:createBlock({id = id_indicator })
+            
+            mainBlock.absolutePosAlignX = 0.5
+            mainBlock.absolutePosAlignY = 0.03
+            mainBlock.autoHeight = true
+            mainBlock.autoWidth = true
+
+            
+            local labelBackground = mainBlock:createRect({color = {0, 0, 0}})
+            --labelBackground.borderTop = 4
+            labelBackground.autoHeight = true
+            labelBackground.autoWidth = true
+
+            local labelBorder = labelBackground:createThinBorder({})
+            labelBorder.autoHeight = true
+            labelBorder.autoWidth = true
+            labelBorder.paddingAllSides = 10
+            labelBorder.flowDirection = "top_to_bottom"
+
+            local text = this.list[this.current].name
+            local label = labelBorder:createLabel{ id=id_label, text = text}
+            label.color = tes3ui.getPalette("header_color")
+            centerText(label)
+
+            
+            if this.current == "campfire" then
+                local eventData = {
+                    label = label,
+                    parentNode = this.parentNode,
+                    labelBorder = labelBorder,
+                    campfire = this.currentRef
+                }
+                event.trigger("Ashfall:CampfireTooltip", eventData)
+            end
+
+        else
+            if mainBlock then
+                mainBlock.visible = false
             end
         end
     end
@@ -104,22 +132,22 @@ function this.callRayTest()
     }
     tes3.player.sceneNode.appCulled = oldCulledValue
     if result then
+        
         if (result and result.reference ) then 
-
-            --logger.debug(result.reference.id)
+            
             local distance = rayPosition:distance(result.intersection)
 
             --Look for activators from list
             if distance < 200 then
                 local targetRef = result.reference
                 if targetRef then
-                    --logger.info("Looking at: %s", targetRef.id)
                     for activatorId, activator in pairs(this.list) do
                         for _, pattern in ipairs(activator.ids) do
                             if string.find(string.lower(targetRef.id), pattern) then
-                                --logger.info("Returning activator")
                                 this.current = activatorId
                                 this.currentRef = targetRef
+                                this.parentNode = result.object.parent
+                                --mwse.log("current node: %s", this.parentNode.name)
                             end
                         end
                     end
@@ -161,7 +189,8 @@ local function triggerActivate(e)
     if (keyTest and not tes3.menuMode() and this.current ) then
         local eventData = {
             activator = this.list[this.current],
-            ref = this.currentRef
+            ref = this.currentRef,
+            node = this.parentNode
         }
         event.trigger("Ashfall:ActivatorActivated", eventData, { filter = eventData.activator.type }) 
     end

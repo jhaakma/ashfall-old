@@ -8,7 +8,7 @@ local function onLoaded()
 end 
 
 local function initialized()
-    if tes3.isModActive("Ashfall.ESP") then
+    if tes3.isModActive("Ashfall.esp") then
         event.register("loaded", onLoaded)
         -- load modules
         require ("mer.ashfall.common")
@@ -33,14 +33,6 @@ end
 --require ("mer.ashfall.effects.faderController")
 
 event.register("initialized", initialized)
-
---MCM setting
-local function registerModConfig()
-    local easyMCM = require("easyMCM.modConfig")
-    easyMCM.registerMCM(require("mer.ashfall.MCM.mcmData"))
-end
-
-event.register("modConfigReady", registerModConfig)
 
 require("mer.ashfall.MCM.mcm")
 

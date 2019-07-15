@@ -4,9 +4,11 @@ local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
 local logger = require("mer.ashfall.logger")
+local skillModule = require("OtherSkills.skillModule")
+local foodTypes = require("mer.ashfall.camping.foodTypes")
+local defaultFoodValue = 5 
 
-local defaultFoodValue = 5
- 
+
 function this.isFood(foodObject)
     local config = mwse.loadConfig("ashfall/config")
     if not config then 
@@ -20,10 +22,51 @@ function this.isFood(foodObject)
     )
 end
 
-function this.getFoodValue(thisFoodId)
-    local foodValues = mwse.loadConfig("ashfall/foodValues")
-    return foodValues[thisFoodId] or defaultFoodValue
+function this.getBurnLimit()
+    --TODO: Use cooking skill to determine
+    local cooking = skillModule.getSkill("Ashfall:Cooking").value
+    if not cooking then
+        mwse.log("No cooking?")
+        return 150
+    end
+    
+    local burnLimit = math.remap(cooking, common.skillStartValue, 100, 120, 160)
+    return burnLimit
 end
+
+function this.getFoodValue(object, itemData)
+
+    if not foodTypes.nutrition[foodTypes.ingredTypes[object.id]] then
+        mwse.log("No value found for %s", object.id)
+    end
+
+    local value = foodTypes.nutrition[foodTypes.ingredTypes[object.id]] or foodTypes.nutrition[foodTypes.TYPE.misc]
+
+    local cookedAmount = itemData and itemData.data.cookedAmount
+    if cookedAmount then
+        local cooking = skillModule.getSkill("Ashfall:Cooking").value
+        local cookingEffect = math.remap(
+            cooking, 
+            common.skillStartValue, 100, 
+            foodTypes.cookedMultiMin, foodTypes.cookedMultiMax
+        )
+
+        local min = value
+        local max = math.ceil(value * cookingEffect)
+
+        if cookedAmount < this.getBurnLimit() then
+            --value based on how cooked it is
+            cookedAmount = math.min(cookedAmount, 100)
+            value = math.remap(cookedAmount, 0, 100, min, max)
+        else
+            --half value when burned
+            value = ( ( max - min ) / 2 ) + min
+        end
+    end
+
+    return value
+end
+
 
 function this.eatAmount( amount ) 
     if not common.data.mcmSettings.enableHunger then
@@ -31,11 +74,15 @@ function this.eatAmount( amount )
     end
 
     local currentHunger = common.data.hunger or  0
-    common.data.hunger = math.max( (currentHunger - amount), 0 )
+    local amountAte = math.min(amount, currentHunger)
+    common.data.hunger = currentHunger - amountAte
     conditionsCommon.updateCondition("hunger")
     needsUI.updateNeedsUI()
     hud.updateHUD()
+    return amountAte
 end
+
+
 
 function this.processMealBuffs(scriptInterval)
     --decrement buff time
@@ -44,7 +91,6 @@ function this.processMealBuffs(scriptInterval)
 
     --Time's up, remove buff
     elseif common.data.mealBuff then
-        logger.info("Removing meal buff")
         mwscript.removeSpell({ reference = tes3.player, spell = common.data.mealBuff })
         common.data.mealBuff = nil
     end

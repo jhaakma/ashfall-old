@@ -5,54 +5,10 @@ local logger = require("mer.ashfall.logger")
 
 local this = {}
 
-local ignoreList = {
-    "fw_cond_warm",
-    "fw_wetcond_soaked",
-    "fw_wetcond_wet",
-    "fw_wetcond_damp"
-}
 
 --Update the spell strength to scale with player attributes/level
-local function scaleSpellValues(spellID)
-    --logger.info("Entering scaleSpellValues")
-    --No effect for comfortable
-    if not spellID then
-        logger.info("[Asfhall ERROR] no spell ID sent")
-        return
-    end
-    
-    local baseID = spellID .. "_BASE"
-    --logger.info("BaseID : %s", baseID)
-    local baseSpell = tes3.getObject(baseID)
-    local realSpell = tes3.getObject(spellID)
-    
-    --Warm has a special case
-    for _, id in ipairs(ignoreList) do
-        if spellID == id then
-            return
-        end
-    end
-    --all others
 
-    for i=1, #realSpell.effects do
 
-        local effect = realSpell.effects[i]
-        if effect.id ~= -1 then
-            local baseEffect = baseSpell.effects[i]
-            --Attributes: scale by matching player attribute
-            local attribute  = effect.attribute
-            if attribute ~= -1 then
-                effect.min = baseEffect.min * ( tes3.mobilePlayer.attributes[attribute + 1].base / 40 ) --40 average starting stat
-                effect.max = effect.min
-            else
-                --Other: scale by level
-                effect.min = baseEffect.min * ( tes3.player.object.level / 20 )
-                effect.max = effect.min
-            end
-            --logger.info("%s: %s", spellID, effect.min)
-        end
-    end
-end
 
 function this.updateCondition(id)
     
@@ -91,11 +47,11 @@ function this.updateCondition(id)
         local spellId = stateData.spell
         --BROKEN--local hasSpell = tes3.player.object.spells:contains(spellId) 
 
-        local isCurrentState = common.data.currentStates[id] == stateId
+        local isCurrentState = ( common.data.currentStates[id] == stateId )
 
         if spellId then
             if isCurrentState then
-                scaleSpellValues(spellId)
+                common.scaleSpellValues(spellId)
                 mwscript.addSpell({ reference = tes3.player, spell = spellId })
             else
                 mwscript.removeSpell({ reference = tes3.player, spell = spellId })
@@ -103,20 +59,9 @@ function this.updateCondition(id)
         end   
     end
 
+    --Restore fatigue if it drops below 0
     if conditionChanging then
-        local previousFatigue = tes3.mobilePlayer.fatigue.current
-        timer.start{
-            type = timer.real,
-            iterations = 1,
-            duration = 0.01,
-
-            callback = function()
-                local newFatigue = tes3.mobilePlayer.fatigue.current
-                if previousFatigue >= 0 and newFatigue < 0 then
-                    tes3.mobilePlayer.fatigue.current = previousFatigue
-                end
-            end
-            }
+        common.restoreFatigue()
     end
 
     

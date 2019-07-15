@@ -1,6 +1,6 @@
 local this = {}
 local data = require('mer.ashfall.tempEffects.ratings.ratingsData')
-local cachePath = 'ashfall/ratings/warmthcache'
+local cachePath = 'ashfall/warmthcache'
 local function getCache()
     return mwse.loadConfig(cachePath) or {
         armor = {},
@@ -149,18 +149,24 @@ local function getItemBodyParts(object)
         mwse.log("[Ashfall] ERROR: incorrect object type")
         return
     end
-    return mapper[object.slot]
+
+    if mapper[object.slot] then
+        return mapper[object.slot]
+    end
 end
 
 
 --Adds up %s for each body part covered by the item
 function this.getItemCoverage(object)
     local bodyParts = getItemBodyParts(object)
-    local coverage = 0
-    for _, part in ipairs(bodyParts) do
-        coverage = coverage + data.bodyParts[part]
+    if bodyParts then
+        local coverage = 0
+        for _, part in ipairs(bodyParts) do
+            coverage = coverage + data.bodyParts[part]
+        end
+        return coverage
     end
-    return coverage
+    return 0 
 end
 
 

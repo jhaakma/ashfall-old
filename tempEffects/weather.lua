@@ -36,14 +36,14 @@ local regionValues = {
     --Vvardenfell
     --Cold
     ["Sheogorad"]                     = {    min    = -45 , max =  -10 },
-    ["Azura's Coast Region"]        = {    min    = -30 , max =  10 },
+    ["Azura's Coast Region"]        = {    min    = -30 , max =  0 },
     --Normal
-    ["Ascadian Isles Region"]        = {    min    = -20 , max =  10 }, --Perfectly normal weather here
-    ["Grazelands Region"]            = {    min    = -30 , max =  20 },-- gets cold at night, warm in day
+    ["Ascadian Isles Region"]        = {    min    = -20 , max =  0 }, --Perfectly normal weather here
+    ["Grazelands Region"]            = {    min    = -30 , max =  10 },-- gets cold at night, warm in day
     --Hot
-    ["Bitter Coast Region"]            = {    min    = -20 , max =  10 }, 
+    ["Bitter Coast Region"]            = {    min    = -20 , max =  20 }, 
     ["West Gash Region"]             = {    min    = -20 , max =  20 },
-    ["Ashlands Region"]                = {    min    = 10 , max =  25 },
+    ["Ashlands Region"]                = {    min    = -20 , max =  10 },
     ["Molag Mar Region"]            = {    min    = 20 , max =  30 },
     ["Red Mountain Region"]            = {    min    = 20 , max =  35 },
 }
@@ -110,6 +110,10 @@ local function cellChanged(e)
     common.data.intWeatherEffect = intWeatherEffect
 end
 
+
+
+
+
 local registerOnce
 local function dataLoaded()
     updateWeather(tes3.getCurrentWeather())
@@ -124,6 +128,15 @@ local function dataLoaded()
 end
 
 event.register("Ashfall:dataLoaded", dataLoaded)
+
+local function setWeatherInterval(e)
+    local interval = math.random(1,6)
+    tes3.worldController.weatherController.hoursBetweenWeatherChanges = interval
+end
+
+event.register("weatherTransitionFinished", setWeatherInterval)
+event.register("weatherChangedImmediate", setWeatherInterval)
+setWeatherInterval()
 
 return this
 

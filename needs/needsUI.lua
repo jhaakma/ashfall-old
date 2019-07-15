@@ -229,7 +229,6 @@ function this.addNeedsBlockToMenu(e, need)
 
     fillBar.widget.fillColor = this.UIData[need].color
 
-    mwse.log("current state: %s", common.data.currentStates[need] )
     local conditionText = common.conditions[need].states[common.data.currentStates[need]].text
 
     local conditionLabel = block:createLabel({ id = this.UIData[need].conditionID, text = conditionText})

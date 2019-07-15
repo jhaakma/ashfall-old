@@ -70,10 +70,10 @@ local function onAttack(e)
                     tes3.getPlayerCell().restingIsIllegal
                 )
                 if illegalToHarvest then
-                    tes3.messageBox("You must be in the wilderness to harvest firewood")
+                    tes3.messageBox("You must be in the wilderness to harvest firewood.")
                 else
 
-                    tes3.playSound({reference=tes3.player, sound="fw_chop"})
+                    tes3.playSound({reference=tes3.player, sound="ashfall_chop"})
                     --Weapon degradation, unequip if below 0
                     weapon.variables.condition = weapon.variables.condition - (10 * swingStrength)
                     if weapon.variables.condition <= 0 then
@@ -91,7 +91,7 @@ local function onAttack(e)
                     if not swingsNeeded then
                         swingsNeeded = getSwingsNeeded()
                     end
-                    
+                     
                     
                     --wait until chopped enough times
                     if swings >= swingsNeeded then 
@@ -99,7 +99,7 @@ local function onAttack(e)
                         --Between 0.5 and 1.0 (at chop == 50)
 
                         --if skills are implemented, use Survival Skill                
-                        local survivalSkill = skillModule and skillModule.getSkill("Survival").value or 30
+                        local survivalSkill = skillModule and skillModule.getSkill("Ashfall:Survival").value or 30
                         --cap at 100
                         survivalSkill = ( survivalSkill < 100 ) and survivalSkill or 100
                         --Between 0.5 and 1.0 (at 100 Survival)
@@ -118,7 +118,7 @@ local function onAttack(e)
                         
                         --incrase skill if implemented
                         if skillModule then
-                            skillModule.incrementSkill("Survival", {progress=(swingsNeeded*2)})
+                            skillModule.incrementSkill("Ashfall:Survival", {progress=(swingsNeeded*2)})
                         end
                         --reset swings
                         swings = 0

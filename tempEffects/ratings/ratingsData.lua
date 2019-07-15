@@ -1,6 +1,7 @@
 local this = {}
 this.warmth = { 
     multiplier = 0.40,
+    --multiplier = 1.0,
     armor = {
         default = 35,
         enchanted = 40,
@@ -63,6 +64,8 @@ this.bodyParts = {
     head = 0.10,
     leftArm = 0.05,
     rightArm = 0.05,
+    leftWrist = 0.05,
+    rightWrist = 0.05,
     leftHand = 0.10,
     rightHand = 0.10,
     chest = 0.30,
@@ -79,8 +82,8 @@ this.armorPartMapping = {
     [tes3.armorSlot.boots] =  { "feet" },
     [tes3.armorSlot.leftGauntlet] =  { "leftHand" },
     [tes3.armorSlot.rightGauntlet] =  { "rightHand" },
-    [tes3.armorSlot.leftBracer] =  { "leftHand" },
-    [tes3.armorSlot.rightBracer] =  { "rightHand" },
+    [tes3.armorSlot.leftBracer] =  { "leftWrist" },
+    [tes3.armorSlot.rightBracer] =  { "rightWrist" },
 }
 
 this.clothingPartMapping = {

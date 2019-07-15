@@ -1,7 +1,7 @@
 local common = require('mer.ashfall.common')
 local hungerCommon = require('mer.ashfall.needs.hunger.hungerCommon')
 local thirstCommon = require('mer.ashfall.needs.thirst.thirstCommon')
-
+local foodTypes = require("mer.ashfall.camping.foodTypes")
 local function setupOuterBlock(e)
     e.flowDirection = 'left_to_right'
     e.paddingTop = 0
@@ -56,7 +56,7 @@ local function updateWaterIndicatorValues(e)
     local bottleData = thirstCommon.getBottleData(e.item.id)
 
     if bottleData then
-        local liquidLevel =  e.itemData and e.itemData.data.currentWaterAmount or 0
+        local liquidLevel =  e.itemData and e.itemData.data.waterAmount or 0
         local capacity = bottleData.capacity
         local maxHeight = 32 * ( capacity / thirstCommon.capacities.MAX)
 
@@ -92,34 +92,152 @@ local function createNeedsTooltip(e)
         return
     end
 
-    local doFoodToolTip = (common.data.mcmOptions.enableHunger and e.object.objectType == tes3.objectType.ingredient)
+    local doFoodToolTip = (
+        common.data.mcmSettings.enableHunger and 
+        e.object.objectType == tes3.objectType.ingredient
+    )
     local labelText
     if doFoodToolTip then
-        local foodValue = hungerCommon.getFoodValue(e.object.id)
+
+        --hunger value
+        local foodValue = hungerCommon.getFoodValue(e.object, e.itemData)
         if foodValue and foodValue ~= 0 then
-            labelText = string.format('Food: %d', foodValue)
+            labelText = string.format('Food Value: %d', foodValue)
+            createTooltip(tooltip, labelText)
+        end
+
+
+        --cook state
+        local thisFoodType = foodTypes.ingredTypes[e.object.id]
+        if thisFoodType then
+            local cookedLabel = ""
+            if thisFoodType == foodTypes.TYPE.protein or thisFoodType == foodTypes.TYPE.vegetable then
+                local cookedAmount = e.itemData and e.itemData.data.cookedAmount
+                if not cookedAmount  then
+                    cookedLabel = " (Raw)"
+                elseif cookedAmount < 100 then
+                    cookedLabel = string.format(" (%d%% Cooked)", cookedAmount)
+                elseif cookedAmount < hungerCommon.getBurnLimit() then
+                    cookedLabel = " (Cooked)"
+                else
+                    cookedLabel = " (Burnt)"
+                end
+            end
+
+            local foodTypeLabel = string.format("%s%s", thisFoodType, cookedLabel)
+            createTooltip(tooltip, foodTypeLabel)
+
         end
     end
 
-    if common.data.mcmOptions.enableThirst then
+    if common.data.mcmSettings.enableThirst then
         local bottleData = thirstCommon.getBottleData(e.object.id)
         if bottleData then
-            local liquidLevel = e.itemData and e.itemData.data.currentWaterAmount or 0
-            labelText = string.format('Water: %d / %d', liquidLevel, bottleData.capacity)
+            local liquidLevel = e.itemData and e.itemData.data.waterAmount or 0
+            labelText = string.format('Water: %d/%d', math.ceil(liquidLevel), bottleData.capacity)
+            if e.itemData and e.itemData.data.waterDirty then
+                labelText = labelText .. " (Dirty)"
+            end
+            createTooltip(tooltip, labelText)
+
+            local icon = e.tooltip:findChild(tes3ui.registerID("HelpMenu_icon"))
+            if icon then
+                updateWaterIndicatorValues{
+                    itemData = e.itemData,
+                    element = icon, 
+                    item = e.object
+                }
+            end
+            
         end
-        local icon = e.tooltip:findChild(tes3ui.registerID("HelpMenu_icon"))
-        if icon then
-            updateWaterIndicatorValues{
-                itemData = e.itemData,
-                element = icon, 
-                item = e.object
-            }
-        end
+        
     end
 
-    if (labelText) then
-        createTooltip(tooltip, labelText)
-    end
 end
 
 event.register('uiObjectTooltip', createNeedsTooltip)
+
+
+---------------
+--Effect indicators-
+--------------------
+local function getWarmEffects()
+    if not common.data then return {} end
+    return {
+        { text = "Warm Meal", value = common.data.stewWarmEffect },
+        { text = "Clothing/Armor", value = common.data.warmthRating },
+        { text = "Torch", value = common.data.torchTemp },
+        { text = "Tent", value = common.data.tentTemp },
+    }
+end
+
+local function warmthTooltip()
+    local tooltip = tes3ui.createTooltipMenu()
+
+    local topBlock = tooltip:createBlock()
+    topBlock.flowDirection = "left_to_right"
+    topBlock.autoHeight = true
+    topBlock.autoWidth = true
+
+
+    local iconBlock = topBlock:createBlock()
+    iconBlock.autoHeight = true
+    iconBlock.autoWidth = true
+    iconBlock.borderRight = 10
+
+    local icon = iconBlock:createImage{path = "Icons/ashfall/spell/Warmth.dds" }
+    icon.height = 16
+    icon.width = 16
+    icon.scaleMode = true
+
+    local header = topBlock:createLabel{ text = "Warmth" }
+    header.color = tes3ui.getPalette("header_color")
+
+    for _, warmEffect in ipairs(getWarmEffects()) do
+        if warmEffect.value and warmEffect.value > 0 then
+            local text = string.format("%s: %d pts", warmEffect.text, warmEffect.value)
+            local label = tooltip:createLabel{ text = text}
+       end
+    end
+end
+
+
+local warmthBlockID = tes3ui.registerID("Ashfall_WarmthIcon")
+local function updateBuffIcons()
+    timer.frame.delayOneFrame(function()
+        local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
+        if menu then
+            
+            local iconsBlock = menu:findChild(tes3ui.registerID("MenuMulti_magic_icons_box")).parent
+            
+            local warmthBlock = menu:findChild(warmthBlockID)
+            if not warmthBlock then
+
+                warmthBlock = iconsBlock:createThinBorder({ id = warmthBlockID})
+                warmthBlock.autoHeight = true
+                warmthBlock.autoWidth = true
+
+
+                local warmthIcon = warmthBlock:createImage{path = "Icons/ashfall/spell/Warmth.dds" }
+                warmthIcon.height = 16
+                warmthIcon.width = 16
+                warmthIcon.scaleMode = true
+                warmthIcon.borderAllSides = 2
+
+                warmthIcon:register( "help", warmthTooltip )
+                
+            end
+
+            warmthBlock.visible = false
+            for _, warmEffect in ipairs(getWarmEffects()) do
+                if warmEffect.value and warmEffect.value > 0 then
+                    warmthBlock.visible = true
+                end
+            end
+        end
+    end)
+end
+
+event.register("simulate", updateBuffIcons)
+event.register("unequipped", updateBuffIcons)
+event.register("equipped", updateBuffIcons)

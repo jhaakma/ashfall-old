@@ -26,7 +26,7 @@ end
     Attaches the utensil mesh to a reference with an "attach" node
 ]]--
 function CampFirePart:attach(reference)
-    local node = reference.sceneNode:getObjectByName("attach")
+    local node = reference.sceneNode:getObjectByName("AttachNode")
     if node then
         local nif = self:loadMesh()  
         if nif then

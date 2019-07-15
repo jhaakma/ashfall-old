@@ -51,7 +51,7 @@ local function callUpdates()
     local interval = hoursPassed - lastTime
     lastTime = hoursPassed
 
-
+ 
     calcTemp.calculateTemp(interval)
     weather.calculateWeatherEffect()
     wetness.calculateWetTemp(interval)
@@ -104,4 +104,8 @@ end
 
 --Register functions
 event.register("Ashfall:dataLoaded", dataLoaded)
---event.register("loaded", dataLoaded)
+
+local function resetTime()
+    lastTime = nil
+end
+event.register("loaded", resetTime)

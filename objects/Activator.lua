@@ -3,6 +3,7 @@ local common = require("mer.ashfall.common")
 local Activator = {}
 Activator.types = {
     waterSource = "waterSource",
+    dirtyWaterSource = "dirtyWaterSource",
     cookingUtensil = "cookingUtensil",
     fire = "fire",
     campfire = "campfire",
@@ -12,6 +13,7 @@ Activator.type = nil
 Activator.name = ""
 Activator.mcmSetting = nil
 Activator.ids = {}
+Activator.hideTooltip = false
 
 function Activator:new(data)
     local t = data or {}

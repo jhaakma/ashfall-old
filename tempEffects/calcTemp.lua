@@ -69,6 +69,7 @@ function this.calculateTemp(timerInterval)
     local bedTemp = common.data.bedTemp or 0
     local tentTemp = common.data.tentTemp or 0
     local furTemp = common.data.furTemp or 0
+    local stewTemp = common.data.stewWarmEffect or 0
 
     --Player Effects -- multipliers
     local hungerEffect = common.data.hungerEffect or 1
@@ -109,6 +110,7 @@ function this.calculateTemp(timerInterval)
                  + frostDamTemp
                  + warmthRating
                  + furTemp
+                 + stewTemp
     )
     common.data.tempRaw = tempRaw
     --cold exclusive effects

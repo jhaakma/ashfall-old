@@ -15,7 +15,7 @@ local logLevels = {
     Checks if the current log level is high enough to log the message
 ]]
 local function doLog(logLevel)
-    local currentLogLevel =  mwse.loadConfig(configPath).logLevel or "INFO"
+    local currentLogLevel = mwse.loadConfig(configPath) and mwse.loadConfig(configPath).logLevel or "INFO"
     return logLevels[currentLogLevel] <= logLevels[logLevel]
 end
 
