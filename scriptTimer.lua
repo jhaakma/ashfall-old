@@ -1,25 +1,17 @@
-local common = require("mer.ashfall.common")
-local logger = require("mer.ashfall.logger")
 --[[ Timer function for weather updates]]--
 
-local calcTemp = require("mer.ashfall.tempEffects.calcTemp")
+local temperatureController = require("mer.ashfall.temperatureController")
 
 local weather = require("mer.ashfall.tempEffects.weather")
 local wetness = require("mer.ashfall.tempEffects.wetness")
---[[local conditions = {
-    tempCondition = require("mer.ashfall.conditions.tempCondition"),
-    wetCondition = require("mer.ashfall.conditions.wetCondition"),
-    thirstCondition = require("mer.ashfall.conditions.thirstCondition"),
-    hungerConditiion = require("mer.ashfall.conditions.hungerCondition"),
-    sleepCondition = require("mer.ashfall.conditions.sleepCondition")
-}]]--
 local conditions = require("mer.ashfall.conditionController")
 local torch = require("mer.ashfall.tempEffects.torch")
 local raceEffects = require("mer.ashfall.tempEffects.raceEffects")
 local fireEffect = require("mer.ashfall.tempEffects.fireEffect")
 local magicEffects = require("mer.ashfall.tempEffects.magicEffects")
 local hazardEffects = require("mer.ashfall.tempEffects.hazardEffects")
-
+local survivalEffect = require("mer.ashfall.survival")
+local sunEffect = require("mer.ashfall.tempEffects.sunEffect")
 local frostBreath = require("mer.ashfall.effects.frostBreath")
 
 
@@ -31,17 +23,12 @@ local activators = require("mer.ashfall.activators.activatorController")
 --Needs
 local needsUI = require("mer.ashfall.needs.needsUI")
 local needs = {
-    thirst = require("mer.ashfall.needs.thirst.thirstCalculate"),
-    hunger = require("mer.ashfall.needs.hunger.hungerCalculate"),
+    thirst = require("mer.ashfall.needs.thirst.thirstController"),
+    hunger = require("mer.ashfall.needs.hunger.hungerController"),
     sleep = require("mer.ashfall.needs.sleep.sleepCalculate")
 }
-local hungerCommon = require("mer.ashfall.needs.hunger.hungerCommon")
-local config = mwse.loadConfig("Ashfall/config")
+local hungerController = require("mer.ashfall.needs.hunger.hungerController")
 --How often the script should run in gameTime
-
-local heavyScriptInterval = 0.2 --seconds
-local realInterval = 0.001
-local pauseInterval = 1.0
 
 local lastTime
 local function callUpdates()
@@ -50,13 +37,14 @@ local function callUpdates()
     lastTime = lastTime or hoursPassed
     local interval = hoursPassed - lastTime
     lastTime = hoursPassed
-
- 
-    calcTemp.calculateTemp(interval)
-    weather.calculateWeatherEffect()
+   
+    
+    weather.calculateWeatherEffect(interval)
+    sunEffect.calculate(interval)
     wetness.calculateWetTemp(interval)
     sleepController.checkSleeping()
-    hungerCommon.processMealBuffs(interval)
+    hungerController.processMealBuffs(interval)
+   
     --Needs:
     for _, script in pairs(needs) do
         script.calculate(interval)
@@ -71,22 +59,26 @@ local function callUpdates()
     fireEffect.calculateFireEffect()
     magicEffects.calculateMagicEffects()
     hazardEffects.calculateHazards()
-
-    wetness.checkForShelter()
+    survivalEffect.calculate()
+    wetness.checkForShelter() 
     conditions.updateConditions()
     
     --visuals
     frostBreath.doFrostBreath()
+
+    temperatureController.calculate(interval)
     needsUI.updateNeedsUI()
 end
 
 event.register("simulate", callUpdates)
 
 
---Use game timer when sleeping
+
 local function dataLoaded()
+    
     timer.delayOneFrame(
         function()
+            --Use game timer when sleeping
             timer.start({
                 duration =  1, 
                 callback = function()
@@ -97,7 +89,15 @@ local function dataLoaded()
                 type = timer.game, 
                 iterations = -1
             })
+
+            timer.start({
+                callback = conditions.checkExtremeConditions,
+                type = timer.real,
+                iterations = -1,
+                duration = 2
+            })
         end
+        
     )
 end
 

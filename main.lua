@@ -9,12 +9,15 @@ end
 
 local function initialized()
     if tes3.isModActive("Ashfall.esp") then
+
         event.register("loaded", onLoaded)
+
+        require("mer.ashfall.survival")
         -- load modules
-        require ("mer.ashfall.common")
+        require ("mer.ashfall.common.common")
         
         require ("mer.ashfall.scriptTimer")
-        require("mer.ashfall.tempEffects.ratings.ratingEffects")
+        
         require("mer.ashfall.needs.needs")
         require("mer.ashfall.effects.harvest_wood")
         require("mer.ashfall.ui.hud")
@@ -23,8 +26,11 @@ local function initialized()
         require("mer.ashfall.effects.keybinds")
 
         require("mer.ashfall.camping.campfire")
+        require("mer.ashfall.ui.itemTooltips")
+        require("mer.ashfall.tempEffects.ratings.ratingEffects")
+        
 
-        mwse.log("Initialized Ashfall")
+        mwse.log("[Ashfall] Initialized")
     end
 end
 
@@ -35,5 +41,7 @@ end
 event.register("initialized", initialized)
 
 require("mer.ashfall.MCM.mcm")
+
+
 
 

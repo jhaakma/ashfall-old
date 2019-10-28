@@ -6,8 +6,8 @@
 ]]--
  
 
-local thirstCommon = require("mer.ashfall.needs.thirst.thirstCommon")
-local common = require("mer.ashfall.common")
+local thirstController = require("mer.ashfall.needs.thirst.thirstController")
+local common = require("mer.ashfall.common.common")
 local Activator = require("mer.ashfall.objects.Activator")
 
 
@@ -25,14 +25,14 @@ local function menuButtonPressed(e)
             tes3.messageBox("You are fully hydrated.")
             return
         end
-        thirstCommon.callWaterMenuAction(function()
-            thirstCommon.drinkAmount(100, common.data.drinkingDirtyWater)
+        thirstController.callWaterMenuAction(function()
+            thirstController.drinkAmount(100, common.data.drinkingDirtyWater)
 
         end)
 
     --refill
     elseif buttons[buttonIndex] == bFillBottle then
-        thirstCommon.fillContainer()
+        thirstController.fillContainer()
     else
         common.data.drinkingRain = false
         common.data.drinkingDirtyWater = false
@@ -141,7 +141,7 @@ local function doDrinkWater(e)
     --Reduce liquid in bottle
     e.itemData.data.waterAmount = e.itemData.data.waterAmount - thisSipSize
     handleEmpties(e)
-    thirstCommon.drinkAmount(thisSipSize, e.itemData.data.waterDirty)
+    thirstController.drinkAmount(thisSipSize, e.itemData.data.waterDirty)
 end
 
 local function drinkFromContainer(e)
@@ -151,7 +151,7 @@ local function drinkFromContainer(e)
     if e.item.objectType == tes3.objectType.alchemy then
         local thisSipSize = potionSipSize
         thisSipSize = math.min( common.data.thirst, thisSipSize)
-        thirstCommon.drinkAmount(thisSipSize)
+        thirstController.drinkAmount(thisSipSize)
     end
 
 
@@ -167,7 +167,7 @@ local function drinkFromContainer(e)
     )
     if doDrink then
         if itemData.waterDirty then
-            common.messageBox{
+            common.helper.messageBox{
                 message = "This water is dirty.",
                 buttons = {
                     { 
@@ -202,17 +202,15 @@ local fillMin = 5
 local function addWaterToWorld(e)
     local wateredCells = common.data.wateredCells
     if not wateredCells[string.lower(e.cell.id)] then
-        --mwse.log("Adding water to bottles")
         wateredCells[string.lower(e.cell.id)] = true
 
         for ref in e.cell:iterateReferences(tes3.objectType.miscItem) do
-            local bottleData = thirstCommon.getBottleData(ref.object.id)
+            local bottleData = thirstController.getBottleData(ref.object.id)
             if bottleData and not ref.data.waterAmount then
                 if math.random() < chanceToFill then
                     local fillAmount = math.random(fillMin, bottleData.capacity)
                     ref.data.waterAmount = fillAmount
                     ref.modified = true
-                    --mwse.log("Filled %s will %d water", ref.object.id, fillAmount )
                 end
             end
         end

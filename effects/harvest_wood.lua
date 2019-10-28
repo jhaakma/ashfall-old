@@ -1,14 +1,8 @@
-local skillModule = require("OtherSkills.skillModule")
+
 local activators = require("mer.ashfall.activators.activatorController")
 local Activator = require("mer.ashfall.objects.Activator")
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local lastRef
-----CONFIGS-----------------------------------------
---Set to true if you want to chop trees in towns----
-local bypassIllegal = true
---How close the tree needs to be to activate--------
-local lookDistance = 230
-----------------------------------------------------
 
 --How many swings required to collect wood. Randomised again after each harvest
 local swingsNeeded
@@ -57,6 +51,7 @@ local function onAttack(e)
                         / ( chopCeiling ) )
 
                 --If attacking the same target, accumulate swings
+                local targetRef = activators.currentRef
                 if lastRef == targetRef then
                     swings = swings + swingStrength * ( 1 + axeDamageMultiplier )
                 else
@@ -99,7 +94,7 @@ local function onAttack(e)
                         --Between 0.5 and 1.0 (at chop == 50)
 
                         --if skills are implemented, use Survival Skill                
-                        local survivalSkill = skillModule and skillModule.getSkill("Ashfall:Survival").value or 30
+                        local survivalSkill = common.skills.survival.value or 30
                         --cap at 100
                         survivalSkill = ( survivalSkill < 100 ) and survivalSkill or 100
                         --Between 0.5 and 1.0 (at 100 Survival)
@@ -116,10 +111,8 @@ local function onAttack(e)
                         tes3.playSound({reference=tes3.player, sound="Item Misc Up"})
                         mwscript.addItem{reference=tes3.player, item="a_firewood", count=numWood}
                         
-                        --incrase skill if implemented
-                        if skillModule then
-                            skillModule.incrementSkill("Ashfall:Survival", {progress=(swingsNeeded*2)})
-                        end
+                        
+                        common.skills.survival:progressSkill(swingsNeeded*2)
                         --reset swings
                         swings = 0
                         swingsNeeded = getSwingsNeeded()

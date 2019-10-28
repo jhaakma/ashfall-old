@@ -1,16 +1,18 @@
-local common = require("mer.ashfall.common")
-local logger = require("mer.ashfall.logger")
+local common = require("mer.ashfall.common.common")
 
 local this = {}
+
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerExternalHeatSource("tentTemp")
 
 local inTentGlobal = tes3.findGlobal("a_inside_tent")
 function this.checkTent()
     if inTentGlobal.value == 1 then
-        --logger.info("Inside tent")
+        --common.log.info("Inside tent")
         common.data.isSheltered = true
         common.data.tentTemp = 20
     else
-        --logger.info("Outside tent")
+        --common.log.info("Outside tent")
         common.data.tentTemp = 0
     end
     

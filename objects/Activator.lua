@@ -1,4 +1,3 @@
-local common = require("mer.ashfall.common")
 
 local Activator = {}
 Activator.types = {

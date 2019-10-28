@@ -4,5 +4,5 @@
 
 require("mer.ashfall.needs.thirst.waterController")
 
-require("mer.ashfall.needs.hunger.eat")
+require("mer.ashfall.needs.hunger.hungerController")
 require("mer.ashfall.needs.needsTooltips")

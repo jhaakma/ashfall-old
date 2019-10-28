@@ -3,10 +3,10 @@
     Add frosty breath to player/NPCs when it's freezing cold outside
 --]]
 
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local this = {}
 
-local coldLevelNeeded = common.conditions.temp.states.veryCold.max
+local coldLevelNeeded = common.config.conditions.temp.states.veryCold.max
 
 local function checkEnabled()
     return common.data.mcmSettings.showFrostBreath
@@ -33,7 +33,7 @@ end
 
 function this.doFrostBreath()
 
-    local temp = common.data.tempRaw
+    local temp = common.data.weatherTemp
     local isCold = temp < coldLevelNeeded
     for ref in tes3.getPlayerCell():iterateReferences(tes3.objectType.npc) do
         if ( ref.mobile and ref.sceneNode ) then

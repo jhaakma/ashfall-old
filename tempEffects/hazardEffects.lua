@@ -1,5 +1,9 @@
 local this = {}
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
+
+--Register heat source
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerExternalHeatSource("hazardTemp")
 
 local hazardTemps = {
     ["in_lava_1"] = 250,

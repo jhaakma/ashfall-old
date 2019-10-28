@@ -43,7 +43,7 @@ this.warmth = {
             ['Steel'] = 20,
             ['Telvanni '] = 60,
             ['Wolf '] = 100
-        }
+        },
     },
     clothing = {
         default = 60,
@@ -68,8 +68,8 @@ this.bodyParts = {
     rightWrist = 0.05,
     leftHand = 0.10,
     rightHand = 0.10,
-    chest = 0.30,
-    legs = 0.20,
+    chest = 0.25,
+    legs = 0.15,
     feet = 0.10,
 }
 
@@ -89,10 +89,10 @@ this.armorPartMapping = {
 this.clothingPartMapping = {
     [tes3.clothingSlot.pants] = { "legs" },
     [tes3.clothingSlot.shoes] = { "feet" },
-    [tes3.clothingSlot.shirt] = { "chest", "leftArm", "rightArm" },
+    [tes3.clothingSlot.shirt] = { "chest", "leftArm", "rightArm", "leftWrist", "rightWrist" },
     [tes3.clothingSlot.robe] = { "chest", "legs", "leftArm", "rightArm" },
-    [tes3.clothingSlot.rightGlove] = { "leftHand" },
-    [tes3.clothingSlot.leftGlove] = { "rightHand" },
+    [tes3.clothingSlot.rightGlove] = { "leftHand", "leftWrist" },
+    [tes3.clothingSlot.leftGlove] = { "rightHand", "rightWrist" },
     [tes3.clothingSlot.skirt] = { "legs" },
 }
 

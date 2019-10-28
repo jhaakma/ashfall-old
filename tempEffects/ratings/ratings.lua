@@ -1,5 +1,6 @@
 local this = {}
 local data = require('mer.ashfall.tempEffects.ratings.ratingsData')
+local common = require("mer.ashfall.common.common")
 local cachePath = 'ashfall/warmthcache'
 local function getCache()
     return mwse.loadConfig(cachePath) or {
@@ -42,10 +43,10 @@ local function getRawItemWarmth(object)
     elseif object.objectType == tes3.objectType.clothing then
         type = "clothing"
     else
-        mwse.log("[Ashfall] ERROR: Tried to get warmth value of incompatabile item type %s" .. object.objectType )
+        common.log.error("Tried to get warmth value of incompatabile item type %s" .. object.objectType )
         return
     end
-    
+
     local cache = getCache()
 
     --Find in cache
@@ -75,7 +76,7 @@ local function getRawItemWarmth(object)
     end
 
     if not value then
-        mwse.log("[Ashfall] ERROR: No warmth value found for %s!", object.name)
+        common.log.error("No warmth value found for %s!", object.name)
         value = 0
     end
     return value
@@ -146,7 +147,7 @@ local function getItemBodyParts(object)
         slot = tes3.clothingSlot
         mapper = data.clothingPartMapping
     else
-        mwse.log("[Ashfall] ERROR: incorrect object type")
+        common.log.error("getItemBodyParts: Not a clothing or armor piece. ")
         return
     end
 
@@ -166,14 +167,11 @@ function this.getItemCoverage(object)
         end
         return coverage
     end
-    return 0 
+    return 0
 end
 
 
-
---Check equipped gear to see which bodyparts are covered and return the % coverage
-function this.getTotalCoverage()
-    local totalCoverage = 0
+function this.getCoveredParts()
     local partsCovered = {
         head = false,
         leftArm = false,
@@ -208,9 +206,17 @@ function this.getTotalCoverage()
         end
     end
 
+    return partsCovered
+end
+
+--Check equipped gear to see which bodyparts are covered and return the % coverage
+function this.getTotalCoverage()
+    local totalCoverage = 0
+    local partsCovered = this.getCoveredParts()
+
     for part, isCovered in pairs(partsCovered) do
         if isCovered then
-            totalCoverage = totalCoverage + data.bodyParts[part]
+            totalCoverage = totalCoverage + data.bodyParts[part] 
         end
     end
 

@@ -1,9 +1,6 @@
 
-local common = require("mer.ashfall.common")
-local logger = require("mer.ashfall.logger")
+local common = require("mer.ashfall.common.common")
 local CampFirePart = require("mer.ashfall.objects.CampFirePart")
-local Utensil = require("mer.ashfall.objects.Utensil")
-local utensils = require("mer.ashfall.cooking.utensils")
 local CookingMenu = require("mer.ashfall.cooking.cookingMenu")
 local Campfire = {}
 Campfire.reference = {}
@@ -21,7 +18,7 @@ end
 
 function Campfire:addFirewood()
 
-    logger.info("adding firewood")
+    common.log.info("adding firewood")
     local wood = CampFirePart:new{
         name = "Wood",
         nifId = "ashfall\\fp\\u\\wood.nif"
@@ -43,7 +40,7 @@ function Campfire:lightFire()
     end   
 
     for _, part in ipairs(self.parts) do
-        logger.info("part = %s", part.name)
+        common.log.info("part = %s", part.name)
         table.insert(newRef.data.campfire.parts, part)
         part:attach(newRef)    
     end
@@ -63,7 +60,7 @@ function Campfire:addSupports()
 end
 
 
-function Campfire:cook()
+function Campfire.cook()
     CookingMenu:new({name = "Camp Fire"}):create()
 end
 
@@ -125,7 +122,7 @@ function Campfire:showMenu()
     addButton(buttons, standardButtons.cancel)
 
 
-    common.messageBox({ message = "Camp Fire", buttons = buttons })    
+    common.helper.messageBox({ message = "Camp Fire", buttons = buttons })    
 end
 
 return Campfire

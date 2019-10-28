@@ -1,5 +1,4 @@
 local common = require("mer.ashfall.cooking.common")
-local logger = require("mer.ashfall.logger")
 
 local Recipe = {}
 Recipe.name = "Meal"
@@ -16,7 +15,7 @@ function Recipe:new(data)
 end
 
  
-function Recipe:getPlayerIngredientCount(ingredient)
+function Recipe.getPlayerIngredientCount(ingredient)
     local count = 0
     for _, id in ipairs(ingredient.ids) do
         count = count + mwscript.getItemCount({ reference = tes3.player, item = id})
@@ -27,18 +26,15 @@ end
 function Recipe:checkIngredient(ingredient)
     local needed = ingredient.count
     local count =  self:getPlayerIngredientCount(ingredient)
-    --logger.info("check ingredient %s. Have: %s/%s", ingredient.name, count, needed )
     local hasEnough =  ( count >= needed )
-    --logger.info(hasEnough)
     return hasEnough
 end
 
 
-function Recipe:checkIngredients(ingredient)
+function Recipe:checkIngredients()
     local hasIngredients = true
     for _, ingredient in ipairs(self.ingredients) do
         local hasThisIngredient = self:checkIngredient(ingredient)
-        --logger.info("Has %s: %s", ingredient.name, hasThisIngredient)
         if not hasThisIngredient then
             hasIngredients = false
         end

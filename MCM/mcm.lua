@@ -1,7 +1,6 @@
 local configPath = "Ashfall/config"
 local config = mwse.loadConfig(configPath)
 if not config then 
-    mwse.log("IM MAKING THE FUCKIN CONFIG FILE YA FUCK")
     config = {
         blocked = {},
         logLevel = "INFO"
@@ -83,7 +82,8 @@ local function registerModConfig()
                     "When enabled, you must drink water regularly in order to survive " ..
                     "Fill bottles with water at any nearby stream, well or keg. You can also drink directly from water sources."    
                 ),
-                variable = createplayerVar("enableThirst", true)
+                variable = createplayerVar("enableThirst", true),
+                callback = tes3ui.updateInventoryTiles --to clear water bottle icons
             }
             categorySurvival:createYesNoButton{
                 label = "Enable Sleep",
@@ -165,8 +165,7 @@ local function registerModConfig()
 
     do --Mod values page
         local pageModValues = template:createSideBarPage{
-            label = "Mod Values",
-            sidebarComponents = sidebar
+            label = "Mod Values"
         }
         addSideBar(pageModValues)
 
@@ -271,7 +270,7 @@ local function registerModConfig()
     end --\mod values page
 
     do --Exclusions Page
-        local pageExclusions = template:createExclusionsPage{
+        template:createExclusionsPage{
             label = "Exclusions",
             description = (
                 "This mod by default will support all characters and equipment in your game. " .. 

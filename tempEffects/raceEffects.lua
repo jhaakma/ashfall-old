@@ -2,8 +2,15 @@
     Race effects
     Check if the player is a Khajiit or Werewolf
 ]]--
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local this = {}
+
+
+--Register heat source
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerBaseTempMultiplier{ id = "vampireColdEffect", coldOnly = true }
+temperatureController.registerBaseTempMultiplier{ id = "vampireWarmEffect", warmOnly = true }
+temperatureController.registerInternalHeatSource{ id = "furTemp", warmOnly = true }
 
 local werewolfWarmth = 40
 local khajiitWarmth = 15

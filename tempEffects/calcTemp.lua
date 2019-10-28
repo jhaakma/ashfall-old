@@ -6,8 +6,7 @@
 ]]--
 local this = {}
 
-local common = require("mer.ashfall.common")
-local logger = require("mer.ashfall.logger")
+local common = require("mer.ashfall.common.common")
 
 local hud = require("mer.ashfall.ui.hud")
 -------------------------------------CONFIG VALUES-------------------------------------
@@ -18,7 +17,7 @@ local limitRate = 50
 --Determines how fast tempPlayer catches up to tempLimit
 local playerRate = 2.5
 local minPlayerDiff = 10
-
+ 
 --"Region" temp when inside
 local interiorWeatherMultiplier = 0.4
 --All effects reduced slightly when inside
@@ -36,9 +35,6 @@ local tempPlayer
 
 --How slowly changes during sleep
 local sleepMulti = 0.7
-
---GameHour variables
-local gameHour
 
 --[[------------------------------------------------------------------
 
@@ -167,9 +163,9 @@ function this.calculateTemp(timerInterval)
     ]]--------------------------------------
     local playerDiff = math.abs( tempLimit - tempPlayer )
     if playerDiff < minPlayerDiff then
-        --logger.info("Using min difference of %d", minPlayerDiff)
+        --common.log.info("Using min difference of %d", minPlayerDiff)
     else
-        --logger.info("Using calculated difference of %d", playerDiff)
+        --common.log.info("Using calculated difference of %d", playerDiff)
     end
     playerDiff = ( playerDiff < minPlayerDiff ) and minPlayerDiff or playerDiff
 
@@ -211,8 +207,8 @@ local function onKeyG(e)
                 tes3.messageBox("No weatherTemp")
             end
 
-            gameHour = tes3.getGlobal("GameHour")
-            --local currentTime = common.hourToClockTime(gameHour)
+            --gameHour = tes3.getGlobal("GameHour")
+            --local currentTime = common.helper.hourToClockTime(gameHour)
            --[[ tes3.messageBox(
                 "Total Warmth = " .. ( common.data.warmthRating )
             )

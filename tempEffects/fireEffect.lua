@@ -5,8 +5,7 @@
     have heat based on firewood level
 ]]--
 local this = {}
-local common = require("mer.ashfall.common")
-local logger = require("mer.ashfall.logger")
+local common = require("mer.ashfall.common.common")
 local activators = require("mer.ashfall.activators.activatorController")
 ---CONFIGS----------------------------------------
 --max distance where fire has an effect
@@ -29,6 +28,10 @@ local maxDistance = 350
 --Multiplier when warming hands next to firepit
 local warmHandsBonus = 1.4
 --------------------------------------------------
+
+--Register heat source
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerExternalHeatSource("fireTemp")
 
 --Check if player has Magic ready stance
 local warmingHands 
@@ -56,8 +59,10 @@ local function checkForFirePit(id)
 end
 
 function this.calculateFireEffect()
+    if not common.config.conditions.temp:isActive() then return end
     local totalHeat = 0
     local closeEnough
+    common.data.nearCampfire = false
     for _, cell in pairs( tes3.getActiveCells() ) do
         for ref in cell:iterateReferences(tes3.objectType.light) do
             if not ref.disabled then
@@ -66,10 +71,12 @@ function this.calculateFireEffect()
                 if distance < maxDistance then
                     local maxHeat = heatDefault
                     --Firepits have special logic for hand warming
+                    
                     if ref.object.id == "ashfall_campfire_01" then
                         if ref.data.isLit then
                             local fuel = ref.data.fuelLevel
                             if fuel then
+                                common.data.nearCampfire = true
                                 maxHeat = math.clamp(math.remap(fuel, 0, 10, 20, 60), 0, 60)
                                 closeEnough = true
                         
@@ -96,7 +103,7 @@ function this.calculateFireEffect()
                         for pattern, heatValue in pairs(heatValues) do
                             if string.find(string.lower(ref.object.id), pattern) then
                                 maxHeat = heatValue
-                                --logger.info("Fire source: %s", ref.object.id)
+                                --common.log.info("Fire source: %s", ref.object.id)
                             end
                         end
                     end

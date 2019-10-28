@@ -14,8 +14,8 @@ this.TYPE = {
 }
 
 this.stewBuffs = {
-    [this.TYPE.protein] = { min = 10, max = 40, id = "ashfall_stew_hearty"}, -- fortify health
-    [this.TYPE.vegetable] = { min = 10, max = 40, id = "ashfall_stew_nutritious"}, --fortify fatigue
+    [this.TYPE.protein] = { min = 15, max = 50, id = "ashfall_stew_hearty"}, -- fortify health
+    [this.TYPE.vegetable] = { min = 15, max = 50, id = "ashfall_stew_nutritious"}, --fortify fatigue
     [this.TYPE.mushroom] = { min = 10, max = 40, id = "ashfall_stew_chunky"}, --fortify magicka
     [this.TYPE.seasoning] = { min = 5, max = 20, id = "ashfall_stew_tasty"}, --fortify agility
     [this.TYPE.herb] = { min = 5, max = 20, id = "ashfall_stew_aromatic"} -- fortify personality

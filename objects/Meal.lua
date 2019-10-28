@@ -1,4 +1,4 @@
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 
 local Meal = {}
 Meal.duration = 6

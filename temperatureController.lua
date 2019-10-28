@@ -1,3 +1,13 @@
+--move to common---------------------------------
+--Also... refactor all temps to point to this----
+local common = require("mer.ashfall.common.common")
+local hud = require("mer.ashfall.ui.hud")
+-------------------------------------------------
+--Move to Config file
+local INT_MULTI = 100 --Rate of change for player temp
+local MAX_DIFFERENCE = 50
+local MAX_MULTI = 10
+-----------------------------------------------
 
 
 local this = {}
@@ -14,7 +24,7 @@ function this.registerExternalHeatSource(heatSource)
     if type(heatSource) == "table" and heatSource.id then
         table.insert(this.externalHeatSources, heatSource)
     else
-        mwse.log("ERROR: incorrect formatting of externalHeatSource")
+        common.log.error("Incorrect formatting of externalHeatSource")
     end
 end
 
@@ -25,7 +35,7 @@ function this.registerInternalHeatSource(heatSource)
     if type(heatSource) == "table" and heatSource.id then
         table.insert(this.internalHeatSources, { id = heatSource.id })
     else
-        mwse.log("ERROR: incorrect formatting of internalHeatSource")
+        common.log.error("Incorrect formatting of internalHeatSource")
     end
 end
 
@@ -37,141 +47,216 @@ function this.registerBaseTempMultiplier(multiplier)
         table.insert(this.baseTempMultipliers, 
         {
             id = multiplier.id,
-            coolingOnly = multiplier.coldOnly,
-            warmingOnly = multiplier.warmOnly
+            coldOnly = multiplier.coldOnly,
+            warmOnly = multiplier.warmOnly
         }
     )
     else
-        mwse.log("ERROR: incorrect formatting of baseTempMultiplier")
+        common.log.error("Incorrect formatting of baseTempMultiplier: %s", multiplier and multiplier.id or multiplier)
     end
 end
 
-
-
-
---move to common---------------------------------
---Also... refactor all temps to point to this----
-local data = require("mer.ashfall.common").data
-data.temp = data.temp or {
-    ext = { base = 0, real = 0 },
-    int = { base = 0, real = 0 },
-}
--------------------------------------------------
---Move to Config file
-local EXT_MULTI = 0.5
-local INT_MULTI = 0.2
------------------------------------------------
-
-local temp = data.temp
-
-
-local function isTempIncreasing()
-    return temp.int.real < temp.ext.real
+function this.registerRateMultiplier(multiplier)
+    if type(multiplier) == "string" then
+        multiplier = { id = multiplier }
+     end
+     
+     if type(multiplier) == "table" and multiplier.id then
+         table.insert(this.rateMultipliers, 
+         {
+             id = multiplier.id,
+             coolingOnly = multiplier.coolingOnly,
+             warmingOnly = multiplier.warmingOnly
+         }
+     )
+     else
+        common.log.error("Incorrect formatting of rateMultiplier: %s", multiplier and multiplier.id or multiplier)
+     end    
 end
 
-local function getWeather()
-    --Move to weather controller, register as external heat source
-    local weatherTemp = data.weatherTemp or 0
-    local interiorWeatherMultiplier = 0.4
-    local cell = tes3.getPlayerCell()
-    local interiorTemp = data.intWeatherEffect or 0
-    if cell.isInterior then
-        return ( weatherTemp * interiorWeatherMultiplier) + interiorTemp
-    else
-        return weatherTemp
-    end
+
+
+
+
+local function isPlayerHot()
+    return common.data.temp > 0
 end
+
+
+
+
+--------------------------------------------------------------------------
+
 
 local function getExternalHeat()
     local heat = 0
     for _, heatSource in ipairs(this.externalHeatSources) do
-        heat = heat + data[heatSource.id]
+        
+        if not common.data[heatSource.id] then
+            common.log.error("common.data.%s not found", heatSource.id)
+        else
+            
+            heat = heat + common.data[heatSource.id]
+        end
     end
     return heat
     --[[
-        data.fireTemp
-        data.hazardTemp
-        data.fireDamTemp
-        data.frostDamTemp
+        common.data.fireTemp
+        common.data.hazardTemp
+        common.data.fireDamTemp
+        common.data.frostDamTemp
     ]]
 end
+
 
 local function getInternalHeat()
     local result = 0
     for _, heatSource in ipairs(this.internalHeatSources) do
-        result = result + data[heatSource.id]
+        if not common.data[heatSource.id] then
+            common.log.error("common.data.%s not found", heatSource.id)
+        else
+            result = result + common.data[heatSource.id]
+        end
     end
     return result
     --[[
-        data.wetTemp
-        data.warmthRating
-        data.bedTemp
-        data.tentTemp
-        data.furTemp
+        common.data.wetTemp
+        common.data.warmthRating
+        common.data.bedTemp
+        common.data.tentTemp
+        common.data.furTemp
+        common.data.stewWarmEffect
     ]]
 end
 
 local function getBaseTempMultiplier()
+    
+    local function isBaseTempHot()
+        return common.data.tempLimit  > 0
+    end
     --[[
         both:
-            data.alcoholEffect
-            data.hungerEffect
-            data.thirstEffect
+            common.data.alcoholEffect
         coldOnly:
-            data.ResistFrostEffect
-            data.vampireColdEffect
+            common.data.ResistFrostEffect
+            common.data.vampireColdEffect
+
+            common.data.thirstEffect
         warmOnly:
-            data.resistFireEffect
-            data.vampireWarmEffect
+            common.data.resistFireEffect
+            common.data.vampireWarmEffect
+
+            common.data.hungerEffect
     ]]
 
     --multipliers that directly affect temperature
     local result = 1
     for _, multiplier in ipairs(this.baseTempMultipliers) do
+        
+        
         local addMultiplier = (
-            ( temp.int.real < 0 and not multiplier.warmOnly ) or 
-            ( temp.int.real > 0 and not multiplier.coldOnly )
+            --cold and NOT warmOnly
+            ( 
+                ( not isBaseTempHot() ) and   
+                multiplier.warmOnly ~= true 
+            ) 
+            
+            or 
+            --warm and not ColdOnly
+            ( 
+                isBaseTempHot() and             
+                multiplier.coldOnly ~= true 
+            )
         )
         if addMultiplier then
-            result = result * data[multiplier.id]
+            if not common.data[multiplier.id] then
+                common.log.error("common.data.%s not found", multiplier.id)
+            else
+                
+                --common.log.debug("Temp Multiplier: %s = %s", multiplier.id, common.data[multiplier.id])
+                result = result * common.data[multiplier.id]
+            end
         end
     end
+    return result
 end
 
-
-
-local function getExternalChangeMultiplier(interval)
-    return interval * EXT_MULTI
-end
-
-
+local timeScale
 local function getInternalChangeMultiplier(interval)
+    timeScale = timeScale or tes3.findGlobal("timeScale")
     --wetness
     --coverage
     --Sleeping?
-    local multipliers
-    if isTempIncreasing() then
-        --addWarmingMultipliers
-    else
-        --addCoolingMultipliers
+    local result = 1
+    for _, multiplier in ipairs(this.rateMultipliers) do
+        local addMultiplier = (
+            ( isPlayerHot() and multiplier.coolingOnly ~= true ) or
+            ( not isPlayerHot() and multiplier.warmingOnly ~= true )
+        )
+        if addMultiplier then
+
+            if not common.data[multiplier.id] then
+                common.log.error("common.data.%s not found", multiplier.id)
+            else
+                result = result * common.data[multiplier.id]
+            end
+        end
     end
 
-    return interval * multipliers * INT_MULTI
+    --Twice as fast movement if moving towards comfortable/warm
+    local comfortMulti = 1.0
+    local movingTowardsWarm = (
+        common.data.temp > common.config.conditions.temp.states.warm.min and common.data.temp > common.data.tempLimit
+            or
+        common.data.temp < common.config.conditions.temp.states.warm.max and common.data.temp < common.data.tempLimit
+    )
+    if movingTowardsWarm then
+        comfortMulti = 2.0
+    end
+    return math.min(comfortMulti * INT_MULTI * interval * result / timeScale.value, 1)
 end
 
-function this.calculate(interval)
 
-    temp.ext.base = getWeather() + getExternalHeat()
-    temp.ext.real = temp.ext.real + ( temp.ext.real - temp.ext.base ) * getExternalChangeMultiplier(interval)
+function this.calculate(interval)
+    if not common.data then return end
+    if not common.data.mcmSettings.enableTemperatureEffects then
+        common.data.tempLimit = 0
+        common.data.baseTemp = 0
+        common.data.temp = 0
+        hud.updateHUD()
+        return
+    end
+
+    common.data.tempLimit = common.data.tempLimit or 0
+    common.data.baseTemp = common.data.baseTemp or 0
+    common.data.temp = common.data.temp or 0
+
+    common.data.tempLimit = getBaseTempMultiplier() * ( getExternalHeat() + getInternalHeat() )
 
     --subtract previous base temp before adding new base temp
-    temp.int.real = temp.int.real - temp.int.base
-    temp.int.base = getInternalHeat() * getBaseTempMultiplier()
-    temp.int.real = temp.int.real + temp.int.base
-    
-    --Move towards external temp
-    temp.int.real = temp.int.real + ( temp.int.real - temp.ext.real ) * getInternalChangeMultiplier(interval)
+     common.data.temp = common.data.temp - common.data.baseTemp
+     common.data.baseTemp = getInternalHeat()
+     common.data.temp = common.data.temp + common.data.baseTemp
 
+
+    --Change temp faster the bigger the difference, up to a max raw amount
+    local difference = math.abs(common.data.temp - common.data.tempLimit)
+    local differenceMulti = 1
+    if not tes3.menuMode() then
+        differenceMulti = math.remap(math.clamp(difference, 0, MAX_DIFFERENCE), 0, MAX_DIFFERENCE, 1.0, MAX_MULTI)
+    end
+
+    --Move towards external temp
+    common.data.temp = (
+        common.data.temp + 
+        ( common.data.tempLimit - common.data.temp ) * getInternalChangeMultiplier(interval) * differenceMulti
+    )
+
+    hud.updateHUD()
+end
+
+function this.update(source)
+    this.calculate(0)
 end
 
 return this

@@ -8,10 +8,10 @@ this.list = {
         mcmSetting = "enableThirst",
         ids = {
             "ex_vivec_waterfall_01",
-            "Ex_Vivec_waterfall_03",
-            "Ex_Vivec_waterfall_05",
-            "In_OM_waterfall",
-            "In_OM_waterfall_small",
+            "ex_vivec_waterfall_03",
+            "ex_vivec_waterfall_05",
+            "in_om_waterfall",
+            "in_om_waterfall_small",
         }
     },
     well = Activator:new{ 
@@ -98,7 +98,7 @@ this.list = {
     campfire = Activator:new{
         name = "Campfire", 
         type = Activator.types.campfire,
-        mcmSetting = "enableTemperatureEffects",
+        mcmSetting = nil,
         ids = {
            "ashfall_campfire",
         }

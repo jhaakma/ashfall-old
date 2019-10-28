@@ -2,7 +2,7 @@
     Needs displayed in stats menu
 ]]--
 local this = {}
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local function rgbToColor(r, g, b)
     return { (r/255), (g/255), (b/255) }
 end
@@ -36,7 +36,7 @@ this.UIData = {
         fillBarID = tes3ui.registerID("Ashfall:hungerFillBar"),
         conditionID = tes3ui.registerID("Ashfall:hungerConditionId"),
         showUIFunction = this.showThirst,
-        conditionTypes = common.conditions.hunger.states,
+        conditionTypes = common.config.conditions.hunger.states,
         defaultCondition = "satiated",
         conditionValueDataField = "hunger",
         color = rgbToColor(230, 92, 0),
@@ -46,7 +46,7 @@ this.UIData = {
         fillBarID = tes3ui.registerID("Ashfall:thirstFillBar"),
         conditionID = tes3ui.registerID("Ashfall:thirstConditionId"),
         showUIFunction = this.showThirst,
-        conditionTypes = common.conditions.thirst.states,
+        conditionTypes = common.config.conditions.thirst.states,
         defaultCondition = "hydrated",
         conditionValueDataField = "thirst",
         color = rgbToColor(0, 143, 179),
@@ -56,7 +56,7 @@ this.UIData = {
         fillBarID = tes3ui.registerID("Ashfall:sleepFillBar"),
         conditionID = tes3ui.registerID("Ashfall:sleepConditionId"),
         showUIFunction = this.showThirst,
-        conditionTypes = common.conditions.sleep.states,
+        conditionTypes = common.config.conditions.sleep.states,
         defaultCondition = "rested",
         conditionValueDataField = "sleep",
         color = rgbToColor(0, 204, 0),
@@ -229,7 +229,7 @@ function this.addNeedsBlockToMenu(e, need)
 
     fillBar.widget.fillColor = this.UIData[need].color
 
-    local conditionText = common.conditions[need].states[common.data.currentStates[need]].text
+    local conditionText = common.config.conditions[need]:getCurrentStateText()
 
     local conditionLabel = block:createLabel({ id = this.UIData[need].conditionID, text = conditionText})
     setupConditionLabel(conditionLabel)

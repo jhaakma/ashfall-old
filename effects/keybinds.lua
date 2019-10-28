@@ -1,4 +1,4 @@
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 
 local function makeAxe()
     tes3.messageBox("Making Stone axe")
@@ -16,7 +16,7 @@ local buttons = {
 
 local function craftingMenu()
     if tes3.player and not tes3.menuMode() then
-        common.messageBox({
+        common.helper.messageBox({
             message = "Ashfall Crafting Menu",
             buttons = buttons
         })

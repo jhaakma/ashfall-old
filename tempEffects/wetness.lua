@@ -2,18 +2,25 @@
     Wetness mechanics
 ]]--
 local this = {}
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
+
+--register temp effects
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerExternalHeatSource("wetTemp")
+temperatureController.registerRateMultiplier{ id = "wetCoolingRate", coolingOnly = true }
+temperatureController.registerRateMultiplier{ id = "wetWarmingRate", warmingOnly = true }
+
 
 
 --How much rain and thunder increase wetness per game hour (without armor
 local rainEffect = 150
 local thunderEffect = 300
-local dryingMultiplier = 75 --dry per hour at max heat
+local DRYING_MULTI = 125 --dry per hour at max heat
 
 --Boundaries for wetEffects
-this.dampLevel = common.conditions.wetness.states.damp.min
-this.wetLevel = common.conditions.wetness.states.wet.min
-this.soakedLevel = common.conditions.wetness.states.soaked.min
+this.dampLevel = common.config.conditions.wetness.states.damp.min
+this.wetLevel = common.config.conditions.wetness.states.wet.min
+this.soakedLevel = common.config.conditions.wetness.states.soaked.min
 
 --Height at which Player gets wetEfects
 local dampHeight = 50
@@ -24,7 +31,7 @@ local soakedHeight = 110
 local wetTempMax = -25
 
 function this.checkForShelter()
-    local sheltered = common.checkRefSheltered()
+    local sheltered = common.helper.checkRefSheltered()
     if sheltered ~= nil then
         common.data.isSheltered = sheltered  
     end
@@ -75,7 +82,7 @@ function this.calculateWetTemp(timeSinceLastRan)
     local weather = tes3.getCurrentWeather()
     if not weather then return end
     local playerTemp = common.data.temp or 0
-    local tempMultiplier = 0.5 + ( ( playerTemp + 100 ) / 400 ) --between 0.5 and 1.0
+    
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
     if weather.rainActive and not cell.isInterior then
@@ -92,8 +99,9 @@ function this.calculateWetTemp(timeSinceLastRan)
     end
     --Drying off (indoors or clear weather)
     if common.data.isSheltered then
-        local dryCoverageEffect = 1 - ( coverage / 2 )
-        local dryChange = ( tempMultiplier * timeSinceLastRan * dryingMultiplier * dryCoverageEffect )
+        local dryCoverageEffect = math.remap(common.data.coverageRating, 0, 1.0, 1.0, 0.5)
+        local tempMultiplier = math.remap(math.max(playerTemp, 0), 0, 100, 1.0, 3.0)
+        local dryChange = ( tempMultiplier * timeSinceLastRan * dryCoverageEffect * DRYING_MULTI )
         currentWetness = currentWetness - dryChange
     end
     --assert min/max values
@@ -104,7 +112,11 @@ function this.calculateWetTemp(timeSinceLastRan)
     common.data.wetness = currentWetness
     common.data.wetTemp = (currentWetness / 100) * wetTempMax
 
+    common.data.wetCoolingRate = math.remap( currentWetness, 0, 100, 1.0, 2 )
+    common.data.wetWarmingRate = math.remap( currentWetness, 0, 100, 1.0, 0.5 )
 end
+
+
 
 return this
 

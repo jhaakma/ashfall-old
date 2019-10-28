@@ -1,6 +1,6 @@
-local common = require('mer.ashfall.common')
-local hungerCommon = require('mer.ashfall.needs.hunger.hungerCommon')
-local thirstCommon = require('mer.ashfall.needs.thirst.thirstCommon')
+local common = require("mer.ashfall.common.common")
+local hungerController = require('mer.ashfall.needs.hunger.hungerController')
+local thirstController = require('mer.ashfall.needs.thirst.thirstController')
 local foodTypes = require("mer.ashfall.camping.foodTypes")
 local function setupOuterBlock(e)
     e.flowDirection = 'left_to_right'
@@ -31,13 +31,13 @@ end
 
 
 --Recursively prints the children of an element to the logs
-local tabCount = tabCount or 0
+local tabCount = 0
 local function printElementTree(e)
     tabCount = tabCount + 1
     for i = 1, #e.children do
         local child = e.children[i]
         local printString = ''
-        for i = 1, tabCount do
+        for _ = 1, tabCount do
             printString = '  ' .. printString
         end
         printString = printString .. '- ' .. child.name .. ', ID: ' .. child.id
@@ -52,13 +52,14 @@ end
 --Adds fillbar showing how much water is left in a bottle. 
 --Height of fillbar border based on capacity of bottle.
 local function updateWaterIndicatorValues(e)
+    if common.data and not common.data.mcmSettings.enableThirst then return end
 
-    local bottleData = thirstCommon.getBottleData(e.item.id)
+    local bottleData = thirstController.getBottleData(e.item.id)
 
     if bottleData then
         local liquidLevel =  e.itemData and e.itemData.data.waterAmount or 0
         local capacity = bottleData.capacity
-        local maxHeight = 32 * ( capacity / thirstCommon.capacities.MAX)
+        local maxHeight = 32 * ( capacity / common.config.capacities.MAX)
 
         local indicatorBlock = e.element:createThinBorder()
         indicatorBlock.consumeMouseEvents = false
@@ -100,7 +101,7 @@ local function createNeedsTooltip(e)
     if doFoodToolTip then
 
         --hunger value
-        local foodValue = hungerCommon.getFoodValue(e.object, e.itemData)
+        local foodValue = hungerController.getFoodValue(e.object, e.itemData)
         if foodValue and foodValue ~= 0 then
             labelText = string.format('Food Value: %d', foodValue)
             createTooltip(tooltip, labelText)
@@ -117,7 +118,7 @@ local function createNeedsTooltip(e)
                     cookedLabel = " (Raw)"
                 elseif cookedAmount < 100 then
                     cookedLabel = string.format(" (%d%% Cooked)", cookedAmount)
-                elseif cookedAmount < hungerCommon.getBurnLimit() then
+                elseif cookedAmount < hungerController.getBurnLimit() then
                     cookedLabel = " (Cooked)"
                 else
                     cookedLabel = " (Burnt)"
@@ -131,7 +132,7 @@ local function createNeedsTooltip(e)
     end
 
     if common.data.mcmSettings.enableThirst then
-        local bottleData = thirstCommon.getBottleData(e.object.id)
+        local bottleData = thirstController.getBottleData(e.object.id)
         if bottleData then
             local liquidLevel = e.itemData and e.itemData.data.waterAmount or 0
             labelText = string.format('Water: %d/%d', math.ceil(liquidLevel), bottleData.capacity)
@@ -196,7 +197,7 @@ local function warmthTooltip()
     for _, warmEffect in ipairs(getWarmEffects()) do
         if warmEffect.value and warmEffect.value > 0 then
             local text = string.format("%s: %d pts", warmEffect.text, warmEffect.value)
-            local label = tooltip:createLabel{ text = text}
+            tooltip:createLabel{ text = text}
        end
     end
 end
@@ -204,13 +205,20 @@ end
 
 local warmthBlockID = tes3ui.registerID("Ashfall_WarmthIcon")
 local function updateBuffIcons()
+    if not common.data then return end
+
     timer.frame.delayOneFrame(function()
+
         local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
         if menu then
             
             local iconsBlock = menu:findChild(tes3ui.registerID("MenuMulti_magic_icons_box")).parent
             
             local warmthBlock = menu:findChild(warmthBlockID)
+            if not common.data.mcmSettings.enableTemperatureEffects then 
+                if warmthBlock then warmthBlock:destroy() end
+                return 
+            end
             if not warmthBlock then
 
                 warmthBlock = iconsBlock:createThinBorder({ id = warmthBlockID})

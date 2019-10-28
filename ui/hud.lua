@@ -1,6 +1,6 @@
 local this = {}
 
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local tooltips = require("mer.ashfall.ui.hudTooltips")
 local needsUI = require("mer.ashfall.needs.needsUI")
 
@@ -23,14 +23,17 @@ local IDs = {
     hunger = tes3ui.registerID("Ashfall:HUD_HungerBar"),
     thirst = tes3ui.registerID("Ashfall:HUD_ThirstBar"),
     sleep = tes3ui.registerID("Ashfall:HUD_SleepBar"),
+
+
+    healthBlocker = tes3ui.registerID("Ashfall:HUD_healthBlocker"),
+    magicBlocker = tes3ui.registerID("Ashfall:HUD_magicBlocker"),
+    fatigueBlocker = tes3ui.registerID("Ashfall:HUD_fatigueBlocker"),
 }
 
 local function findHUDElement(id)
     local multiMenu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     return multiMenu:findChild( id )
 end
-
-
 
 
 function this.updateHUD()
@@ -43,12 +46,11 @@ function this.updateHUD()
 
         local outerBlock = findHUDElement(IDs.outerBlock)
         if outerBlock then
-            local temp = common.data.temp or 0
-            local tempLimit = common.data.tempLimit
             --Get values
-            local tempPlayer = math.clamp(temp, -100, 100) or 0
-            local tempLimit = math.clamp(tempLimit, -100, 100) or 0
-            local condition = common.conditions.temp.states[( common.data.currentStates.temp  or "comfortable" )].text
+            local tempPlayer = math.clamp((common.data.temp or 0), -100, 100) or 0
+            local tempLimit = math.clamp((common.data.tempLimit), -100, 100) or 0
+
+            local condition = common.config.conditions.temp.states[( common.data.currentStates.temp  or "comfortable" )].text
             local wetness = common.data.wetness or 0
             wetness = math.clamp(wetness, 0, 100) or 0
 
@@ -148,11 +150,13 @@ function this.updateHUD()
             else
                 sleepBar.parent.visible = false
             end
+
             needsBlock:updateLayout()
         else
             needsBlock.visible = false
         end
         
+       
 
     end
 
@@ -374,12 +378,19 @@ local function createHUD(e)
         outerBlock = quickFormat(outerBlock, 0)
         createTempHUD(outerBlock)
 
-        
         mainBlock:reorderChildren(1, -2, 2)
 
-        
 end
 
-event.register("uiActivated", createHUD, { filter = "MenuMulti" })
+
+
+
+local function createUI(e)
+    createHUD(e)
+end
+
+
+
+event.register("uiActivated", createUI, { filter = "MenuMulti" })
 
 return this

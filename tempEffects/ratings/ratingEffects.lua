@@ -1,6 +1,11 @@
 local ui = require("mer.ashfall.tempEffects.ratings.ratingUI")
 local ratings = require("mer.ashfall.tempEffects.ratings.ratings")
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
+
+--Register heat source
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerInternalHeatSource("warmthRating")
+temperatureController.registerRateMultiplier("coverageMulti")
 
 local function updateRatings()
     local warmth = ratings.getTotalWarmth()
@@ -8,12 +13,29 @@ local function updateRatings()
 
     local coverage = ratings.getTotalCoverage()
     common.data.coverageRating = coverage
+    common.data.coverageMulti = math.remap(coverage, 0, 1, 1, 0.25 )
 
-    ui.updateRatingsUI()
+    
 end
 
- 
+event.register("Ashfall:dataLoaded", function()
+    updateRatings()
+    ui.updateRatingsUI()
 
-event.register("unequipped", updateRatings)
-event.register("equipped", updateRatings)
-event.register("Ashfall:dataLoaded", updateRatings)
+    timer.start({
+        duration = 1,
+        callback = function()
+
+            event.register("unequipped", function()
+                updateRatings()
+                temperatureController.update("ratingsEffect: unequipped")
+                ui.updateRatingsUI()
+            end)
+            event.register("equipped", function()
+                updateRatings()
+                temperatureController.update("ratingsEffect: equipped")
+                ui.updateRatingsUI()
+            end)
+        end
+    })
+end)

@@ -1,8 +1,12 @@
 --[[
     Script to check if player is holding a torch and set torchTemp
 ]]--
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local this = {}
+
+--Register heat source
+local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerExternalHeatSource("torchTemp")
 
 local minHeat = 5
 local maxHeat = 15

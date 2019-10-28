@@ -1,5 +1,5 @@
 local this = {}
-local common = require("mer.ashfall.common")
+local common = require("mer.ashfall.common.common")
 local ratingsCommon = require("mer.ashfall.tempEffects.ratings.ratings")
 
 
@@ -9,6 +9,10 @@ local function quickFormat(element, padding)
     element.autoWidth = true
     return element
 end
+
+
+
+
 
 --[[
     Create warmth and coverage ratings inside the Character Box in the inventory menu
@@ -34,8 +38,7 @@ local function createRatingsUI()
         local warmthLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:WarmthRating"), text = warmthText }) 
 
         local coverageText = "Coverage: "
-        local coverageLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:CoverageRating"), text = coverageText }) 
-
+        outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:CoverageRating"), text = coverageText }) 
         --characterBox:reorderChildren(0, outerBlock, 1)
 
         inventoryMenu:updateLayout()
@@ -58,7 +61,7 @@ function this.updateRatingsUI()
         local coverageLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:CoverageRating"))
         local coverageValue = ratingsCommon.getAdjustedCoverage(  common.data.coverageRating )
         coverageValue = math.clamp( coverageValue, 0, 100 )
-        coverageLabel.text = "Coverage: " .. coverageValue
+        coverageLabel.text = string.format("Coverage: %d%%", coverageValue)
 
         inventoryMenu:updateLayout()
     end

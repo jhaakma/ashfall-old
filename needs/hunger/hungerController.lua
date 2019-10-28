@@ -4,7 +4,15 @@ local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
 local foodTypes = require("mer.ashfall.camping.foodTypes")
+local meals = require("mer.ashfall.cooking.meals")
+
 local temperatureController = require("mer.ashfall.temperatureController")
+temperatureController.registerBaseTempMultiplier({ id = "hungerEffect", coldOnly = true })
+
+local coldMulti = 2.0
+local HUNGER_EFFECT_LOW = 1.3
+local HUNGER_EFFECT_HIGH = 1.0
+local restMultiplier = 1.0
 
 function this.isFood(foodObject)
     local config = mwse.loadConfig("ashfall/config")
@@ -43,7 +51,7 @@ function this.getFoodValue(object, itemData)
     if cookedAmount then
         local cooking = common.skills.cooking.value
         local cookingEffect = math.remap(
-            cooking,
+            cooking, 
             common.skillStartValue, 100, 
             foodTypes.cookedMultiMin, foodTypes.cookedMultiMax
         )
@@ -60,7 +68,6 @@ function this.getFoodValue(object, itemData)
             value = ( ( max - min ) / 2 ) + min
         end
     end
-
     return value
 end
 
@@ -74,6 +81,7 @@ function this.eatAmount( amount )
     local amountAte = math.min(amount, currentHunger)
     common.data.hunger = currentHunger - amountAte
     conditionsCommon.updateCondition("hunger")
+    this.calculate(0)
     temperatureController.update("eatAmount")
     needsUI.updateNeedsUI()
     hud.updateHUD()
@@ -93,5 +101,73 @@ function this.processMealBuffs(scriptInterval)
         common.data.mealBuff = nil
     end
 end
+
+function this.calculate(scriptInterval)
+    
+    --Check Ashfall disabled
+    local hungerEnabled = (
+        common.data.mcmSettings.enableHunger
+    )
+    if not hungerEnabled then
+        common.data.hunger = 0
+        return
+    end
+
+    local hungerRate = common.data.mcmSettings.hungerRate / 10
+
+    local hunger = common.data.hunger or 0
+    local temp = common.data.temp or 0
+
+    --Colder it gets, the faster you grow hungry
+    local coldEffect = math.clamp(temp, -100, 0) 
+    
+    coldEffect = math.remap( coldEffect, -100, 0, coldMulti, 1.0)
+
+    --calculate hunger
+    local resting = (
+        tes3.mobilePlayer.sleeping or
+        tes3.menuMode()
+    )
+    if resting then
+        hunger = hunger + ( scriptInterval * hungerRate * coldEffect * restMultiplier )
+    else
+        hunger = hunger + ( scriptInterval * hungerRate * coldEffect )
+    end
+    hunger = math.clamp( hunger, 0, 100 )
+    common.data.hunger = hunger
+
+    --The hungrier you are, the more extreme cold temps are
+    local hungerEffect = math.remap( hunger, 0, 100, HUNGER_EFFECT_HIGH, HUNGER_EFFECT_LOW )
+    common.data.hungerEffect = hungerEffect
+end
+
+local function applyFoodBuff(foodId)
+    for _, meal in pairs(meals) do
+        if meal.id == foodId then
+            meal:applyBuff()
+            temperatureController.update("applyFoodBuff")
+        end
+    end
+end
+
+local function onEquip(e)    
+    if this.isFood(e.item) then
+        this.eatAmount(this.getFoodValue(e.item, e.itemData))
+        applyFoodBuff(e.item.id)
+
+        --Check for food poisoning
+        if foodTypes.ingredTypes[e.item.id] == foodTypes.TYPE.protein then
+            local cookedAmount = e.itemData and e.itemData.data.cookedAmount or 0
+            if cookedAmount then
+                local chance = 1 - ( cookedAmount / 100 )
+                if math.random() < chance then
+                    common.helper.tryContractDisease("ashfall_d_foodPoison")
+                end
+            end
+        end
+    end
+end
+
+event.register("equip", onEquip, { filter = tes3.player } )
 
 return this

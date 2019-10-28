@@ -1,75 +1,43 @@
 --Updates condition spell effect strength based on player stats
 --Uses base version of spell as a reference to get attribute  values without multiplier
-local common = require("mer.ashfall.common")
-local logger = require("mer.ashfall.logger")
+local common = require("mer.ashfall.common.common")
 
 local this = {}
 
 
 --Update the spell strength to scale with player attributes/level
 
-
-
 function this.updateCondition(id)
-    
+
     if not common.data then return end
-    local conditionData = common.conditions[id]
-    
+    local thisCondition = common.config.conditions[id]
+
     if common.data.currentStates[id] == nil then
-        common.data.currentStates[id] = conditionData.default
+        common.data.currentStates[id] = thisCondition.default
     end
 
-    previousState = common.data.currentStates[id] or conditionData.default
-    local currentValue = common.data[id] or 0
-    local newState
-    local conditionChanging = false
+    local previousState = common.data.currentStates[id] or thisCondition.default
+    
 
-    for stateId, stateData in pairs(conditionData.states) do
+    local currentState = thisCondition:getCurrentState()
 
-        if stateData.min <= currentValue and currentValue <= stateData.max then
-            newState = stateId
-            if newState ~= previousState then--we have changed states
-                conditionChanging = true
-                common.data.currentStates[id] = newState
-                local doShowMessage = (
-                    common.data.mcmSettings[conditionData.showMessageOption] and
-                    common.data.mcmSettings[conditionData.enableOption] and 
-                    not common.data.muteConditionMessages 
-                )
-                if doShowMessage then
-                    tes3.messageBox("You are " .. string.lower(common.conditions[id].states[newState].text) .. "." )
-                end
-
-            end  
-        end
-
-        --We want to updates spells every time to avoid bullshit mwscript issues
-        local spellId = stateData.spell
-        --BROKEN--local hasSpell = tes3.player.object.spells:contains(spellId) 
-
-        local isCurrentState = ( common.data.currentStates[id] == stateId )
-
-        if spellId then
-            if isCurrentState then
-                common.scaleSpellValues(spellId)
-                mwscript.addSpell({ reference = tes3.player, spell = spellId })
-            else
-                mwscript.removeSpell({ reference = tes3.player, spell = spellId })
-            end
-        end   
+    local conditionChanging = ( currentState ~= previousState )
+    if conditionChanging then
+        common.data.currentStates[id] = currentState
+        thisCondition:showUpdateMessages()
     end
+    thisCondition:updateConditionEffects(currentState)
 
     --Restore fatigue if it drops below 0
     if conditionChanging then
-        common.restoreFatigue()
+        common.helper.restoreFatigue()
     end
 
-    
 end
 
 --Update all conditions - called by the script timer
 function this.updateConditions()
-    for name, _ in pairs(common.conditions) do
+    for name, _ in pairs(common.config.conditions) do
         this.updateCondition(name)
     end
 end
@@ -82,20 +50,16 @@ local function refreshAfterRestore(e)
         not string.startswith(e.source.id, "fw")
     )
     if doRefresh then
-        --logger.info("checking refresh")
-        for id, data in pairs(common.conditions) do
+        for id, _ in pairs(common.config.conditions) do
 
             local currentCondition = common.data.currentStates[id]
 
-            local conditionData = common.conditions[id].states
+            local thisCondition = common.config.conditions[id].states
 
-            if conditionData and currentCondition then
-                local spell = conditionData[currentCondition].spell
+            if thisCondition and currentCondition then
+                local spell = thisCondition[currentCondition].spell
 
-               -- logger.info("Spell = %s", spell)
                 if spell and tes3.player.object.spells:contains(spell) then
-                    --logger.info("Refreshing spell: %s", spell)
-                    --mwscript.removeSpell({ reference = tes3.player, spell = spell })
                     mwscript.addSpell({ reference = tes3.player, spell = spell })
                 end
             end
@@ -104,6 +68,18 @@ local function refreshAfterRestore(e)
 end
 
 event.register("spellTick", refreshAfterRestore)
+
+--Extreme Conditions timer
+function this.checkExtremeConditions()
+    
+    -- for _, condition in pairs(common.config.conditions) do
+    --     if common.data[condition.id] <= condition.min then
+    --         if condition.minCallback then condition.minCallback() end
+    --     elseif common.data[condition.id] >= condition.max then
+    --         if condition.maxCallback then condition.maxCallback() end
+    --     end
+    -- end
+end
 
 
 return this
