@@ -1,14 +1,15 @@
 local this = {}
 
 --[[
-    This script creates tooltips when looking at Ashfall activators.
-    Other scripts can see what the player is looking at by checking]
-    this.current
-]]--
+    This script determines what static activator is being looked at, and 
+    creates the tooltip for it. 
+    Other scripts can see what the player is looking at by checking
+    this.getCurrentActivator()
+]]-- 
 
 local common = require("mer.ashfall.common.common")
-local activatorList = require("mer.Ashfall.activators.activatorList")
-this.list = activatorList.list
+local activatorConfig = require("mer.Ashfall.activators.activatorConfig")
+this.list = activatorConfig.list
 this.current = nil
 this.currentRef = nil
 this.parentNode = nil
@@ -17,13 +18,22 @@ function this.getCurrentActivator()
     return this.list[this.current]
 end
 
-local id_indicator = tes3ui.registerID("Ashfall:activatorTooltip")
-local id_label = tes3ui.registerID("Ashfall:activatorTooltipLabel")
+function this.getCurrentType()
+    local currentActivator = this.getCurrentActivator()
+    if currentActivator then
+        return currentActivator.type
+    end
+end
+
+
+
+
 
 --[[
     Create a tooltip when looking at an activator
 ]]--
-
+local id_indicator = tes3ui.registerID("Ashfall:activatorTooltip")
+local id_label = tes3ui.registerID("Ashfall:activatorTooltipLabel")
 function this.getActivatorTooltip()
     local menu = tes3ui.findMenu(tes3ui.registerID("MenuMulti"))
     if menu then
@@ -42,7 +52,7 @@ local function doActivate()
     return (
         this.current and 
         not tes3.menuMode() and 
-        common.data.mcmSettings[this.list[this.current].mcmSetting] ~= false
+        common.data.mcmSettings[this.getCurrentActivator().mcmSetting] ~= false
     )
 end
 
@@ -176,7 +186,6 @@ function this.callRayTest()
     end
     createActivatorIndicator()
 end
---event.register("simulate", callRayTest)
 
 --[[
     triggerActivate:

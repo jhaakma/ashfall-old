@@ -62,15 +62,6 @@ function this.calculate(interval)
         shadeMultiplier
     )
 
-    common.log.debug(
-        "%s * timeMulti(%.2f) * seasonMulti(%.2f), shadeMultiplier(%.2f) = %.2f",
-        HEAT_DEFAULT, 
-        timeMulti,
-        seasonMulti,
-        shadeMultiplier, 
-        sunHeat
-    )
-
     common.data.sunTemp = common.data.sunTemp or 0
     common.data.sunTemp = (
         common.data.sunTemp + 

@@ -10,16 +10,15 @@ local logLevels = {
 
 local params = {
     modName = "Ashfall",
-    configPath = "ashfall/config",
+    configPath = "ashfall",
     default = "INFO"
 }
-
-local config =  mwse.loadConfig(params.configPath)
 
 --[[
     Checks if the current log level is high enough to log the message
 ]]
 local function doLog(logLevel)
+    local config =  mwse.loadConfig(params.configPath)
     local currentLogLevel = config.logLevel or params.default
     return logLevels[currentLogLevel] <= logLevels[logLevel]
 end
@@ -39,6 +38,7 @@ end
 function this.error(str, ...)
     if doLog("ERROR") then
         print( "[" .. params.modName .. ": ERROR]" .. tostring(str):format(...))
+        error(tostring(str):format(...))
     end
 end
 

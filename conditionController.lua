@@ -10,23 +10,22 @@ local this = {}
 function this.updateCondition(id)
 
     if not common.data then return end
-    local thisCondition = common.config.conditions[id]
+    local thisCondition = common.conditions[id]
 
     if common.data.currentStates[id] == nil then
         common.data.currentStates[id] = thisCondition.default
     end
 
     local previousState = common.data.currentStates[id] or thisCondition.default
-    
-
     local currentState = thisCondition:getCurrentState()
 
     local conditionChanging = ( currentState ~= previousState )
     if conditionChanging then
         common.data.currentStates[id] = currentState
         thisCondition:showUpdateMessages()
+        thisCondition:updateConditionEffects(currentState)
     end
-    thisCondition:updateConditionEffects(currentState)
+    
 
     --Restore fatigue if it drops below 0
     if conditionChanging then
@@ -37,7 +36,8 @@ end
 
 --Update all conditions - called by the script timer
 function this.updateConditions()
-    for name, _ in pairs(common.config.conditions) do
+    --if tes3.menuMode() then return end
+    for name, _ in pairs(common.conditions) do
         this.updateCondition(name)
     end
 end
@@ -45,20 +45,16 @@ end
 --Remove and re-add the condition spell if the player healed their stats with a potion or spell. 
 local function refreshAfterRestore(e)
     local doRefresh = (
-        common.data and
         e.effectInstance.state == tes3.spellState.ending and
+        --We aren't checking Ashfall spells, we're checking other spells that might have healed the ashfall spells
         not string.startswith(e.source.id, "fw")
     )
     if doRefresh then
-        for id, _ in pairs(common.config.conditions) do
-
-            local currentCondition = common.data.currentStates[id]
-
-            local thisCondition = common.config.conditions[id].states
-
-            if thisCondition and currentCondition then
-                local spell = thisCondition[currentCondition].spell
-
+        for id, condition in pairs(common.conditions) do
+            local currentState = condition:getCurrentState()
+            local states = common.conditions[id].states
+            if states and currentState then
+                local spell = states[currentState].spell
                 if spell and tes3.player.object.spells:contains(spell) then
                     mwscript.addSpell({ reference = tes3.player, spell = spell })
                 end
@@ -68,18 +64,5 @@ local function refreshAfterRestore(e)
 end
 
 event.register("spellTick", refreshAfterRestore)
-
---Extreme Conditions timer
-function this.checkExtremeConditions()
-    
-    -- for _, condition in pairs(common.config.conditions) do
-    --     if common.data[condition.id] <= condition.min then
-    --         if condition.minCallback then condition.minCallback() end
-    --     elseif common.data[condition.id] >= condition.max then
-    --         if condition.maxCallback then condition.maxCallback() end
-    --     end
-    -- end
-end
-
 
 return this

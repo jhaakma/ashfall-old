@@ -1,6 +1,13 @@
+--[[
+    Adds functionality for a custom wait menu. Instead of fading out 
+    like the vanilla wait menu, it instead goes into vanity/3rd person
+    camera mode and speeds up time. Can wait for up to one hour in this mode. 
+
+]]
+
+
 local this = {}
 local common = require("mer.ashfall.common.common")
-local menuID = tes3ui.registerID("Ashfall:FastTimeMenu")
 local currentSpeed = 1
 
 local DELTA_MIN = 2.0

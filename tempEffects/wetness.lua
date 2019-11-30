@@ -3,6 +3,7 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common.common")
+local wetness = common.conditions.wetness
 
 --register temp effects
 local temperatureController = require("mer.ashfall.temperatureController")
@@ -18,9 +19,9 @@ local thunderEffect = 300
 local DRYING_MULTI = 125 --dry per hour at max heat
 
 --Boundaries for wetEffects
-this.dampLevel = common.config.conditions.wetness.states.damp.min
-this.wetLevel = common.config.conditions.wetness.states.wet.min
-this.soakedLevel = common.config.conditions.wetness.states.soaked.min
+this.dampLevel = common.conditions.wetness.states.damp.min
+this.wetLevel = common.conditions.wetness.states.wet.min
+this.soakedLevel = common.conditions.wetness.states.soaked.min
 
 --Height at which Player gets wetEfects
 local dampHeight = 50
@@ -38,6 +39,7 @@ function this.checkForShelter()
 end
 
 
+
 --[[ 
     Called by tempTimer
 ]]--
@@ -47,12 +49,13 @@ function this.calculateWetTemp(timeSinceLastRan)
     --Check if Ashfall is disabled
     if not common.data.mcmSettings.enableTemperatureEffects then
         common.data.wetness = 0
+        common.data.wetTemp = 0
+        common.data.wetCoolingRate = 1
+        common.data.wetWarmingRate = 1
         return
     end
+    local currentWetness = wetness:getValue()
 
-    local currentWetness = common.data and common.data.wetness or 0
-
-    
     --Check if player is submerged 
     -- does not care about coverage
     local cell = tes3.getPlayerCell()
@@ -80,12 +83,11 @@ function this.calculateWetTemp(timeSinceLastRan)
     --increase wetness if it's raining, otherwise reduce wetness over time
     -- wetness decreased by coverage
     local weather = tes3.getCurrentWeather()
-    if not weather then return end
     local playerTemp = common.data.temp or 0
     
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
-    if weather.rainActive and not cell.isInterior then
+    if weather and weather.rainActive and not cell.isInterior then
         --Raining
         if weather.index == tes3.weather.rain and common.data.isSheltered == false then
             currentWetness = currentWetness + rainEffect * timeSinceLastRan * ( 1.0 - coverage )

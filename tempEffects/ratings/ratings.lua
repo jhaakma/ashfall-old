@@ -1,16 +1,16 @@
 local this = {}
 local data = require('mer.ashfall.tempEffects.ratings.ratingsData')
 local common = require("mer.ashfall.common.common")
-local cachePath = 'ashfall/warmthcache'
+
 local function getCache()
-    return mwse.loadConfig(cachePath) or {
+    return common.getConfig().warmthCache or {
         armor = {},
         clothing = {}
     }
 end
 
 local function saveCache(newCache) 
-    mwse.saveConfig(cachePath, newCache)
+    common.saveConfigValue("warmthCache", newCache)
 end 
 
 

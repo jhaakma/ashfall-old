@@ -13,10 +13,9 @@ local hazardEffects = require("mer.ashfall.tempEffects.hazardEffects")
 local survivalEffect = require("mer.ashfall.survival")
 local sunEffect = require("mer.ashfall.tempEffects.sunEffect")
 local frostBreath = require("mer.ashfall.effects.frostBreath")
-
+local statsEffect = require("mer.ashfall.needs.statsEffect")
 
 --Survival stuff
-local sleepController = require("mer.ashfall.sleepController")    
 local tentController = require("mer.ashfall.tentController")
 local activators = require("mer.ashfall.activators.activatorController")
 
@@ -25,14 +24,14 @@ local needsUI = require("mer.ashfall.needs.needsUI")
 local needs = {
     thirst = require("mer.ashfall.needs.thirst.thirstController"),
     hunger = require("mer.ashfall.needs.hunger.hungerController"),
-    sleep = require("mer.ashfall.needs.sleep.sleepCalculate")
+    tiredness = require("mer.ashfall.needs.sleep.sleepController")
 }
 local hungerController = require("mer.ashfall.needs.hunger.hungerController")
 --How often the script should run in gameTime
 
 local lastTime
 local function callUpdates()
-    
+    if not tes3.player then return end
     local hoursPassed = ( tes3.worldController.daysPassed.value * 24 ) + tes3.worldController.hour.value
     lastTime = lastTime or hoursPassed
     local interval = hoursPassed - lastTime
@@ -42,13 +41,13 @@ local function callUpdates()
     weather.calculateWeatherEffect(interval)
     sunEffect.calculate(interval)
     wetness.calculateWetTemp(interval)
-    sleepController.checkSleeping()
     hungerController.processMealBuffs(interval)
    
     --Needs:
     for _, script in pairs(needs) do
         script.calculate(interval)
     end
+    statsEffect.calculate()
 
     --Heavy scripts
     activators.callRayTest()
@@ -66,11 +65,12 @@ local function callUpdates()
     --visuals
     frostBreath.doFrostBreath()
 
+    tes3.player.data.Ashfall.valuesInitialised = true
     temperatureController.calculate(interval)
     needsUI.updateNeedsUI()
 end
 
-event.register("simulate", callUpdates)
+event.register("enterFrame", callUpdates)
 
 
 
@@ -80,7 +80,7 @@ local function dataLoaded()
         function()
             --Use game timer when sleeping
             timer.start({
-                duration =  1, 
+                duration =  0.5, 
                 callback = function()
                     if tes3.player and tes3.menuMode() then
                         callUpdates()
@@ -88,13 +88,6 @@ local function dataLoaded()
                 end, 
                 type = timer.game, 
                 iterations = -1
-            })
-
-            timer.start({
-                callback = conditions.checkExtremeConditions,
-                type = timer.real,
-                iterations = -1,
-                duration = 2
             })
         end
         

@@ -8,9 +8,9 @@
 
 local thirstController = require("mer.ashfall.needs.thirst.thirstController")
 local common = require("mer.ashfall.common.common")
-local Activator = require("mer.ashfall.objects.Activator")
+local activatorConfig = require("mer.ashfall.activators.activatorConfig")
 
-
+local thirst = common.conditions.thirst
 
 local buttons = {}
 local bDrink = "Drink"
@@ -21,7 +21,7 @@ local function menuButtonPressed(e)
 
     --Drink
     if buttons[buttonIndex] == bDrink then
-        if common.data.thirst <= 0.1 then
+        if thirst:getValue() <= 0.1 then
             tes3.messageBox("You are fully hydrated.")
             return
         end
@@ -55,7 +55,7 @@ end
 event.register(
     "Ashfall:ActivatorActivated", 
     callWatermenu, 
-    { filter = Activator.types.waterSource } 
+    { filter = activatorConfig.types.waterSource } 
 )
 
 event.register(
@@ -64,7 +64,7 @@ event.register(
         common.data.drinkingDirtyWater = true
         callWatermenu()
     end, 
-    { filter = Activator.types.dirtyWaterSource } 
+    { filter = activatorConfig.types.dirtyWaterSource } 
 )
 
 
@@ -135,7 +135,7 @@ local function doDrinkWater(e)
     thisSipSize = math.min( thisSipSize, e.itemData.data.waterAmount )
 
     --Only drink as much as player needs
-    local hydrationNeeded = common.data.thirst
+    local hydrationNeeded = thirst:getValue()
     thisSipSize = math.min( hydrationNeeded, thisSipSize)
 
     --Reduce liquid in bottle
@@ -150,7 +150,7 @@ local function drinkFromContainer(e)
     --First check potions, gives a little hydration
     if e.item.objectType == tes3.objectType.alchemy then
         local thisSipSize = potionSipSize
-        thisSipSize = math.min( common.data.thirst, thisSipSize)
+        thisSipSize = math.min( thirst:getValue(), thisSipSize)
         thirstController.drinkAmount(thisSipSize)
     end
 

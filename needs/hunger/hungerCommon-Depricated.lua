@@ -7,7 +7,7 @@ local foodTypes = require("mer.ashfall.camping.foodTypes")
 local temperatureController = require("mer.ashfall.temperatureController")
 
 function this.isFood(foodObject)
-    local config = mwse.loadConfig("ashfall/config")
+    local config = mwse.loadConfig("ashfall")
     if not config then 
         common.log.info("Error: no config found")
     end
@@ -66,13 +66,13 @@ end
 
 
 function this.eatAmount( amount ) 
-    if not common.data.mcmSettings.enableHunger then
+    local hunger = common.conditions.hunger
+    if not hunger:isActive() then
         return
     end
-
-    local currentHunger = common.data.hunger or  0
+    local currentHunger = hunger:getValue()
     local amountAte = math.min(amount, currentHunger)
-    common.data.hunger = currentHunger - amountAte
+    hunger:setValue(currentHunger - amountAte)
     conditionsCommon.updateCondition("hunger")
     temperatureController.update("eatAmount")
     needsUI.updateNeedsUI()

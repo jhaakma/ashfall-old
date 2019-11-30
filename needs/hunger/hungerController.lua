@@ -5,20 +5,20 @@ local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
 local foodTypes = require("mer.ashfall.camping.foodTypes")
 local meals = require("mer.ashfall.cooking.meals")
+local statsEffect = require("mer.ashfall.needs.statsEffect")
 
 local temperatureController = require("mer.ashfall.temperatureController")
 temperatureController.registerBaseTempMultiplier({ id = "hungerEffect", coldOnly = true })
 
-local coldMulti = 2.0
+local coldMulti = 5.0
 local HUNGER_EFFECT_LOW = 1.3
 local HUNGER_EFFECT_HIGH = 1.0
 local restMultiplier = 1.0
+local hunger = common.conditions.hunger
+
 
 function this.isFood(foodObject)
-    local config = mwse.loadConfig("ashfall/config")
-    if not config then 
-        common.log.info("Error: no config found")
-    end
+    local config = common.getConfig()
     local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
     return (
         foodObject.objectType == tes3.objectType.ingredient and
@@ -77,11 +77,25 @@ function this.eatAmount( amount )
         return
     end
 
-    local currentHunger = common.data.hunger or  0
+
+    local currentHunger = hunger:getValue()
     local amountAte = math.min(amount, currentHunger)
-    common.data.hunger = currentHunger - amountAte
+
+    --Get the health stat before and after applying the hunger
+    local before = statsEffect.getMaxStat("health")
+    hunger:setValue(currentHunger - amountAte)
+    local after = statsEffect.getMaxStat("health")
+
+    --Increase health by how much was gained by eating
+    local healthIncrease = after - before
+    tes3.modStatistic{
+        reference = tes3.mobilePlayer,
+        current = healthIncrease,
+        name = "health",
+        limit = true
+    }
     conditionsCommon.updateCondition("hunger")
-    this.calculate(0)
+    this.update()
     temperatureController.update("eatAmount")
     needsUI.updateNeedsUI()
     hud.updateHUD()
@@ -102,47 +116,55 @@ function this.processMealBuffs(scriptInterval)
     end
 end
 
-function this.calculate(scriptInterval)
-    
+
+
+
+function this.calculate(scriptInterval, forceUpdate)
+    if not forceUpdate and scriptInterval == 0 then return end
+
     --Check Ashfall disabled
-    local hungerEnabled = (
-        common.data.mcmSettings.enableHunger
-    )
-    if not hungerEnabled then
-        common.data.hunger = 0
+    if not hunger:isActive() then
+        hunger:setValue(0)
+        return
+    end
+    if common.data.blockNeeds == true then
         return
     end
 
     local hungerRate = common.data.mcmSettings.hungerRate / 10
 
-    local hunger = common.data.hunger or 0
-    local temp = common.data.temp or 0
-
-    --Colder it gets, the faster you grow hungry
-    local coldEffect = math.clamp(temp, -100, 0) 
+    local newHunger = hunger:getValue()
     
-    coldEffect = math.remap( coldEffect, -100, 0, coldMulti, 1.0)
+    local temp = common.conditions.temp
+    --Colder it gets, the faster you grow hungry
+    local coldEffect = math.clamp(temp:getValue(), temp.states.freezing.min, temp.states.chilly.max) 
+    
+    coldEffect = math.remap( coldEffect, temp.states.freezing.min,  temp.states.chilly.max, coldMulti, 1.0)
 
-    --calculate hunger
+    --calculate newHunger
     local resting = (
         tes3.mobilePlayer.sleeping or
         tes3.menuMode()
     )
     if resting then
-        hunger = hunger + ( scriptInterval * hungerRate * coldEffect * restMultiplier )
+        newHunger = newHunger + ( scriptInterval * hungerRate * coldEffect * restMultiplier )
     else
-        hunger = hunger + ( scriptInterval * hungerRate * coldEffect )
+        newHunger = newHunger + ( scriptInterval * hungerRate * coldEffect )
     end
-    hunger = math.clamp( hunger, 0, 100 )
-    common.data.hunger = hunger
+    hunger:setValue(newHunger)
+
 
     --The hungrier you are, the more extreme cold temps are
-    local hungerEffect = math.remap( hunger, 0, 100, HUNGER_EFFECT_HIGH, HUNGER_EFFECT_LOW )
+    local hungerEffect = math.remap( newHunger, 0, 100, HUNGER_EFFECT_HIGH, HUNGER_EFFECT_LOW )
     common.data.hungerEffect = hungerEffect
 end
 
+function this.update()
+    this.calculate(0, true)
+end
+
 local function applyFoodBuff(foodId)
-    for _, meal in pairs(meals) do
+    for _, meal in pairs(meals) do 
         if meal.id == foodId then
             meal:applyBuff()
             temperatureController.update("applyFoodBuff")

@@ -13,7 +13,6 @@ function this.calculate()
 end
 
 local function checkConditions()
-
     if not common.data then return end
     if not common.data.mcmSettings.enableTemperatureEffects then return end
 
@@ -36,7 +35,7 @@ local function checkConditions()
     --Increase when warming up next to a campfire
     if common.data.nearCampfire then
         local fireInc = math.remap(common.data.fireTemp, 0, 100, 1, 5)
-        common.log.debug("Fire effect: %s", fireInc)
+        
         totalIncrease = totalIncrease + fireInc
     end
 
@@ -46,7 +45,6 @@ local function checkConditions()
     end
 
     if totalIncrease > 0 then
-        common.log.debug("progressing survival skill by %s", totalIncrease)
         common.skills.survival:progressSkill(totalIncrease)
     end
 end

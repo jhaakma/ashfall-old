@@ -111,12 +111,12 @@ function CookingMenu:createRecipeSelect(parentBlock, recipe)
     background.autoHeight = true
     background.alpha = self.selectedAlpha
     background.paddingAllSides = self.padding - 4
-    local recipeSelect = background:createTextSelect({ id = "recipe", text = recipe.name, state = state })   
+    local recipeSelect = background:createTextSelect({ id = "recipe", text = recipe.name })   
     
     
     recipeSelect:register(
         "mouseClick", 
-        function(e)
+        function()
             self:selectRecipe({ buttonBlock = background, recipe = recipe })
         end
     )
@@ -160,8 +160,8 @@ end
 
 function CookingMenu:createIngredientsList(parentBlock, recipe)
 
-    local function createIngredientItem(parentBlock, ingredient)
-        local ingredBlock = parentBlock:createBlock()
+    local function createIngredientItem(parent, ingredient)
+        local ingredBlock = parent:createBlock()
         ingredBlock.widthProportional = 1.0
         ingredBlock.autoHeight = true
         ingredBlock.flowDirection = "left_to_right"
@@ -193,19 +193,19 @@ end
 
 function CookingMenu:createEffectsList(parentBlock, recipe)
 
-    local function makeEffectBlock(parentBlock)
-        local block = parentBlock:createBlock()
-        block.widthProportional = parentBlock.widthProportional
-        block.autoWidth = parentBlock.autoWidth
-        block.autoHeight = parentBlock.autoHeight
+    local function makeEffectBlock(parent)
+        local block = parent:createBlock()
+        block.widthProportional = parent.widthProportional
+        block.autoWidth = parent.autoWidth
+        block.autoHeight = parent.autoHeight
         block.paddingBottom = self.padding / 2
         block.paddingTop = self.padding / 2
         block.flowDirection = "left_to_right"
         return block
     end
 
-    local function createEffectItem(parentBlock, effect)
-        local block = makeEffectBlock(parentBlock)
+    local function createEffectItem(parent, effect)
+        local block = makeEffectBlock(parent)
 
         local imagePath = string.format("icons\\%s", effect.object.icon)
         local icon = block:createImage{ path = imagePath, id = tes3ui.registerID("effectIcon") }
@@ -254,7 +254,7 @@ function CookingMenu:createDuration(parentBlock, recipe)
     durationPane.paddingBottom = 4
 
     local text = string.format("%s minutes", recipe.duration)
-    local label = durationPane:createLabel({ text = text })
+    durationPane:createLabel({ text = text })
 end
 
 
@@ -386,7 +386,7 @@ end
 
 function CookingMenu:cookMeal()
     local function finishCooking()
-        tes3.runLegacyScript({params})
+        --tes3.runLegacyScript({params})
         local meal = tes3.getObject(self.selectedRecipe.meal.id)
         tes3.messageBox("You have cooked %s", meal.name)
         mwscript.addItem({ reference = tes3.player, item = meal, count = 1})

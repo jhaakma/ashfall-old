@@ -6,25 +6,25 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common.common")
-local activators = require("mer.ashfall.activators.activatorController")
+local activatorConfig = require("mer.ashfall.activators.activatorConfig")
 ---CONFIGS----------------------------------------
 --max distance where fire has an effect
 local heatValues = {
     lantern = 3,
-    lamp = 3,
-    candle = 5, 
-    chandelier = 3,
+    lamp = 2,
+    candle = 3, 
+    chandelier = 2,
     sconce = 10,
-    torch = 20,
-    fire = 25,
-    flame = 30,
+    torch = 12,
+    fire = 18,
+    flame = 20,
 }
 
 
 
 local heatDefault = 5
-local heatFirepit = 50
-local maxDistance = 350
+local maxFirepitHeat = 40
+local maxDistance = 340
 --Multiplier when warming hands next to firepit
 local warmHandsBonus = 1.4
 --------------------------------------------------
@@ -49,7 +49,7 @@ end
 
 --Check Ids to see if this light is a firepit of some kind
 local function checkForFirePit(id)
-    local patterns = activators.list.fire.ids
+    local patterns = activatorConfig.list.fire.ids
     for _, pattern in pairs(patterns) do
         if string.find( string.lower(id), pattern) then
             return true
@@ -59,7 +59,7 @@ local function checkForFirePit(id)
 end
 
 function this.calculateFireEffect()
-    if not common.config.conditions.temp:isActive() then return end
+    if not common.conditions.temp:isActive() then return end
     local totalHeat = 0
     local closeEnough
     common.data.nearCampfire = false
@@ -91,7 +91,7 @@ function this.calculateFireEffect()
                             maxHeat = 0
                         end
                     elseif checkForFirePit(ref.object.id) then
-                        maxHeat = heatFirepit
+                        maxHeat = maxFirepitHeat
                         closeEnough = true
                         
                         checkWarmHands()

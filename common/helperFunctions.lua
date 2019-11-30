@@ -65,6 +65,7 @@ function this.checkRefSheltered(reference)
     return sheltered
 end
 
+
 --[[
     Allows the creation of messageboxes using buttons that each have their own callback.
     {
@@ -75,14 +76,11 @@ end
     }
 ]]
 function this.messageBox(params)
-
     --[[
         Button = { text, callback}
     ]]--
-
     local message = params.message
     local buttons = params.buttons
-
     local function callback(e)
         --get button from 0-indexed MW param
         local button = buttons[e.button+1]
@@ -90,13 +88,11 @@ function this.messageBox(params)
             button.callback()
         end
     end
-
     --Make list of strings to insert into buttons
     local buttonStrings = {}
     for _, button in ipairs(buttons) do
         table.insert(buttonStrings, button.text)
     end
-
     tes3.messageBox({
         message = message,
         buttons = buttonStrings,
@@ -117,10 +113,8 @@ function this.createSliderPopup(params)
         okayCallback - function called on Okay
         cancelCallback - function called on Cancel
     ]]
-
     local menu = tes3ui.createMenu{ id = menuId, fixedFrame = true }
     tes3ui.enterMenuMode(menuId)
-
     --Slider
     local sliderBlock = menu:createBlock()
     sliderBlock.width = 500
@@ -142,12 +136,10 @@ function this.createSliderPopup(params)
     buttonBlock.autoHeight = true
     buttonBlock.widthProportional = 1.0
     buttonBlock.childAlignX = 1.0
-
     --Okay
     local okayButton = buttonBlock:createButton{
         text = tes3.findGMST(tes3.gmst.sOK).value
     }
-
     okayButton:register("mouseClick",
         function()
             menu:destroy()
@@ -157,7 +149,6 @@ function this.createSliderPopup(params)
             end
         end
     )
-
     --Cancel
     local cancelButton = buttonBlock:createButton{
         text = tes3.findGMST(tes3.gmst.sCancel).value
@@ -182,10 +173,9 @@ function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
     local function fadeTimeIn()
         tes3.runLegacyScript({command = "EnablePlayerControls"})
         callback()
-        tes3.player.data.Ashfall.muteConditionMessages = false
+        tes3.player.data.Ashfall.fadeBlock = false
     end
-
-    tes3.player.data.Ashfall.muteConditionMessages = true
+    tes3.player.data.Ashfall.fadeBlock = true
     tes3.fadeOut({ duration = 0.5 })
     tes3.runLegacyScript({command = "DisablePlayerControls"})
     --Halfway through, advance gamehour
@@ -221,7 +211,6 @@ function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
     })
 end
 
-
 --[[
     Restore lost fatigue to prevent collapsing
 ]]
@@ -231,7 +220,6 @@ function this.restoreFatigue()
         type = timer.real,
         iterations = 1,
         duration = 0.01,
-
         callback = function()
             local newFatigue = tes3.mobilePlayer.fatigue.current
             if previousFatigue >= 0 and newFatigue < 0 then
@@ -244,20 +232,14 @@ end
 --[[
     Attempt to contract a disease
 ]]
-
-
 function this.tryContractDisease(spellID)
-
     local resistDisease = tes3.mobilePlayer.resistCommonDisease 
     local survival = skillModule.getSkill("Ashfall:Survival").value
-
     local resistEffect = math.remap( math.min(resistDisease, 100), 0, 100, 1.0, 0.0 )
     local survivalEffect =  math.remap( math.min(survival, 100), 0, 100, 1.0, 0.5 )
 
     local defaultChance = 0.3
-
     local catchChance = defaultChance * resistEffect * survivalEffect
-    
     if math.random() < catchChance then
         local spell = tes3.getObject(spellID)
         tes3.messageBox(tes3.findGMST(tes3.gmst.sMagicContractDisease).value, spell.name)
@@ -275,11 +257,8 @@ function this.getSeasonMultiplier()
     day = day or tes3.worldController.day
     month = month or tes3.worldController.month
     local dayOfYear = day.value + tes3.getCumulativeDaysForMonth(month.value)
-
     local dayAdjusted = dayOfYear < 196 and dayOfYear  or ( 196 - ( dayOfYear - 196 ) ) 
-    
     local seasonMultiplier = math.remap(dayAdjusted, 0, 196, 0, 1)
     return seasonMultiplier
 end
-
 return this

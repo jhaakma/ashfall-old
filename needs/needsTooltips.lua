@@ -59,7 +59,7 @@ local function updateWaterIndicatorValues(e)
     if bottleData then
         local liquidLevel =  e.itemData and e.itemData.data.waterAmount or 0
         local capacity = bottleData.capacity
-        local maxHeight = 32 * ( capacity / common.config.capacities.MAX)
+        local maxHeight = 32 * ( capacity / common.staticConfigs.capacities.MAX)
 
         local indicatorBlock = e.element:createThinBorder()
         indicatorBlock.consumeMouseEvents = false

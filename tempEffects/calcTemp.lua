@@ -33,7 +33,7 @@ local tempReal
 local tempLimit
 local tempPlayer
 
---How slowly changes during sleep
+--How slowly changes during tiredness
 local sleepMulti = 0.7
 
 --[[------------------------------------------------------------------
@@ -223,7 +223,7 @@ local function onKeyG(e)
                 --common.data.armorCoverage, common.data.clothingCoverage )
             --tes3.messageBox("Weather Temp: %.2f, int Weather: %s",
                 --common.data.weatherTemp, ( common.data.intWeatherEffect or "nil"  ))
-            --tes3.messageBox("Thirst: %.0f", ( common.data.thirst or "nil" ) )
+            --tes3.messageBox("Thirst: %.0f", ( thirst:getValue() or "nil" ) )
         end
     end
 end

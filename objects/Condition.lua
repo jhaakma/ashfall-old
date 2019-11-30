@@ -8,10 +8,11 @@ Condition.fields = {
     showMessageOption = true,
     enableOption = true,
     states = true,
-    min = true,
+    minDebuffState = true,
+    min = true, 
     max = true,
     minCallback = true,
-    maxCallback = true
+    maxCallback = true,
 }
 
 
@@ -21,8 +22,8 @@ local function scaleSpellValues(spellID)
         return
     end
     
-    local BASE_STAT = 40
-    local BASE_LEVEL = 20
+    local BASE_STAT = 60
+    local BASE_LEVEL = 30
     local ignoreList = {
         "fw_cond_warm",
         "fw_wetcond_soaked",
@@ -72,32 +73,36 @@ end
 function Condition:showUpdateMessages()
     if (
         self:isActive() and
-        ( tes3.player.data.Ashfall.muteConditionMessages ~= true ) and
+        ( tes3.player.data.Ashfall.fadeBlock ~= true ) and
         ( tes3.player.data.Ashfall.mcmSettings[self.showMessageOption] == true ) 
     ) then
-        tes3.messageBox(self:getCurrentStateText())
+        tes3.messageBox(self:getCurrentStateMessage())
     end
 end
 
 
-function Condition:getCurrentStateText()
-    local state = tes3.player.data.Ashfall.currentStates[self.id]
-    return string.format("You are %s.", self.states[state].text)
+function Condition:getCurrentStateMessage()
+    return string.format("You are %s.", self:getCurrentStateData().text )
+end
+
+function Condition:getCurrentStateData()
+    return self.states[self:getCurrentState()]
 end
 
 --[[
-    Returns the current state the player is in for this condition
+    Returns the current state ID the player is in for this condition
 ]]
 function Condition:getCurrentState()
-    local currentValue = (tes3.player.data.Ashfall[self.id] ~= nil ) and tes3.player.data.Ashfall[self.id] or 0
+    local currentState = self.default
+    local currentValue = self:getValue()
     currentValue = math.clamp(currentValue, self.min, self.max)
 
-    for state, values in pairs (self.states) do
+    for id, values in pairs (self.states) do
         if values.min <= currentValue and currentValue <= values.max then
-             return state
+            currentState = id
         end
     end
-    return self.default
+    return currentState
 end
 
 function Condition:updateConditionEffects(currentState)
@@ -113,6 +118,34 @@ function Condition:updateConditionEffects(currentState)
         end
     end
 
+end
+
+function Condition:getValue()
+    if not tes3.player or not tes3.player.data.Ashfall then
+        mwse.log("ERROR: trying to get condition value %s before player was loaded", self.id)
+        return 0
+    end
+    return tes3.player.data.Ashfall[self.id] or 0
+end
+
+
+function Condition:setValue(newVal)
+    if not tes3.player or not tes3.player.data.Ashfall then
+        mwse.log("ERROR: trying to set condition value %s before player was loaded", self.id)
+        return
+    end
+    --mwse.log("Set %s to %s", self.id, newVal)
+    tes3.player.data.Ashfall[self.id] = math.clamp(newVal, self.min, self.max)
+end
+
+function Condition:getStatMultiplier()
+    if self.minDebuffState then
+        local minVal =  self.states[self.minDebuffState].min
+        local value = math.max(self:getValue(), minVal)
+        return math.remap(value, minVal, 100, 1.0, 0.0)
+    else
+        mwse.log("[Asfall ERROR] getStatMultiplier(): %s does not have a debuffState", self.id)
+    end
 end
 
 return Condition

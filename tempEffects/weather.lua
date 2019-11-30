@@ -11,17 +11,14 @@ local common = require('mer.ashfall.common.common')
 local temperatureController = require("mer.ashfall.temperatureController")
 temperatureController.registerExternalHeatSource("weatherTemp")
 
-
-local INTERIOR_WEATHER_MULTI = 0.4
-
 local SEASON_MIN = 0.8
 local SEASON_MAX = 1.2
 
 local currentWeather
 
 local weatherValues = {
-    [tes3.weather.blight] = 20,
-    [tes3.weather.ash] = 10,
+    [tes3.weather.blight] = 40,
+    [tes3.weather.ash] = 30,
     [tes3.weather.clear] = 0,
     [tes3.weather.cloudy] = -10,
     [tes3.weather.overcast] = -20,
@@ -50,11 +47,11 @@ local regionValues = {
     ['Grazelands Region'] = {min = -40, max = 0},
      -- gets cold at night, warm in day
     --Hot
-    ['Bitter Coast Region'] = {min = -25, max = 10},
-    ['West Gash Region'] = {min = -35, max = 10},
-    ['Ashlands Region'] = {min = -10, max = 10},
-    ['Molag Mar Region'] = {min = 0, max = 25},
-    ['Red Mountain Region'] = {min = 0, max = 30}
+    ['Bitter Coast Region'] = {min = -25, max = 5},
+    ['West Gash Region'] = {min = -35, max = 5},
+    ['Ashlands Region'] = {min = -10, max = 5},
+    ['Molag Mar Region'] = {min = 0, max = 10},
+    ['Red Mountain Region'] = {min = 0, max = 15}
 }
 
 --Keyword search in interior names for cold caves etc
@@ -138,14 +135,13 @@ local function cellChanged()
     updateWeather(tes3.getCurrentWeather())
 
     --default
-    local intWeatherEffect = common.config.interiorTempValues.default
+    local intWeatherEffect = common.staticConfigs.interiorTempValues.default
 
     --check ids
     local lowerCellId = string.lower(tes3.player.cell.id)
-        for key, val in pairs(common.config.interiorTempPatterns) do
+        for key, val in pairs(common.staticConfigs.interiorTempPatterns) do
             if string.find(lowerCellId, key) then
                 intWeatherEffect = val
-                common.log.debug('interior %s: %s',key, intWeatherEffect)
             end
         end
    -- end
@@ -156,7 +152,7 @@ local registerOnce
 local function dataLoaded()
     
     updateWeather(tes3.getCurrentWeather())
-    common.data.weatherTemp = common.data.weatherTemp or common.config.interiorTempValues.default
+    common.data.weatherTemp = common.data.weatherTemp or common.staticConfigs.interiorTempValues.default
     if not registerOnce then
         registerOnce = true
         cellChanged()

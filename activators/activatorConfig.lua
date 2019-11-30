@@ -1,10 +1,20 @@
 local Activator = require("mer.ashfall.objects.Activator")
 local this = {}
 
+this.types = {
+    waterSource = "waterSource",
+    dirtyWaterSource = "dirtyWaterSource",
+    cookingUtensil = "cookingUtensil",
+    fire = "fire",
+    campfire = "campfire",
+    woodSource = "woodSource",
+    branch = "branch"
+}
+
 this.list = {
     water = Activator:new{ 
         name = "Water (Dirty)", 
-        type = Activator.types.dirtyWaterSource,
+        type = this.types.dirtyWaterSource,
         mcmSetting = "enableThirst",
         ids = {
             "ex_vivec_waterfall_01",
@@ -12,11 +22,12 @@ this.list = {
             "ex_vivec_waterfall_05",
             "in_om_waterfall",
             "in_om_waterfall_small",
+            "rm_well"
         }
     },
     well = Activator:new{ 
         name = "Well", 
-        type = Activator.types.waterSource,
+        type = this.types.waterSource,
         mcmSetting = "enableThirst",
         ids = {
             "ex_nord_well",
@@ -25,7 +36,7 @@ this.list = {
     },
     keg = Activator:new{ 
         name = "Keg", 
-        type = Activator.types.waterSource,
+        type = this.types.waterSource,
         mcmSetting = "enableThirst",
         ids = {
             "kegstand",
@@ -33,7 +44,7 @@ this.list = {
     },
     tree = Activator:new{ 
         name = "Tree",
-        type = Activator.types.woodSource,
+        type = this.types.woodSource,
         mcmSetting = "enableTemperatureEffects",
         ids = {
             "flora_ash_log",
@@ -59,7 +70,7 @@ this.list = {
     },
     wood = Activator:new{ 
         name = "Wood",
-        type = Activator.types.woodSource,
+        type = this.types.woodSource,
         mcmSetting = "enableTemperatureEffects",
         ids = {
             "flora_ashtree",
@@ -85,7 +96,7 @@ this.list = {
     },
     fire = Activator:new{ 
         name = "Fire", 
-        type = Activator.types.fire,
+        type = this.types.fire,
         mcmSetting = "enableCooking",
         ids = {
             "firepit_f",
@@ -97,7 +108,7 @@ this.list = {
     },
     campfire = Activator:new{
         name = "Campfire", 
-        type = Activator.types.campfire,
+        type = this.types.campfire,
         mcmSetting = nil,
         ids = {
            "ashfall_campfire",
@@ -106,11 +117,20 @@ this.list = {
 
     cookingPot = Activator:new{ 
         name = "Cooking Pot", 
-        type = Activator.types.cookingUtensil,
+        type = this.types.cookingUtensil,
         mcmSetting = "enableCooking",
         ids = {
             "furn_com_cauldron",
         }
     },
+
+    branch = Activator:new{
+        name = "Branch",
+        type = this.types.branch,
+        mcmSetting = nil,
+        ids = {
+            "ashfall_branch"
+        }
+    }
 }
 return this

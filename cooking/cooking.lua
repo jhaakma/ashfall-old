@@ -1,12 +1,13 @@
 local common = require ("mer.ashfall.common.common")
 local activators = require("mer.ashfall.activators.activatorController")
-local Activator = require("mer.ashfall.objects.Activator")
+local activatorConfig = require("mer.ashfall.activators.activatorConfig")
+
 local CookingMenu = require("mer.ashfall.cooking.cookingMenu")
 
-local function onActivate(e)
+local function onActivate()
     local inputController = tes3.worldController.inputController
     local pressedActivateKey = inputController:keybindTest(tes3.keybind.activate)
-    if pressedActivateKey and cookingEnabled then
+    if pressedActivateKey then
         local cookingActive = (
             common.data and
             common.data.mcmSettings.enableHunger and
@@ -16,11 +17,11 @@ local function onActivate(e)
             local currentActivator = activators.getCurrentActivator()
             local lookingAtUtensil = ( 
                 currentActivator and
-                currentActivator.type == Activator.types.cookingUtensil
+                currentActivator.type == activatorConfig.cookingUtensil.type
             )
             if lookingAtUtensil then
                 common.log.info("Creating %s menu", currentActivator.name)
-                menu = CookingMenu:new({
+                local menu = CookingMenu:new({
                     name = currentActivator.name
                 })
                 menu:create()
@@ -32,5 +33,5 @@ local function onActivate(e)
     end
 end
  
-event.register("keyDown", onActivate )
+event.register("keyDown-DISABLED", onActivate )
 

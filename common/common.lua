@@ -1,10 +1,38 @@
 --Common
 local this = {}
 
-this.config = require("mer.ashfall.common.config")
+this.staticConfigs = require("mer.ashfall.common.staticConfigs")
 this.log = require("mer.ashfall.common.logger")
 this.helper = require("mer.ashfall.common.helperFunctions")
+this.conditions = require("mer.ashfall.common.conditions")
 
+local configPath = "ashfall"
+local inMemConfig
+function this.getConfig()
+    return inMemConfig and inMemConfig or mwse.loadConfig(configPath)
+end
+
+function this.saveConfig(newConfig)
+    inMemConfig = newConfig
+    mwse.saveConfig(configPath, newConfig)
+end
+
+function this.getConfigValue(value)
+    local config = this.getConfig()
+    if config then
+        return config[value]
+    else
+        return nil
+    end
+end
+
+function this.saveConfigValue(key, val)
+    local config = this.getConfig()
+    if config then
+        config[key] = val
+        mwse.saveConfig(configPath, config)
+    end
+end
 
 --[[
     Skills
@@ -64,7 +92,6 @@ local function onSkillsReady()
 
     this.log.info("Ashfall skills registered")
 end
-
 event.register("OtherSkills:Ready", onSkillsReady)
 
 
@@ -74,7 +101,7 @@ local function initialiseLocalSettings(mcmData)
     for setting, value in pairs(mcmData) do
         if this.data.mcmSettings[setting] == nil then
             this.data.mcmSettings[setting] = value
-            this.log.info( "Initialising local config %s to %s", setting, value )
+            this.log.info( "Initialising local data %s to %s", setting, value )
         end
     end
 end
@@ -96,16 +123,11 @@ local function onLoaded()
     this.data.currentStates = this.data.currentStates or {}
     this.data.wateredCells = this.data.wateredCells or {}
     this.data.mcmSettings = this.data.mcmSettings or {}
-    
-    --[[this.data.temp = this.data.temp or {
-        ext = { base = 0, real = 0 },
-        int = { base = 0, real = 0 },
-    }]]
     --initialise mod config
     local mcmData = require ("mer.ashfall.MCM.mcmData")
     initialiseLocalSettings(mcmData)
 
-    this.log.info("Common data loaded successfully")
+    this.log.info("Common Data loaded successfully")
     event.trigger("Ashfall:dataLoaded")
 end
 event.register("loaded", onLoaded)

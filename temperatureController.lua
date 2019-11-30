@@ -5,8 +5,8 @@ local hud = require("mer.ashfall.ui.hud")
 -------------------------------------------------
 --Move to Config file
 local INT_MULTI = 100 --Rate of change for player temp
-local MAX_DIFFERENCE = 50
-local MAX_MULTI = 10
+local MAX_DIFFERENCE = 40
+local MAX_MULTI = 1--Rate of player temp change
 -----------------------------------------------
 
 
@@ -36,6 +36,7 @@ function this.registerInternalHeatSource(heatSource)
         table.insert(this.internalHeatSources, { id = heatSource.id })
     else
         common.log.error("Incorrect formatting of internalHeatSource")
+
     end
 end
 
@@ -172,8 +173,6 @@ local function getBaseTempMultiplier()
             if not common.data[multiplier.id] then
                 common.log.error("common.data.%s not found", multiplier.id)
             else
-                
-                --common.log.debug("Temp Multiplier: %s = %s", multiplier.id, common.data[multiplier.id])
                 result = result * common.data[multiplier.id]
             end
         end
@@ -206,9 +205,9 @@ local function getInternalChangeMultiplier(interval)
     --Twice as fast movement if moving towards comfortable/warm
     local comfortMulti = 1.0
     local movingTowardsWarm = (
-        common.data.temp > common.config.conditions.temp.states.warm.min and common.data.temp > common.data.tempLimit
+        common.data.temp > common.conditions.temp.states.warm.min and common.data.temp > common.data.tempLimit
             or
-        common.data.temp < common.config.conditions.temp.states.warm.max and common.data.temp < common.data.tempLimit
+        common.data.temp < common.conditions.temp.states.warm.max and common.data.temp < common.data.tempLimit
     )
     if movingTowardsWarm then
         comfortMulti = 2.0
@@ -217,7 +216,9 @@ local function getInternalChangeMultiplier(interval)
 end
 
 
-function this.calculate(interval)
+function this.calculate(interval, forceUpdate)
+    if not forceUpdate and interval == 0 then return end
+    
     if not common.data then return end
     if not common.data.mcmSettings.enableTemperatureEffects then
         common.data.tempLimit = 0
@@ -226,7 +227,6 @@ function this.calculate(interval)
         hud.updateHUD()
         return
     end
-
     common.data.tempLimit = common.data.tempLimit or 0
     common.data.baseTemp = common.data.baseTemp or 0
     common.data.temp = common.data.temp or 0
@@ -256,7 +256,12 @@ function this.calculate(interval)
 end
 
 function this.update(source)
-    this.calculate(0)
+    if source then
+        common.log.debug(source)
+    end
+    if common.data.valuesInitialised then
+        this.calculate(0, true)
+    end
 end
 
 return this

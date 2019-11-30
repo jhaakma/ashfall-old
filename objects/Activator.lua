@@ -1,14 +1,7 @@
 
 local Activator = {}
-Activator.types = {
-    waterSource = "waterSource",
-    dirtyWaterSource = "dirtyWaterSource",
-    cookingUtensil = "cookingUtensil",
-    fire = "fire",
-    campfire = "campfire",
-    woodSource = "woodSource",
-}
-Activator.type = nil
+
+Activator.type = nil 
 Activator.name = ""
 Activator.mcmSetting = nil
 Activator.ids = {}

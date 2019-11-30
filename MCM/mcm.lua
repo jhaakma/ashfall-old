@@ -1,17 +1,21 @@
-local configPath = "Ashfall/config"
-local config = mwse.loadConfig(configPath)
-if not config then 
-    config = {
-        blocked = {},
-        logLevel = "INFO"
-    }
-    mwse.saveConfig(configPath, config)
-end
+local common = require("mer.ashfall.common.common")
+
 local playerDataPath = "Ashfall.mcmSettings"
+local configPath = "ashfall"
+
+local config = common.getConfig()
+if not config then 
+    config = {}
+end
+config.blocked = config.blocked or {}
+config.logLevel = config.logLevel or "INFO"
+mwse.saveConfig(configPath, config)
+
+local function createTableVar(id)
+    return mwse.mcm.createTableVariable{ id = id, table = config }
+end
 
 local function registerModConfig()
-
-    
     
     local sideBarDefault = (
         "Welcome to Ashfall, the ultimate survival mod for Morrowind! \n\n" ..
@@ -88,10 +92,10 @@ local function registerModConfig()
             categorySurvival:createYesNoButton{
                 label = "Enable Sleep",
                 description = (
-                    "When enabled, you must sleep regularly or face debuffs from sleep deprivation. " .. 
-                    "Sleeping in a bed or bedroll will allow you to become \"Well Rested\", while sleeping out in the open will not fully recover your sleep."
+                    "When enabled, you must tiredness regularly or face debuffs from tiredness deprivation. " .. 
+                    "Sleeping in a bed or bedroll will allow you to become \"Well Rested\", while sleeping out in the open will not fully recover your tiredness."
                 ),
-                variable = createplayerVar("enableSleep", true)
+                variable = createplayerVar("enableTiredness", true)
             }
             categorySurvival:createYesNoButton{
                 label = "Enable Cooking (In Development)",
@@ -128,8 +132,8 @@ local function registerModConfig()
             }
             categoryConditions:createOnOffButton{
                 label = "Sleep updates",
-                description = "Show update messages when sleep condition changes.",
-                variable = createplayerVar("showSleep", true)
+                description = "Show update messages when tiredness condition changes.",
+                variable = createplayerVar("showTiredness", true)
             }
             categoryConditions:createOnOffButton{
                 label = "Wetness updates",
@@ -142,6 +146,14 @@ local function registerModConfig()
             local categoryMisc = pageGeneral:createCategory{ 
                 label = "Miscellanious",
                 description = "Ashfall features not directly related to survival mechanics.",
+            }
+
+            categoryMisc:createYesNoButton{
+                label = "Hunger/Thirst can kill you",
+                description = (
+                    "When enabled, you can die of hunger or thirst. Otherwise you will drop to 1 health."
+                ),
+                variable = createplayerVar("needsCanKill", false)
             }
 
             categoryMisc:createYesNoButton{
@@ -223,13 +235,13 @@ local function registerModConfig()
         do --Sleep Category
             local categorySleep = pageModValues:createCategory{
                 label = "Sleep",
-                description =  "Change sleep components."
+                description =  "Change tiredness components."
             }
 
             categorySleep:createSlider{
                 label = "Sleep Loss Rate",
                 description = (
-                    "Determines how much sleep you lose per hour. When set to 10, you lose 1% sleep every hour. The default lose sleep rate is 50."
+                    "Determines how much tiredness you lose per hour. When set to 10, you lose 1% tiredness every hour. The default lose tiredness rate is 50."
                 ),
                 min = 0,
                 max = 200,
@@ -239,7 +251,7 @@ local function registerModConfig()
             }
             categorySleep:createSlider{
                 label =  "Sleep Loss Rate (Waiting)",
-                description = "Determines how much sleep you lose per hour while waiting. When set to 10, you lose 1% sleep every hour. The default rate is 28 (i.e sleep goes from 100% to 0% in 30.",
+                description = "Determines how much tiredness you lose per hour while waiting. When set to 10, you lose 1% tiredness every hour. The default rate is 28 (i.e tiredness goes from 100% to 0% in 30.",
                 min = 0,
                 max = 200,
                 step = 1,
@@ -249,7 +261,7 @@ local function registerModConfig()
 
             categorySleep:createSlider{
                 label = "Gain Sleep Rate",
-                description = "Determines how much sleep you gain per hour while resting on the ground. When set to 10, you gain 1% sleep every hour. The default gain sleep rate is 80.",
+                description = "Determines how much tiredness you gain per hour while resting on the ground. When set to 10, you gain 1% tiredness every hour. The default gain tiredness rate is 80.",
                 min = 0,
                 max = 200,
                 step = 1,
@@ -258,7 +270,7 @@ local function registerModConfig()
             }
             categorySleep:createSlider{
                 label = "Gain Sleep Rate (Bed)",
-                description = "Determines how much sleep you gain per hour while resting while using a bed. When set to 10, you gain 1% sleep every hour. The default gain sleep rate is 120.",
+                description = "Determines how much tiredness you gain per hour while resting while using a bed. When set to 10, you gain 1% tiredness every hour. The default gain tiredness rate is 120.",
                 min = 0,
                 max = 200,
                 step = 1,
@@ -278,7 +290,7 @@ local function registerModConfig()
                 "This page provides an interface to accomplish that. " ..
                 "Using the lists below you can easily view or edit which objects are to be blocked and which are to be allowed."
             ),
-            variable = mwse.mcm.createTableVariable{ id = "blocked", table = config},
+            variable = createTableVar("blocked"),
             filters = {
                 {
                     label = "Plugins",
@@ -313,7 +325,7 @@ local function registerModConfig()
                 { label = "ERROR", value = "ERROR"},
                 { label = "NONE", value = "NONE"},
             },
-            variable = mwse.mcm.createTableVariable{ id = "logLevel", table = config }
+            variable = createTableVar("logLevel")
         }
 
     end --\Dev Options

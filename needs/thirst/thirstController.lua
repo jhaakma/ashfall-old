@@ -4,74 +4,93 @@ local common = require("mer.ashfall.common.common")
 local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
-
+local statsEffect = require("mer.ashfall.needs.statsEffect")
 local temperatureController = require("mer.ashfall.temperatureController")
 temperatureController.registerBaseTempMultiplier({ id = "thirstEffect", warmOnly = true })
 
-local heatMulti = 2.0
+local heatMulti = 5.0
 local THIRST_EFFECT_LOW = 1.3
 local THIRST_EFFECT_HIGH = 1.0
 local restMultiplier = 1.0
-function this.calculate(scriptInterval)
+
+local thirst = common.conditions.thirst
+
+function this.calculate(scriptInterval, forceUpdate)
+    if not forceUpdate and scriptInterval == 0 then return end
+
     local thirstRate = common.data.mcmSettings.thirstRate / 10
-    local thirstActive = (
-        common.data and
-        common.data.mcmSettings.enableThirst
-    )
-    if not thirstActive then
-        common.data.thirst = 0
+
+    if not thirst:isActive() then
+        thirst:setValue(0)
         return
     end
     if common.data.drinkingRain then
         return
     end
+    if common.data.blockNeeds == true then
+        return
+    end
 
-    local thirst = common.data.thirst or 0
-    local temp = common.data.temp or 0
+    local currentThirst = thirst:getValue()
+    local temp = common.conditions.temp
 
     --Hotter it gets the faster you become thirsty
-    local heatEffect = math.clamp(temp, 0, 100 )
-    heatEffect = math.remap(heatEffect, 0, 100, 1.0, heatMulti)
-
+    local heatEffect = math.clamp(temp:getValue(), temp.states.warm.min, temp.states.scorching.max )
+    heatEffect = math.remap(heatEffect, temp.states.warm.min, temp.states.scorching.max, 1.0, heatMulti)
+    
     --Calculate thirst
     local resting = (
         tes3.mobilePlayer.sleeping or
         tes3.menuMode()
     )
     if resting then
-        thirst = thirst + ( scriptInterval * thirstRate * heatEffect * restMultiplier )
+        currentThirst = currentThirst + ( scriptInterval * thirstRate * heatEffect * restMultiplier )
     else
-        thirst = thirst + ( scriptInterval * thirstRate * heatEffect )
+        currentThirst = currentThirst + ( scriptInterval * thirstRate * heatEffect )
     end
-    thirst = math.clamp(thirst, 0, 100) 
+    currentThirst = math.clamp(currentThirst, 0, 100) 
 
-    common.data.thirst = thirst
+    thirst:setValue(currentThirst)
 
     --The thirstier you are, the more extreme heat temps are
-    local thirstEffect = math.remap(thirst, 0, 100, THIRST_EFFECT_HIGH, THIRST_EFFECT_LOW)
+    local thirstEffect = math.remap(currentThirst, 0, 100, THIRST_EFFECT_HIGH, THIRST_EFFECT_LOW)
     common.data.thirstEffect = thirstEffect
 end
 
-
-
-function this.getBottleData(id)
-    return common.config.bottleList[string.lower(id)]
+function this.update()
+    this.calculate(0, true)
 end
 
 
+function this.getBottleData(id)
+    return common.staticConfigs.bottleList[string.lower(id)]
+end
+
 
 function this.drinkAmount( amount, drinkingDirtyWater )
-    if not common.config.conditions.thirst:isActive() then return end
-    local currentThirst = common.data.thirst or 0
+    if not common.conditions.thirst:isActive() then return end
+    local currentThirst = thirst:getValue()
     
     if currentThirst <= 0.1 then
         tes3.messageBox("You are fully hydrated.")
         return 0
     end
     local amountDrank = math.min( currentThirst, amount )
-    common.data.thirst = common.data.thirst - amountDrank
+
+    local before = statsEffect.getMaxStat("magicka")
+    thirst:setValue(currentThirst - amountDrank)
+    local after = statsEffect.getMaxStat("magicka")
+
+    --local magickaIncrease = tes3.mobilePlayer.magicka.base * ( amountDrank / 100 )
+    local magickaIncrease = after - before
+    tes3.modStatistic{
+        reference = tes3.mobilePlayer,
+        current = magickaIncrease,
+        name = "magicka",
+        limit = true
+    }
     conditionsCommon.updateCondition("thirst")
-    this.calculate(0)
+    this.update()
     temperatureController.update("drinkAmount")
     needsUI.updateNeedsUI()
     hud.updateHUD()

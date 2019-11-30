@@ -1,6 +1,6 @@
 
-local activators = require("mer.ashfall.activators.activatorController")
-local Activator = require("mer.ashfall.objects.Activator")
+local activatorController = require("mer.ashfall.activators.activatorController")
+local activatorConfig = require("mer.ashfall.activators.activatorConfig")
 local common = require("mer.ashfall.common.common")
 local lastRef
 
@@ -18,11 +18,7 @@ local function onAttack(e)
     if not common.data.mcmSettings.enableTemperatureEffects then
         return
     end
-
-    local lookingAtWood = (
-        activators.current and 
-        activators.list[activators.current].type == Activator.types.woodSource
-    )
+    local lookingAtWood = activatorController.getCurrentType() == activatorConfig.types.woodSource
     local isPlayer = e.mobile.reference == tes3.player
     --attacker is player and looking at wood
     if isPlayer and lookingAtWood then
@@ -51,7 +47,7 @@ local function onAttack(e)
                         / ( chopCeiling ) )
 
                 --If attacking the same target, accumulate swings
-                local targetRef = activators.currentRef
+                local targetRef = activatorController.currentRef
                 if lastRef == targetRef then
                     swings = swings + swingStrength * ( 1 + axeDamageMultiplier )
                 else
@@ -109,7 +105,7 @@ local function onAttack(e)
                             tes3.messageBox("You have harvested %d pieces of firewood", numWood)
                         end
                         tes3.playSound({reference=tes3.player, sound="Item Misc Up"})
-                        mwscript.addItem{reference=tes3.player, item="a_firewood", count=numWood}
+                        mwscript.addItem{reference=tes3.player, item=common.staticConfigs.objectIds.firewood, count=numWood}
                         
                         
                         common.skills.survival:progressSkill(swingsNeeded*2)
