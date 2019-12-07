@@ -37,17 +37,18 @@ local function callUpdates()
     local interval = hoursPassed - lastTime
     lastTime = hoursPassed
    
-    
-    weather.calculateWeatherEffect(interval)
-    sunEffect.calculate(interval)
-    wetness.calculateWetTemp(interval)
-    hungerController.processMealBuffs(interval)
-   
+     
     --Needs:
     for _, script in pairs(needs) do
         script.calculate(interval)
     end
     statsEffect.calculate()
+
+    
+    weather.calculateWeatherEffect(interval)
+    sunEffect.calculate(interval)
+    wetness.calculateWetTemp(interval)
+    hungerController.processMealBuffs(interval)
 
     --Heavy scripts
     activators.callRayTest()

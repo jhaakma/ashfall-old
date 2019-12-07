@@ -166,7 +166,7 @@ event.register('Ashfall:dataLoaded', dataLoaded)
 
 --Change weather every few hours
 local function setWeatherInterval()
-    local interval = math.random(1, 6)
+    local interval = math.random(2, 6)
     tes3.worldController.weatherController.hoursBetweenWeatherChanges = interval
 end
 

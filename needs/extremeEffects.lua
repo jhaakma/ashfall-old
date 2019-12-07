@@ -11,7 +11,7 @@ local passedOut
 local function passOut()
     local hours = 2.5 + math.random(0.5)
     local secondsTaken = 5
-    local function wakeUp(e)
+    local function wakeUp()
         tiredness:setValue(5)
         tes3.setStatistic{
             reference = tes3.mobilePlayer,
@@ -46,22 +46,9 @@ local function checkTired()
     end
 end
 
---Heat
-local function checkHot()
-    local temp = common.conditions.temp
-    if temp:getCurrentState() == "scorching" then
-
-    end
-end
-
-
-
-
-
 
 local function checkStats()
     checkTired()
-    checkHot()
 end
 event.register("simulate", checkStats)
 

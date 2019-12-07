@@ -1088,14 +1088,6 @@ local function placeCampfire(e)
     }
     newRef.data.fuelLevel = e.target.stackSize
     updateVisuals(newRef)
-    
-    --[[timer.start({
-        type = timer.real,
-        duration = 0.5,
-        callback = function()
-            mwscript.drop({reference = tes3.player, item = "a__lightreset"})
-        end
-    })]]
 
 end
 

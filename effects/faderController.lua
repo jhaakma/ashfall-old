@@ -52,7 +52,7 @@ end
 
 
 local function checkFaders()
-    for id, config in pairs(faderConfigs) do
+    for _, config in pairs(faderConfigs) do
         local condition = common.conditions[config.condition]
         local currentValue = condition:getValue()
 

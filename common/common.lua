@@ -123,6 +123,10 @@ local function onLoaded()
     this.data.currentStates = this.data.currentStates or {}
     this.data.wateredCells = this.data.wateredCells or {}
     this.data.mcmSettings = this.data.mcmSettings or {}
+
+    --In case the game was saved during block Needs timer
+    this.data.blockNeeds = false
+
     --initialise mod config
     local mcmData = require ("mer.ashfall.MCM.mcmData")
     initialiseLocalSettings(mcmData)

@@ -4,10 +4,9 @@ local this = {}
 local statsEffect = require("mer.ashfall.needs.statsEffect")
 local coldRestLimit = common.conditions.temp.states.veryCold.min
 local hotRestLimit = common.conditions.temp.states.veryHot.max
-local interruptText = ""
 local isUsingBed
 local isWaiting
-local bedWarmth = 20
+local bedWarmth = 10
 
 local temperatureController = require("mer.ashfall.temperatureController")
 temperatureController.registerInternalHeatSource("bedTemp")
@@ -23,15 +22,9 @@ local function setRestValues(e)
     --scripted means the player has activated a bed or bedroll
     isUsingBed = e.scripted
     isWaiting = not e.allowRest
-    --Set interrupt text
-    local tempLimit = common.data.tempLimit
-    local tempText = ( tempLimit < 0 ) and "cold" or "hot"
-    local restText = ( e.allowRest ) and "rest" or "wait"
-
-    interruptText = string.format("It is too %s to %s, you must find shelter!", tempText, restText)
-
 end
 event.register("uiShowRestMenu", setRestValues )
+
 
 
 local function hideSleepItems(restMenu)
@@ -48,6 +41,13 @@ local function hideSleepItems(restMenu)
     end
 end
 
+local function getTempInterruptText()
+    --Set interrupt text
+    local tempLimit = common.data.tempLimit
+    local tempText = ( tempLimit < 0 ) and "cold" or "hot"
+    local restText = ( isWaiting ) and "wait" or "rest"
+    return string.format("It is too %s to %s, you must find shelter!", tempText, restText)
+end
 
 --Prevent tiredness if ENVIRONMENT is too cold/hot
 --We do this by tapping into the Rest Menu,
@@ -57,10 +57,8 @@ local function activateRestMenu (e)
 
     if isUsingBed then
         --manually update tempLimit so you can see what it will be with the bedTemp added
-        --if common.data.tempLimit < 0 then
-            common.data.bedTemp = bedWarmth
-            common.data.tempLimit = common.data.tempLimit + bedWarmth
-        --end
+        common.data.bedTemp = bedWarmth
+        common.data.tempLimit = common.data.tempLimit + bedWarmth
         require("mer.ashfall.temperatureController").update()
         common.log.debug("Is Scripted: adding warmth")
     end
@@ -69,8 +67,9 @@ local function activateRestMenu (e)
     local restMenu = e.element
     local labelText = restMenu:findChild( tes3ui.registerID("MenuRestWait_label_text") )
 
-    if tempLimit < ( coldRestLimit ) or tempLimit > ( hotRestLimit - common.data.bedTemp ) then
-        labelText.text = interruptText
+    if ( tempLimit < coldRestLimit ) or (tempLimit > (hotRestLimit + common.data.bedTemp) ) then
+        common.log.debug("blocked by activateRestMenu")
+        labelText.text = getTempInterruptText()
         hideSleepItems(restMenu)
     elseif hunger:getValue() > hunger.states.starving.min then
         labelText.text = "You are too hungry to " .. ( isWaiting and "wait." or "rest.")
@@ -100,47 +99,47 @@ local function activateRestMenu (e)
 end
 event.register("uiActivated", activateRestMenu, { filter = "MenuRestWait" })
 
-
---Wake up if sleeping and ENVIRONMENT is too cold/hot
-local clock = os.clock
-local function wait(n)  -- seconds
-    local t0 = clock()
-    while clock() - t0 <= n do end
+local function preventNextCycle()
+    common.log.debug("FISDUFhsdiujh")
+    return true
 end
 
+event.register("weatherCycled", preventNextCycle)
 local function checkSleeping(interval)
     --whether waiting or sleeping, wake up
     local restingOrWaiting = (
-        interval > 0 and 
+        interval > 0 and
         tes3.menuMode() and 
         common.data.mcmSettings.enableTemperatureEffects and 
-        tes3.player.data.Ashfall.fadeBlock ~= true
+        tes3.player.data.Ashfall.fadeBlock ~= true and 
+        not common.data.blockNeeds
     )
-
     if restingOrWaiting then
-
-        --Slow down real time it takes to wait. This gives us room to breath, 
-        -- see the weather change, react to conditions etc.
-        wait(interval * 0.25)
-
-        local tempLimit = common.data.tempLimit
         --Temperature
-        if tempLimit < coldRestLimit or tempLimit > hotRestLimit then
-            tes3.runLegacyScript({ command = "WakeUpPC" })
-            tes3.messageBox({ message = interruptText, buttons = { "Okay" } })
-
+        local tempLimit = common.data.tempLimit
+        
+        common.log.debug("tempLimit: %s", tempLimit)
+        common.log.debug("coldRestLimit: %s", coldRestLimit)
+        common.log.debug("hotRestLimit: %s", hotRestLimit)
+        if tempLimit < coldRestLimit or tempLimit > (hotRestLimit + common.data.bedTemp) then
+            common.log.debug("blocked by checkSleeping")
+            mwscript.wakeUpPC()
+            
+            tes3.messageBox({ message = getTempInterruptText(), buttons = { "Okay" } })
             --needs
         end
         if hunger:getValue() > hunger.states.starving.min then
             --Cap the hunger loss
             hunger:setValue(hunger.states.starving.min)
             --Wake PC
-            tes3.runLegacyScript({ command = "WakeUpPC" })
+            mwscript.wakeUpPC()
+            
             --Message PC
             tes3.messageBox({ message = "You are starving.", buttons = { "Okay" } }) 
         elseif thirst:getValue() > thirst.states.dehydrated.min then
             --Cap the thirst loss
-            tes3.runLegacyScript({ command = "WakeUpPC" })
+            mwscript.wakeUpPC()
+            
             --Wake PC
             thirst:setValue(thirst.states.dehydrated.min)
             --Message PC
@@ -149,25 +148,24 @@ local function checkSleeping(interval)
             --Cap the tiredness loss
             tiredness:setValue(tiredness.states.exhausted.min)
             --Rouse PC
-            tes3.runLegacyScript({ command = "WakeUpPC" })
+            mwscript.wakeUpPC()
+            
             --Message PC
             tes3.messageBox({ message = "You are exhausted.", buttons = { "Okay" } }) 
         end
     end
     
     if tes3.mobilePlayer.sleeping and isUsingBed then
-        --if common.data.tempLimit < 0 then
-            common.data.usingBed = true
-            common.data.bedTemp = bedWarmth
-        --end
+        common.data.usingBed = true
+        common.data.bedTemp = bedWarmth
     end 
 end
 
 
-function this.calculate(scriptInterval, forceUpdate)
+function this.calculate(scriptInterval)
     checkSleeping(scriptInterval)
 
-    if not forceUpdate and scriptInterval == 0 then return end
+    --if not forceUpdate and scriptInterval == 0 then return end
     if not common.data.mcmSettings.enableTiredness then
         tiredness:setValue(100)
     end

@@ -67,29 +67,51 @@ local function calcFatigue()
     end 
 end
 
-local doInJail
-local function turnOnNeeds()
-    doInJail = false
+local doBlockNeeds
+local function unblockNeeds()
+    common.log.debug("unblocking")
+    doBlockNeeds = false
     common.data.blockNeeds = false
 end
-local function checkJail()
-    if tes3.mobilePlayer.inJail and not doInJail then
-        doInJail = true
-        common.data.blockNeeds = true
-        timer.start{
-            type = timer.real,
-            duration = 1,
-            callback = turnOnNeeds
-        }
+
+local function checkInJail()
+    if not doBlockNeeds then
+        if tes3.mobilePlayer.inJail then
+            common.log.debug("In Jail")
+            doBlockNeeds = true
+        end
+        if doBlockNeeds == true then
+            common.data.blockNeeds = true
+            timer.start{
+                type = timer.real,
+                duration = 2,
+                callback = unblockNeeds
+            }
+        end
     end
 end
+
 
 function this.calculate()
     calcHealth()
     calcMagicka()
     calcFatigue()
-    checkJail()
+    checkInJail()
 end
+
+local function checkTravel()
+    if not doBlockNeeds  then
+        doBlockNeeds = true
+        common.log.debug("Travelling")
+        common.data.blockNeeds = true
+        timer.start{
+            type = timer.real,
+            duration = 2,
+            callback = unblockNeeds
+        }
+    end
+end
+event.register("calcTravelPrice", checkTravel )
 
 function this.getMaxStat(stat)
     if stat == "health" then return getMaxHealth() end
@@ -108,5 +130,8 @@ local function enterRestMenu()
     })
 end
 event.register("uiActivated", enterRestMenu, { filter = "MenuRestWait"})
+
+
+
 
 return this
