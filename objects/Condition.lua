@@ -21,7 +21,7 @@ local function scaleSpellValues(spellID)
     if not spellID then
         return
     end
-    
+
     local BASE_STAT = 60
     local BASE_LEVEL = 30
     local ignoreList = {
@@ -30,14 +30,14 @@ local function scaleSpellValues(spellID)
         "fw_wetcond_wet",
         "fw_wetcond_damp"
     }
-    
 
-    
+
+
     local baseID = spellID .. "_BASE"
     --this.log.info("BaseID : %s", baseID)
     local baseSpell = tes3.getObject(baseID)
     local realSpell = tes3.getObject(spellID)
-    
+
     --Warm has a special case
     for _, id in ipairs(ignoreList) do
         if spellID == id then

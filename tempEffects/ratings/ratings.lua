@@ -3,14 +3,14 @@ local data = require('mer.ashfall.tempEffects.ratings.ratingsData')
 local common = require("mer.ashfall.common.common")
 
 local function getCache()
-    return common.getConfig().warmthCache or {
+    return common.config.get().warmthCache or {
         armor = {},
         clothing = {}
     }
 end
 
 local function saveCache(newCache) 
-    common.saveConfigValue("warmthCache", newCache)
+    common.config.saveValue("warmthCache", newCache)
 end 
 
 

@@ -1,4 +1,4 @@
-
+local config = require("mer.ashfall.common.config")
 local this = {}
 
 local logLevels = {
@@ -18,8 +18,7 @@ local params = {
     Checks if the current log level is high enough to log the message
 ]]
 local function doLog(logLevel)
-    local config =  mwse.loadConfig(params.configPath)
-    local currentLogLevel = config.logLevel or params.default
+    local currentLogLevel = config.get().logLevel or params.default
     return logLevels[currentLogLevel] <= logLevels[logLevel]
 end
 

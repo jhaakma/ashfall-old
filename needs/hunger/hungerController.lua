@@ -18,7 +18,7 @@ local hunger = common.conditions.hunger
 
 
 function this.isFood(foodObject)
-    local config = common.getConfig()
+    local config = common.config.get()
     local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
     return (
         foodObject.objectType == tes3.objectType.ingredient and

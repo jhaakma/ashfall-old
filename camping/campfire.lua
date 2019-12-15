@@ -693,7 +693,7 @@ local menuButtons = {
                                 common.skills.cooking:progressSkill(SKILL_INCREMENT_STEW_INGRED)
                                 common.skills.survival:progressSkill(SKILL_INCREMENT_STEW_INGRED_SURVIVAL)
 
-
+                                
                                 tes3.player.object.inventory:removeItem{
                                     mobile = tes3.mobilePlayer,
                                     item = e.item,
