@@ -1,29 +1,31 @@
-local this = {}
-
 local configPath = "ashfall"
-local cache
-function this.get()
-    return cache or mwse.loadConfig(configPath)
-end
+local defaultValues = {
+    logLevel = "INFO",
+    blocked = {},
+    warmthCache = {
+        armor = {},
+        clothing = {}
+    }
+}
 
-function this.save(newConfig)
-    cache = newConfig
-    mwse.saveConfig(configPath, newConfig)
-end
-
-function this.getValue(value)
-    local config = this.get()
-    if config then
-        return config[value]
-    else
-        return nil
+--Our in-memory cache of the config file
+local cache = mwse.loadConfig(configPath)
+for key, val in pairs(defaultValues) do
+    if cache[key] == nil then
+        cache[key] = val
     end
 end
 
-function this.saveValue(key, val)
-    local config = this.get()
-    if config then
-        config[key] = val
-        mwse.saveConfig(configPath, config)
+local config = {
+    save = function()
+        mwse.saveConfig(configPath, cache)
     end
-end
+}
+
+local meta = {
+    __index = function(_, key)
+        return cache[key]
+    end
+}
+
+return setmetatable(config, meta)
