@@ -6,7 +6,7 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common.common")
-local activatorConfig = require("mer.ashfall.activators.activatorConfig")
+local activatorConfig = common.staticConfigs.activatorConfig
 ---CONFIGS----------------------------------------
 --max distance where fire has an effect
 local heatValues = {
@@ -59,7 +59,7 @@ local function checkForFirePit(id)
 end
 
 function this.calculateFireEffect()
-    if not common.conditions.temp:isActive() then return end
+    if not common.staticConfigs.conditionConfig.temp:isActive() then return end
     local totalHeat = 0
     local closeEnough
     common.data.nearCampfire = false

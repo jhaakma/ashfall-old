@@ -13,7 +13,8 @@ local THIRST_EFFECT_LOW = 1.3
 local THIRST_EFFECT_HIGH = 1.0
 local restMultiplier = 1.0
 
-local thirst = common.conditions.thirst
+local conditionConfig = common.staticConfigs.conditionConfig
+local thirst = conditionConfig.thirst
 
 function this.calculate(scriptInterval, forceUpdate)
     if not forceUpdate and scriptInterval == 0 then return end
@@ -32,7 +33,7 @@ function this.calculate(scriptInterval, forceUpdate)
     end
 
     local currentThirst = thirst:getValue()
-    local temp = common.conditions.temp
+    local temp = conditionConfig.temp
 
     --Hotter it gets the faster you become thirsty
     local heatEffect = math.clamp(temp:getValue(), temp.states.warm.min, temp.states.scorching.max )
@@ -68,7 +69,7 @@ end
 
 
 function this.drinkAmount( amount, drinkingDirtyWater )
-    if not common.conditions.thirst:isActive() then return end
+    if not conditionConfig.thirst:isActive() then return end
     local currentThirst = thirst:getValue()
     
     if currentThirst <= 0.1 then
@@ -106,6 +107,7 @@ end
 
 
 function this.callWaterMenuAction(callback)
+    common.log.debug("if common.data.drinkingRain then")
     if common.data.drinkingRain then
         common.data.drinkingRain = false
         common.helper.fadeTimeOut( 0.25, 2, callback )
@@ -132,62 +134,66 @@ function this.fillContainer(source, returnFunction)
                 end
             end,
             callback = function(e)
+                if e.item then 
+                    this.callWaterMenuAction(function()
+                        --initialise itemData
+                        local itemData = e.itemData
+                        if not itemData then
+                            itemData = tes3.addItemData{ 
+                                to = tes3.player, 
+                                item = e.item,
+                                updateGUI = true
+                            }
+                        end
 
-                if not e.item then 
-                    return
-                end
-                this.callWaterMenuAction(function()
-                    --initialise itemData
-                    local itemData = e.itemData
-                    if not itemData then
-                        itemData = tes3.addItemData{ 
-                            to = tes3.player, 
-                            item = e.item,
-                            updateGUI = true
-                        }
-                    end
-
-                    --dirty container if drinking from raw water
-                    if common.data.drinkingDirtyWater then
-                        itemData.data.waterDirty = true
-                        common.data.drinkingDirtyWater = nil
-                    end
-                    local fillAmount
-                    local bottleData = this.getBottleData(e.item.id)
-
-                    itemData.data.waterAmount = itemData.data.waterAmount or 0
-                    if source then
-
-                        fillAmount = math.min(
-                            bottleData.capacity - itemData.data.waterAmount,
-                            source.waterAmount
-                        )
-                        common.helper.transferQuantity(source, itemData.data, "waterAmount", "waterAmount", fillAmount)
-                        --clean source if empty
-                        if source.waterDirty then
+                        --dirty container if drinking from raw water
+                        if common.data.drinkingDirtyWater == true then
+                            common.log.debug("Fill water DIRTY")
                             itemData.data.waterDirty = true
+                            common.data.drinkingDirtyWater = nil
                         end
-                        if source.waterAmount == 0 then
-                            source.waterDirty = nil
+                        local fillAmount
+                        local bottleData = this.getBottleData(e.item.id)
+
+                        itemData.data.waterAmount = itemData.data.waterAmount or 0
+                        if source then
+
+                            fillAmount = math.min(
+                                bottleData.capacity - itemData.data.waterAmount,
+                                source.waterAmount
+                            )
+                            common.helper.transferQuantity(source, itemData.data, "waterAmount", "waterAmount", fillAmount)
+                            --clean source if empty
+                            if source.waterDirty then
+                                itemData.data.waterDirty = true
+                            end
+                            if source.waterAmount == 0 then
+                                source.waterDirty = nil
+                            end
+                        else
+                            itemData.data.waterAmount = bottleData.capacity
                         end
-                    else
-                        itemData.data.waterAmount = bottleData.capacity
-                    end
 
-                    tes3ui.updateInventoryTiles()
-                    tes3.playSound({reference = tes3.player, sound = "Swim Left"})
-                    tes3.messageBox(
-                        "%s filled with %swater.",
-                        e.item.name,
-                        (itemData.data.waterDirty and "dirty " or "")
-                    )
+                        tes3ui.updateInventoryTiles()
+                        tes3.playSound({reference = tes3.player, sound = "Swim Left"})
+                        tes3.messageBox(
+                            "%s filled with %swater.",
+                            e.item.name,
+                            (itemData.data.waterDirty and "dirty " or "")
+                        )
 
-                    if returnFunction then returnFunction() end
-                end)
+                        if returnFunction then returnFunction() end
+                        
+                    end)
+                end
             end
         }
-    end
-    )
+        timer.delayOneFrame(function()
+            common.log.debug("common.data.drinkingRain = false fill")
+            common.data.drinkingRain = false
+            common.data.drinkingDirtyWater = false
+        end)
+    end)
 end
 
 return this

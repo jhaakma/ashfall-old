@@ -1,6 +1,6 @@
 local common = require ("mer.ashfall.common.common")
 local activators = require("mer.ashfall.activators.activatorController")
-local activatorConfig = require("mer.ashfall.activators.activatorConfig")
+local activatorConfig = common.staticConfigs.activatorConfig
 
 local CookingMenu = require("mer.ashfall.cooking.cookingMenu")
 

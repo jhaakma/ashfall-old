@@ -9,12 +9,12 @@
 
 ]]
 
-local activatorConfig = require("mer.ashfall.activators.activatorConfig")
 local common = require ("mer.ashfall.common.common")
-local foodTypes = require("mer.ashfall.camping.foodTypes")
+local activatorConfig = common.staticConfigs.activatorConfig
+local foodConfig = common.staticConfigs.foodConfig
 local thirstController = require("mer.ashfall.needs.thirst.thirstController")
 local hungerController = require("mer.ashfall.needs.hunger.hungerController")
-local fastTime = require("mer.ashfall.camping.fastTime")
+local fastTime = require("mer.ashfall.effects.fastTime")
 --STATIC VARS------------------------------------------------------------
 local cfConfigs = {
     firewoodFuelMulti = 2, 
@@ -31,24 +31,24 @@ local cfConfigs = {
 }
 
 
-local STEW_COOLDOWN_WATER = 50
-local STEW_COOLDOWN_INGRED = 20
+local stewWaterCooldownAmount = 50
+local stewIngredientCooldownAmount = 20
 
 --Cooking pot / Kettle water heating
-local WATER_HEAT_RATE = 40--base water heat/cooling speed
-local FUEL_WATER_MULTI_MIN = 5--min fuel multiplier on water heating
-local FUEL_WATER_MULTI_MAX = 10--max fuel multiplier on water heating
+local waterHeatRate = 40--base water heat/cooling speed
+local minFuelWaterHeat = 5--min fuel multiplier on water heating
+local maxFuelWaterHeat = 10--max fuel multiplier on water heating
 
 --Skills
-local SKILL_INCREMENT_GRILLING = 10
-local SKILL_INCREMENT_GRILLING_SURVIVAL = 4
-local SKILL_INCREMENT_STEW_INGRED = 5
-local SKILL_INCREMENT_STEW_INGRED_SURVIVAL  = 1
-local SKILL_INCREMENT_LIGHT_FIRE = 5
+local skillCookingGrillingIncrement = 10
+local skillSurvivalGrillingIncrement = 4
+local skillCookingStewIngredIncrement = 5
+local skillSurvivalStewIngredIncrement  = 1
+local skillSurvivalLightFireIncrement = 5
 --fuel
-local FIRE_TIME_MULTI = 1.0
-local RAIN_EFFECT_MULTI = 1.4
-local THUNDER_EFFECT_MULTI = 1.6
+local fuelDecay = 1.0
+local fuelDecayRainEffect = 1.4
+local fuelDecayThunderEffect = 1.6
 
 
 local campfireID = common.staticConfigs.objectIds.campfire
@@ -60,17 +60,30 @@ local grillId = common.staticConfigs.objectIds.grill
 
 local function dataLoaded()
     common.data.stewWarmEffect = common.data.stewWarmEffect and common.data.stewWarmEffect or 0
-    --register stewTemp
-    local temperatureController = require("mer.ashfall.temperatureController")
-    temperatureController.registerInternalHeatSource("stewWarmEffect")
 end
 event.register("Ashfall:dataLoaded", dataLoaded)
 
 
---Calculators
-local function calculateCookMultiplier(fuelLevel)
-    return 500 * math.min(math.remap(fuelLevel, 0, 10, 0.5, 1.5), 1.5)
+local function firstDataLoaded()
+    --register stewTemp
+    local temperatureController = require("mer.ashfall.temperatureController")
+    temperatureController.registerInternalHeatSource("stewWarmEffect")
 end
+event.register("Ashfall:dataLoadedOnce", firstDataLoaded)
+
+--Calculators
+
+--How much fuel level affects grill cook speed
+local function calculateCookMultiplier(fuelLevel)
+    return 350 * math.min(math.remap(fuelLevel, 0, 10, 0.5, 1.5), 1.5)
+end
+
+--How much ingredient weight affects grill cook speed
+local function calculateCookWeightModifier(ingredObject)
+    return math.remap(ingredObject.weight, 1, 2, 1, 0.5)
+end
+
+--How much water heat affects stew cook speed
 local function calculateWaterHeatEffect(waterHeat)
     return math.remap(waterHeat, cfConfigs.hotWaterHeatValue, cfConfigs.maxWaterHeatValue, 1, 10)
 end
@@ -114,11 +127,6 @@ local function iterateCampfires(callback)
 
    --Max Execution time: 0.001 seconds
 end
-
-
-
-
-
 
 --Empty a cooking pot, reseting all data
 local function clearCookingPot(campfire)
@@ -226,7 +234,6 @@ local function updateFireScale(campfire)
     local fireNode = campfire.sceneNode:getObjectByName("FIRE_PARTICLE_NODE")
     fireNode.scale = multiplier
 end
-
 
 --Update the water level of the cooking pot
 local function updateWaterHeight(campfire)
@@ -436,7 +443,7 @@ local menuButtons = {
             local lightNode = campfire.sceneNode:getObjectByName("AttachLight")
             lightNode.translation.z = 25
             campfire.data.fuelLevel = campfire.data.fuelLevel - 0.5
-            common.skills.survival:progressSkill( SKILL_INCREMENT_LIGHT_FIRE)
+            common.skills.survival:progressSkill( skillSurvivalLightFireIncrement)
             campfire.data.isLit = true
             updateVisuals(campfire)
         end,
@@ -618,7 +625,7 @@ local menuButtons = {
                                 --Cool down stew
                                 campfire.data.waterHeat = campfire.data.waterHeat or 0
                                 local before = campfire.data.waterHeat
-                                campfire.data.waterHeat = math.max(( campfire.data.waterHeat - STEW_COOLDOWN_WATER * ratio ), 0)
+                                campfire.data.waterHeat = math.max(( campfire.data.waterHeat - stewWaterCooldownAmount * ratio ), 0)
                                 local after = campfire.data.waterHeat
                                 if before > cfConfigs.hotWaterHeatValue and after < cfConfigs.hotWaterHeatValue then
                                     tes3.removeSound{
@@ -666,7 +673,7 @@ local menuButtons = {
                         filter = function(e)
                             return (
                                 e.item.objectType == tes3.objectType.ingredient and
-                                foodTypes.ingredTypes[e.item.id] == foodType
+                                foodConfig.ingredTypes[e.item.id] == foodType
                                 --Can only grill meat and veges
                             )
                         end,
@@ -674,7 +681,7 @@ local menuButtons = {
                             if e.item then
                                 --Cool down stew
                                 campfire.data.stewProgress = campfire.data.stewProgress or 0
-                                campfire.data.stewProgress = math.max(( campfire.data.stewProgress - STEW_COOLDOWN_INGRED ), 0)
+                                campfire.data.stewProgress = math.max(( campfire.data.stewProgress - stewIngredientCooldownAmount ), 0)
 
                                 --initialise stew levels
                                 campfire.data.stewLevels = campfire.data.stewLevels or {}
@@ -690,8 +697,8 @@ local menuButtons = {
                                     ) * 100
                                 )
 
-                                common.skills.cooking:progressSkill(SKILL_INCREMENT_STEW_INGRED)
-                                common.skills.survival:progressSkill(SKILL_INCREMENT_STEW_INGRED_SURVIVAL)
+                                common.skills.cooking:progressSkill(skillCookingStewIngredIncrement)
+                                common.skills.survival:progressSkill(skillSurvivalStewIngredIncrement)
 
                                 
                                 tes3.player.object.inventory:removeItem{
@@ -709,11 +716,11 @@ local menuButtons = {
                 end)
             end
             local ingredButtons = {
-                { text = foodTypes.TYPE.protein, callback = function() ingredientSelect(foodTypes.TYPE.protein) end },
-                { text = foodTypes.TYPE.vegetable, callback = function() ingredientSelect(foodTypes.TYPE.vegetable) end },
-                { text = foodTypes.TYPE.mushroom, callback = function() ingredientSelect(foodTypes.TYPE.mushroom) end },
-                { text = foodTypes.TYPE.seasoning, callback = function() ingredientSelect(foodTypes.TYPE.seasoning) end },
-                { text = foodTypes.TYPE.herb, callback = function() ingredientSelect(foodTypes.TYPE.herb) end },
+                { text = foodConfig.TYPE.protein, callback = function() ingredientSelect(foodConfig.TYPE.protein) end },
+                { text = foodConfig.TYPE.vegetable, callback = function() ingredientSelect(foodConfig.TYPE.vegetable) end },
+                { text = foodConfig.TYPE.mushroom, callback = function() ingredientSelect(foodConfig.TYPE.mushroom) end },
+                { text = foodConfig.TYPE.seasoning, callback = function() ingredientSelect(foodConfig.TYPE.seasoning) end },
+                { text = foodConfig.TYPE.herb, callback = function() ingredientSelect(foodConfig.TYPE.herb) end },
 
             }
             local buttons = {}
@@ -796,13 +803,13 @@ local menuButtons = {
                 campfire.data.stewLevels and 
                 campfire.data.stewProgress and
                 campfire.data.stewProgress == cfConfigs.maxStewProgress and
-                common.conditions.hunger:getValue() > 0.01
+                common.staticConfigs.conditionConfig.hunger:getValue() > 0.01
             )
         end,
         callback = function(campfire)
 
             --remove old sbuffs
-            for name, buff in pairs(foodTypes.stewBuffs) do
+            for name, buff in pairs(foodConfig.stewBuffs) do
                 if campfire.data.stewLevels[name] == nil then
                     mwscript.removeSpell{ reference = tes3.player, spell = buff.id }
                 end
@@ -811,7 +818,7 @@ local menuButtons = {
             --Add buffs and set duration
             for name, ingredLevel in pairs(campfire.data.stewLevels) do
                 --add spell
-                local stewBuff = foodTypes.stewBuffs[name]
+                local stewBuff = foodConfig.stewBuffs[name]
                 local effectStrength = calculateStewBuffStrength(math.min(ingredLevel, 100), stewBuff.min, stewBuff.max)
                 timer.delayOneFrame(function()
                     local spell = tes3.getObject(stewBuff.id)
@@ -826,13 +833,13 @@ local menuButtons = {
             --add up ingredients, mulitplying nutrition by % in the pot
             local nutritionLevel = 0
             local maxNutritionLevel = 0
-            for type, _ in pairs(foodTypes.stewBuffs) do
-                nutritionLevel = nutritionLevel + ( foodTypes.nutrition[type] * ( campfire.data.stewLevels[type] or 0 ) / 100 )
-                maxNutritionLevel = nutritionLevel + foodTypes.nutrition[type]
+            for type, _ in pairs(foodConfig.stewBuffs) do
+                nutritionLevel = nutritionLevel + ( foodConfig.nutrition[type] * ( campfire.data.stewLevels[type] or 0 ) / 100 )
+                maxNutritionLevel = nutritionLevel + foodConfig.nutrition[type]
             end
             local foodRatio = nutritionLevel / maxNutritionLevel
             
-            local highestNeed = math.max(common.conditions.hunger:getValue() / foodRatio, common.conditions.thirst:getValue())
+            local highestNeed = math.max(common.staticConfigs.conditionConfig.hunger:getValue() / foodRatio, common.staticConfigs.conditionConfig.thirst:getValue())
             local maxDrinkAmount = math.min(campfire.data.waterAmount, (cfConfigs.maxWaterLevel / cfConfigs.stewMealCapacity), highestNeed )
 
             local amountAte = hungerController.eatAmount(maxDrinkAmount * foodRatio)
@@ -1106,7 +1113,7 @@ local function onActivateFirewood(e)
 
     if string.lower(e.target.object.id) == firewoodID then
         local cell =tes3.getPlayerCell()
-        if cell.restingIsIllegal or cell.isInterior then
+        if cell.restingIsIllegal then
             return
         end
         common.helper.messageBox({
@@ -1143,16 +1150,16 @@ local function updateCampfireValues(e)
                 --raining and campfire exposed
                 if tes3.getCurrentWeather().index == tes3.weather.rain then
                     if not common.helper.checkRefSheltered(campfire) then
-                        rainEffect = RAIN_EFFECT_MULTI
+                        rainEffect = fuelDecayRainEffect
                     end
                 --thunder and campfire exposed
                 elseif tes3.getCurrentWeather().index == tes3.weather.thunder then
                     if not common.helper.checkRefSheltered(campfire) then
-                        rainEffect = THUNDER_EFFECT_MULTI
+                        rainEffect = fuelDecayThunderEffect
                     end
                 end
 
-                campfire.data.fuelLevel = campfire.data.fuelLevel - ( difference * FIRE_TIME_MULTI * rainEffect )
+                campfire.data.fuelLevel = campfire.data.fuelLevel - ( difference * fuelDecay * rainEffect )
                 if campfire.data.fuelLevel <= 0 then
                     campfire.data.fuelLevel = 0
                     local playSound = difference < 0.01
@@ -1179,10 +1186,10 @@ local function updateCampfireValues(e)
                 campfire.data.lastWaterUpdated = e.timestamp
                 local heatEffect = -1--negative if cooling down
                 if campfire.data.isLit then--based on fuel if heating up
-                    heatEffect = math.remap(campfire.data.fuelLevel, 0, cfConfigs.maxWoodInFire, FUEL_WATER_MULTI_MIN, FUEL_WATER_MULTI_MAX)
+                    heatEffect = math.remap(campfire.data.fuelLevel, 0, cfConfigs.maxWoodInFire, minFuelWaterHeat, maxFuelWaterHeat)
                 end
                 local heatBefore = campfire.data.waterHeat
-                campfire.data.waterHeat = math.clamp((campfire.data.waterHeat + ( difference * WATER_HEAT_RATE * heatEffect )), 0, cfConfigs.maxWaterHeatValue)
+                campfire.data.waterHeat = math.clamp((campfire.data.waterHeat + ( difference * waterHeatRate * heatEffect )), 0, cfConfigs.maxWaterHeatValue)
                 local heatAfter = campfire.data.waterHeat
 
                 --add boiling sound
@@ -1267,69 +1274,74 @@ local function findCampfireForCooking(ingredient, cookingType)
     return campfire
 end
 
---update any food that is currently grilling
-local function grillFood(e)
-    for _, cell in pairs( tes3.getActiveCells() ) do
-        for ingredient in cell:iterateReferences(tes3.objectType.ingredient) do
-            local foodType = foodTypes.ingredTypes[ingredient.object.id]
-            --Can only grill meat and veges
-            if foodType == foodTypes.TYPE.protein or foodType == foodTypes.TYPE.vegetable then
+local function grillFoodItem(ingredient, timestamp)
+    if ingredient.object.objectType == tes3.objectType.ingredient then
+        local foodType = foodConfig.ingredTypes[ingredient.object.id]
+        --Can only grill certain types of food
+        if foodConfig.grillValues[foodType] then
+            local campfire = findCampfireForCooking(ingredient, "grilling")
+            if campfire then
+                if campfire.data.hasGrill and campfire.data.isLit then
+                    ingredient.data.lastCookUpdated = ingredient.data.lastCookUpdated or timestamp
+                    ingredient.data.cookedAmount = ingredient.data.cookedAmount or 0
 
-                local campfire = findCampfireForCooking(ingredient, "grilling")
-                if campfire then
-                    if campfire.data.hasGrill and campfire.data.isLit then
-                        ingredient.data.lastCookUpdated = ingredient.data.lastCookUpdated or e.timestamp
-                        ingredient.data.cookedAmount = ingredient.data.cookedAmount or 0
+                    local difference = timestamp - ingredient.data.lastCookUpdated
+                    if difference > 0.008 then
+                        ingredient.data.lastCookUpdated = timestamp
+                        local before = ingredient.data.cookedAmount
 
-                        local difference = e.timestamp - ingredient.data.lastCookUpdated
-                        if difference > 0.008 then
-                            ingredient.data.lastCookUpdated = e.timestamp
-                            local before = ingredient.data.cookedAmount
+                        local thisCookMulti = calculateCookMultiplier(campfire.data.fuelLevel)
+                        local weightMulti = calculateCookWeightModifier(ingredient.object)
+                        ingredient.data.cookedAmount = ingredient.data.cookedAmount + ( difference * thisCookMulti * weightMulti)
+                        local after = ingredient.data.cookedAmount
 
-                            local thisCookMulti = calculateCookMultiplier(campfire.data.fuelLevel) 
-                            ingredient.data.cookedAmount = ingredient.data.cookedAmount + ( difference * thisCookMulti )
-                            local after = ingredient.data.cookedAmount
+                        
 
-                            
-
-                            --Only play sounds/messages if not transitioning from cell
-                            if difference < 0.01 then
-                                --Cooked your food
-                                if before < 100 and after > 100 then
-                                    tes3.messageBox("%s is fully cooked.", ingredient.object.name)
-                                    tes3.playSound{ sound = "potion fail", pitch = 0.7, reference = e.reference }
-                                    common.skills.cooking:progressSkill(SKILL_INCREMENT_GRILLING)
-                                    common.skills.survival:progressSkill(SKILL_INCREMENT_GRILLING_SURVIVAL)
-                                end
-                                --burned your food
-                                local burnLevel = hungerController.getBurnLimit()
-                                if before < burnLevel and after > burnLevel then
-                                    tes3.messageBox("%s has become burnt.", ingredient.object.name)
-                                    tes3.playSound{ sound = "potion fail", pitch = 0.9, reference = e.reference }
-                                end
+                        --Only play sounds/messages if not transitioning from cell
+                        if difference < 0.01 then
+                            --Cooked your food
+                            if before < 100 and after > 100 then
+                                tes3.messageBox("%s is fully cooked.", ingredient.object.name)
+                                tes3.playSound{ sound = "potion fail", pitch = 0.7, reference = ingredient }
+                                common.skills.cooking:progressSkill(skillCookingGrillingIncrement)
+                                common.skills.survival:progressSkill(skillSurvivalGrillingIncrement)
                             end
-                            local helpMenu = tes3ui.findHelpLayerMenu(tes3ui.registerID("HelpMenu"))
-                            if helpMenu and helpMenu.visible == true then
-                                tes3ui.refreshTooltip()
+                            --burned your food
+                            local burnLevel = hungerController.getBurnLimit()
+                            if before < burnLevel and after > burnLevel then
+                                tes3.messageBox("%s has become burnt.", ingredient.object.name)
+                                tes3.playSound{ sound = "potion fail", pitch = 0.9, reference = ingredient }
                             end
                         end
-                    else
-                        --reset grill time if campfire is unlit
-                        ingredient.data.lastCookUpdated = nil
+                        local helpMenu = tes3ui.findHelpLayerMenu(tes3ui.registerID("HelpMenu"))
+                        if helpMenu and helpMenu.visible == true then
+                            tes3ui.refreshTooltip()
+                        end
                     end
+                else
+                    --reset grill time if campfire is unlit
+                    ingredient.data.lastCookUpdated = nil
                 end
             end
         end
     end
 end
 
-event.register("simulate", grillFood)
+--update any food that is currently grilling
+local function grillFoodSimulate(e)
+    for _, cell in pairs( tes3.getActiveCells() ) do
+        for ingredient in cell:iterateReferences(tes3.objectType.ingredient) do
+            grillFoodItem(ingredient, e.timestamp)
+        end
+    end
+end
+event.register("simulate", grillFoodSimulate)
 
 --Reset grill time when item is placed
 local function ingredientPlaced(e)
     if e.reference and e.reference.object then
-        local foodType = foodTypes.ingredTypes[e.reference.object.id]
-        if foodType == foodTypes.TYPE.protein or foodType == foodTypes.TYPE.vegetable then
+        local foodType = foodConfig.ingredTypes[e.reference.object.id]
+        if foodConfig.grillValues[foodType] then
                 --Reset grill time for meat and veges
             timer.frame.delayOneFrame(function()
                 local ingredient = e.reference
@@ -1346,14 +1358,15 @@ local function ingredientPlaced(e)
                     tes3.playSound{ sound = "potion fail", pitch = 0.8, reference = ingredient }
                 end
             end)
+            grillFoodItem(e.reference, tes3.getSimulationTimestamp())
         end
     end
-    grillFood({ timestamp = tes3.getSimulationTimestamp() })
 end
 event.register("referenceSceneNodeCreated" , ingredientPlaced)
 
 
 --Update Stew buffs
+--local  i = 0
 local function updateBuffs(e)
     if common.data.stewBuffTimeLeft and common.data.stewBuffTimeLeft > 0 then
 
@@ -1366,16 +1379,14 @@ local function updateBuffs(e)
 
             common.data.stewWarmEffect = 0 
 
-            for _, stewBuff in pairs(foodTypes.stewBuffs) do
+            for _, stewBuff in pairs(foodConfig.stewBuffs) do
                 mwscript.removeSpell({ reference = tes3.player, spell = stewBuff.id})
             end
             common.helper.restoreFatigue()
         end
     end
-
     common.data.lastStewBuffUpdated = e.timestamp
 end
-
 event.register("simulate", updateBuffs)
 
 ------------------
@@ -1450,7 +1461,7 @@ local function updateTooltip(e)
                 
                 for name, ingredLevel in pairs(campfire.data.stewLevels) do
                     local value = math.min(ingredLevel, 100)
-                    local stewBuff = foodTypes.stewBuffs[name]
+                    local stewBuff = foodConfig.stewBuffs[name]
                     local spell = tes3.getObject(stewBuff.id)
                     local effect = spell.effects[1]
 

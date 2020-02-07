@@ -50,7 +50,7 @@ function this.updateHUD()
             local tempPlayer = math.clamp((common.data.temp or 0), -100, 100) or 0
             local tempLimit = math.clamp((common.data.tempLimit), -100, 100) or 0
 
-            local condition = common.conditions.temp.states[( common.data.currentStates.temp  or "comfortable" )].text
+            local condition = common.staticConfigs.conditionConfig.temp.states[( common.data.currentStates.temp  or "comfortable" )].text
             local wetness = common.data.wetness or 0
             wetness = math.clamp(wetness, 0, 100) or 0
 
@@ -131,7 +131,7 @@ function this.updateHUD()
 
             --THIRST
             local thirstBar = findHUDElement(IDs.thirst)
-            local thirst = common.conditions.thirst
+            local thirst = common.staticConfigs.conditionConfig.thirst
             if needsUI.showThirst()  then
                 local newThirst = ( (1 - thirst:getValue() / 100 ) * thirstBar.parent.height)
                 thirstBar.height = newThirst
@@ -142,7 +142,7 @@ function this.updateHUD()
 
             --SLEEP
             local sleepBar = findHUDElement(IDs.tiredness)
-            local tiredness = common.conditions.tiredness
+            local tiredness = common.staticConfigs.conditionConfig.tiredness
             if needsUI.showTiredness() then
                 local newSleep = ( (1-  tiredness:getValue() / 100 ) * sleepBar.parent.height)
                 sleepBar.height = newSleep

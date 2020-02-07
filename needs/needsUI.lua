@@ -3,6 +3,8 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common.common")
+local conditionConfig = common.staticConfigs.conditionConfig
+
 local function rgbToColor(r, g, b)
     return { (r/255), (g/255), (b/255) }
 end
@@ -34,7 +36,7 @@ this.UIData = {
         fillBarID = tes3ui.registerID("Ashfall:hungerFillBar"),
         conditionID = tes3ui.registerID("Ashfall:hungerConditionId"),
         showUIFunction = this.showHunger,
-        conditionTypes = common.conditions.hunger.states,
+        conditionTypes = conditionConfig.hunger.states,
         defaultCondition = "wellFed",
         need = "hunger",
         color = rgbToColor(230, 92, 0),
@@ -44,7 +46,7 @@ this.UIData = {
         fillBarID = tes3ui.registerID("Ashfall:thirstFillBar"),
         conditionID = tes3ui.registerID("Ashfall:thirstConditionId"),
         showUIFunction = this.showThirst,
-        conditionTypes = common.conditions.thirst.states,
+        conditionTypes = conditionConfig.thirst.states,
         defaultCondition = "hydrated",
         need = "thirst",
         color = rgbToColor(0, 143, 179),
@@ -54,7 +56,7 @@ this.UIData = {
         fillBarID = tes3ui.registerID("Ashfall:sleepFillBar"),
         conditionID = tes3ui.registerID("Ashfall:sleepConditionId"),
         showUIFunction = this.showTiredness,
-        conditionTypes = common.conditions.tiredness.states,
+        conditionTypes = conditionConfig.tiredness.states,
         defaultCondition = "rested",
         need = "tiredness",
         color = rgbToColor(0, 204, 0),
@@ -63,7 +65,7 @@ this.UIData = {
 }
 
 local function updateNeedsBlock(menu, data)
-    local need = common.conditions[data.need]
+    local need = conditionConfig[data.need]
 
     local block = menu:findChild(data.blockID)
     
@@ -162,7 +164,7 @@ local function createNeedsUI(e)
 
     for _, needId in ipairs({"hunger", "thirst", "tiredness"}) do
         local data = this.UIData[needId]
-        local need = common.conditions[needId]
+        local need = conditionConfig[needId]
 
         local block = needsBlock:createBlock({id = data.blockID})
         setupNeedsElementBlock(block)
@@ -218,7 +220,7 @@ end
 
 
 function this.addNeedsBlockToMenu(e, needId)
-    local need = common.conditions[needId]
+    local need = conditionConfig[needId]
     local data = this.UIData[needId]
     if not data.showUIFunction() then
         --this need is disabled

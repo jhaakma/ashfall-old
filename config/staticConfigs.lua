@@ -1,5 +1,10 @@
 local this = {}
 
+this.activatorConfig = require("mer.Ashfall.config.activatorConfig")
+this.conditionConfig = require("mer.Ashfall.config.conditionConfig")
+this.foodConfig = require("mer.Ashfall.config.foodConfig")
+this.ratingsConfig = require("mer.Ashfall.config.ratingsConfig")
+
 this.objectIds = {
     firewood = "a_firewood",
     branch = "ashfall_firewood",
@@ -14,14 +19,14 @@ this.capacities = {
     cup = 50,
     goblet = 50,
     mug = 60,
-    flask = 80,
-    tankard = 100,
-    bottle = 120,
-    jug = 150,
-    pitcher = 180,
-    cookingPot = 200,
+    flask = 70,
+    tankard = 90,
+    bottle = 110,
+    jug = 140,
+    pitcher = 150,
+    cookingPot = 150,
     kettle = 120,
-    MAX = 200
+    MAX = 150
 }
 
 this.bottleList = {
@@ -241,7 +246,6 @@ this.interiorTempPatterns = {
     ["tureynulal"] = this.interiorTempValues.ruin,
     ["vemynal"] = this.interiorTempValues.ruin,
 }
-
 
 
 return this

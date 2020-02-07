@@ -1,7 +1,8 @@
 local common = require("mer.ashfall.common.common")
 local hungerController = require('mer.ashfall.needs.hunger.hungerController')
 local thirstController = require('mer.ashfall.needs.thirst.thirstController')
-local foodTypes = require("mer.ashfall.camping.foodTypes")
+local foodConfig = common.staticConfigs.foodConfig
+
 local function setupOuterBlock(e)
     e.flowDirection = 'left_to_right'
     e.paddingTop = 0
@@ -51,13 +52,13 @@ end
 
 --Adds fillbar showing how much water is left in a bottle. 
 --Height of fillbar border based on capacity of bottle.
-local function updateWaterIndicatorValues(e)
+local function updateFoodAndWaterTiles(e)
     if common.data and not common.data.mcmSettings.enableThirst then return end
 
-    local bottleData = thirstController.getBottleData(e.item.id)
-
-    if bottleData then
-        local liquidLevel =  e.itemData and e.itemData.data.waterAmount or 0
+    --bottles show water amount
+    local bottleData = thirstController.getBottleData(e.item.id) 
+    if e.itemData and bottleData then
+        local liquidLevel = e.itemData.data.waterAmount or 0
         local capacity = bottleData.capacity
         local maxHeight = 32 * ( capacity / common.staticConfigs.capacities.MAX)
 
@@ -70,15 +71,47 @@ local function updateWaterIndicatorValues(e)
         indicatorBlock.paddingAllSides = 2
 
         local levelIndicator = indicatorBlock:createImage({ path = "textures/menu_bar_blue.dds" })
+        --Add a greenish tinge to dirty water
+        if e.itemData.data.waterDirty then
+            levelIndicator.color = { 0.8, 0.6, 0.5 }
+        end
         levelIndicator.consumeMouseEvents = false
         levelIndicator.width = 6
         levelIndicator.height = maxHeight * ( liquidLevel / capacity )
         levelIndicator.scaleMode = true
         levelIndicator.absolutePosAlignY = 1.0
     end
+
+    --Food shows cooked amount
+    local hasCookedValue = (
+        e.itemData and 
+        e.itemData.data and 
+        e.itemData.data.cookedAmount and 
+        e.itemData.data.cookedAmount > 0
+    )
+    if hasCookedValue then
+        local cookedAmount =  e.itemData.data.cookedAmount
+        local capacity = 100
+        local maxHeight = 32
+
+        local indicatorBlock = e.element:createThinBorder()
+        indicatorBlock.consumeMouseEvents = false
+        indicatorBlock.absolutePosAlignX = 0.1
+        indicatorBlock.absolutePosAlignY = 1.0
+        indicatorBlock.width = 8
+        indicatorBlock.height = maxHeight
+        indicatorBlock.paddingAllSides = 2
+
+        local levelIndicator = indicatorBlock:createImage({ path = "textures/menu_bar_red.dds" })
+        levelIndicator.consumeMouseEvents = false
+        levelIndicator.width = 6
+        levelIndicator.height = maxHeight * ( cookedAmount / capacity )
+        levelIndicator.scaleMode = true
+        levelIndicator.absolutePosAlignY = 1.0
+    end
 end
 
-event.register( "itemTileUpdated", updateWaterIndicatorValues )
+event.register( "itemTileUpdated", updateFoodAndWaterTiles )
 
 
 
@@ -109,10 +142,10 @@ local function createNeedsTooltip(e)
 
 
         --cook state
-        local thisFoodType = foodTypes.ingredTypes[e.object.id]
+        local thisFoodType = foodConfig.ingredTypes[e.object.id]
         if thisFoodType then
             local cookedLabel = ""
-            if thisFoodType == foodTypes.TYPE.protein or thisFoodType == foodTypes.TYPE.vegetable then
+            if foodConfig.grillValues[thisFoodType] then
                 local cookedAmount = e.itemData and e.itemData.data.cookedAmount
                 if not cookedAmount  then
                     cookedLabel = " (Raw)"
@@ -143,7 +176,7 @@ local function createNeedsTooltip(e)
 
             local icon = e.tooltip:findChild(tes3ui.registerID("HelpMenu_icon"))
             if icon then
-                updateWaterIndicatorValues{
+                updateFoodAndWaterTiles{
                     itemData = e.itemData,
                     element = icon, 
                     item = e.object

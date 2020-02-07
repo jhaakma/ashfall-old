@@ -17,9 +17,12 @@ for key, val in pairs(defaultValues) do
 end
 
 local config = {
+    --save to file
     save = function()
         mwse.saveConfig(configPath, cache)
-    end
+    end,
+    --get cache table
+    get = function() return cache end
 }
 
 local meta = {
@@ -27,5 +30,5 @@ local meta = {
         return cache[key]
     end
 }
-
-return setmetatable(config, meta)
+setmetatable(config, meta)
+return config

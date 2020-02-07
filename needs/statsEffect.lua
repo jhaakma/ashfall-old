@@ -1,21 +1,21 @@
 local this = {}
 local common = require("mer.ashfall.common.common")
-
+local conditionConfig = common.staticConfigs.conditionConfig
 
 
 local function getMaxHealth()
     local minHeath = common.data and common.data.mcmSettings.needsCanKill and 0 or 1
-    local multiplier = common.conditions.hunger:getStatMultiplier()
+    local multiplier = conditionConfig.hunger:getStatMultiplier()
     return math.max( minHeath, math.floor(tes3.mobilePlayer.health.base * multiplier ) )
 end
 local function getMaxMagicka()
     local minMagicka = 0
-    local multiplier = common.conditions.thirst:getStatMultiplier()
+    local multiplier = conditionConfig.thirst:getStatMultiplier()
     return math.max(minMagicka, math.floor(tes3.mobilePlayer.magicka.base * multiplier) )
 end
 local function getMaxFatigue()
     local minFatigue = 0
-    local multiplier = common.conditions.tiredness:getStatMultiplier()
+    local multiplier = conditionConfig.tiredness:getStatMultiplier()
     return math.max(minFatigue, math.floor(tes3.mobilePlayer.fatigue.base * multiplier ) )
 end
 
@@ -67,51 +67,29 @@ local function calcFatigue()
     end 
 end
 
-local doBlockNeeds
-local function unblockNeeds()
-    common.log.debug("unblocking")
-    doBlockNeeds = false
+local doInJail
+local function turnOnNeeds()
+    doInJail = false
     common.data.blockNeeds = false
 end
-
-local function checkInJail()
-    if not doBlockNeeds then
-        if tes3.mobilePlayer.inJail then
-            common.log.debug("In Jail")
-            doBlockNeeds = true
-        end
-        if doBlockNeeds == true then
-            common.data.blockNeeds = true
-            timer.start{
-                type = timer.real,
-                duration = 2,
-                callback = unblockNeeds
-            }
-        end
+local function checkJail()
+    if tes3.mobilePlayer.inJail and not doInJail then
+        doInJail = true
+        common.data.blockNeeds = true
+        timer.start{
+            type = timer.real,
+            duration = 1,
+            callback = turnOnNeeds
+        }
     end
 end
-
 
 function this.calculate()
     calcHealth()
     calcMagicka()
     calcFatigue()
-    checkInJail()
+    checkJail()
 end
-
-local function checkTravel()
-    if not doBlockNeeds  then
-        doBlockNeeds = true
-        common.log.debug("Travelling")
-        common.data.blockNeeds = true
-        timer.start{
-            type = timer.real,
-            duration = 2,
-            callback = unblockNeeds
-        }
-    end
-end
-event.register("calcTravelPrice", checkTravel )
 
 function this.getMaxStat(stat)
     if stat == "health" then return getMaxHealth() end
@@ -130,8 +108,5 @@ local function enterRestMenu()
     })
 end
 event.register("uiActivated", enterRestMenu, { filter = "MenuRestWait"})
-
-
-
 
 return this

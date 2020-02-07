@@ -1,19 +1,21 @@
 local this = {}
 local common = require("mer.ashfall.common.common")
+local conditionConfig = common.staticConfigs.conditionConfig
+
 local faderConfigs = {
     freezing = {
         name = "Freezing",
         texture = "Textures/Ashfall/faders/frozen.dds",
         onSound = "ashfall_freeze",
         condition = "temp",
-        conditionMax = common.conditions.temp.states.freezing.max
+        conditionMax = conditionConfig.temp.states.freezing.max
     },
     scorching = {
         name = "Scorching",
         texture = "Textures/Ashfall/faders/scorching.dds",
         onSound = "ashfall_scorch",
         condition = "temp",
-        conditionMin = common.conditions.temp.states.scorching.min
+        conditionMin = conditionConfig.temp.states.scorching.min
     },
 
 }
@@ -53,7 +55,7 @@ end
 
 local function checkFaders()
     for _, config in pairs(faderConfigs) do
-        local condition = common.conditions[config.condition]
+        local condition = conditionConfig[config.condition]
         local currentValue = condition:getValue()
 
         local outOfBounds = false

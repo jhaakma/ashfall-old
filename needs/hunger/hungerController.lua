@@ -3,7 +3,7 @@ local common = require("mer.ashfall.common.common")
 local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
-local foodTypes = require("mer.ashfall.camping.foodTypes")
+
 local meals = require("mer.ashfall.cooking.meals")
 local statsEffect = require("mer.ashfall.needs.statsEffect")
 
@@ -14,11 +14,12 @@ local coldMulti = 5.0
 local HUNGER_EFFECT_LOW = 1.3
 local HUNGER_EFFECT_HIGH = 1.0
 local restMultiplier = 1.0
-local hunger = common.conditions.hunger
 
+local hunger = common.staticConfigs.conditionConfig.hunger
+local foodConfig = common.staticConfigs.foodConfig
 
 function this.isFood(foodObject)
-    local config = common.config.get()
+    local config = common.getConfig()
     local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
     return (
         foodObject.objectType == tes3.objectType.ingredient and
@@ -41,11 +42,13 @@ end
 
 function this.getFoodValue(object, itemData)
 
-    if not foodTypes.nutrition[foodTypes.ingredTypes[object.id]] then
+    if not foodConfig.nutrition[foodConfig.ingredTypes[object.id]] then
         common.log.error("No value found for %s", object.id)
     end
-
-    local value = foodTypes.nutrition[foodTypes.ingredTypes[object.id]] or foodTypes.nutrition[foodTypes.TYPE.misc]
+    local ingredType = foodConfig.ingredTypes[object.id]
+    local value = foodConfig.nutrition[ingredType] or foodConfig.nutrition[foodConfig.TYPE.misc]
+    --scale by weight
+    value = value * math.remap(object.weight, 1, 2, 1, 1.5)
 
     local cookedAmount = itemData and itemData.data.cookedAmount
     if cookedAmount then
@@ -53,7 +56,7 @@ function this.getFoodValue(object, itemData)
         local cookingEffect = math.remap(
             cooking, 
             common.skillStartValue, 100, 
-            foodTypes.cookedMultiMin, foodTypes.cookedMultiMax
+            foodConfig.grillValues[ingredType].min, foodConfig.grillValues[ingredType].max
         )
 
         local min = value
@@ -135,7 +138,7 @@ function this.calculate(scriptInterval, forceUpdate)
 
     local newHunger = hunger:getValue()
     
-    local temp = common.conditions.temp
+    local temp = common.staticConfigs.conditionConfig.temp
     --Colder it gets, the faster you grow hungry
     local coldEffect = math.clamp(temp:getValue(), temp.states.freezing.min, temp.states.chilly.max) 
     
@@ -172,13 +175,13 @@ local function applyFoodBuff(foodId)
     end
 end
 
-local function onEquip(e)    
+local function onEquip(e)
     if this.isFood(e.item) then
         this.eatAmount(this.getFoodValue(e.item, e.itemData))
         applyFoodBuff(e.item.id)
 
         --Check for food poisoning
-        if foodTypes.ingredTypes[e.item.id] == foodTypes.TYPE.protein then
+        if foodConfig.ingredTypes[e.item.id] == foodConfig.TYPE.protein then
             local cookedAmount = e.itemData and e.itemData.data.cookedAmount or 0
             if cookedAmount then
                 local chance = 1 - ( cookedAmount / 100 )
@@ -190,6 +193,6 @@ local function onEquip(e)
     end
 end
 
-event.register("equip", onEquip, { filter = tes3.player } )
+event.register("equip", onEquip, { filter = tes3.player, priority = -100 } )
 
 return this

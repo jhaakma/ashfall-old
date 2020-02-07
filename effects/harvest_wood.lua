@@ -1,7 +1,7 @@
 
 local activatorController = require("mer.ashfall.activators.activatorController")
-local activatorConfig = require("mer.ashfall.activators.activatorConfig")
 local common = require("mer.ashfall.common.common")
+local activatorConfig = common.staticConfigs.activatorConfig
 local lastRef
 
 --How many swings required to collect wood. Randomised again after each harvest

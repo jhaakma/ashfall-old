@@ -8,7 +8,7 @@ local this = {}
 ]]-- 
 
 local common = require("mer.ashfall.common.common")
-local activatorConfig = require("mer.Ashfall.activators.activatorConfig")
+local activatorConfig = common.staticConfigs.activatorConfig
 this.list = activatorConfig.list
 this.current = nil
 this.currentRef = nil

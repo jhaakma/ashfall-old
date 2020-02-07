@@ -6,7 +6,7 @@ local skillModule = include("OtherSkills.skillModule")
 local logger = require("mer.ashfall.common.logger")
 local skills = {}
 --INITIALISE SKILLS--
-local skillstartValue = 10
+skills.skillStartValue = 10
 local function onSkillsReady()
     if not skillModule then
         timer.start({
@@ -34,7 +34,7 @@ local function onSkillsReady()
         {    
             name = "Survival", 
             icon = "Icons/ashfall/survival.dds",
-            value = skillstartValue,
+            value = skills.skillStartValue,
             attribute = tes3.attribute.endurance,
             description = "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively. A higher survival skill also reduces the chance of getting food poisoning or dysentry from drinking dirty water.",
             specialization = tes3.specialization.stealth
@@ -46,7 +46,7 @@ local function onSkillsReady()
         {    
             name = "Cooking", 
             icon = "Icons/ashfall/cooking.dds",
-            value = skillstartValue,
+            value = skills.skillStartValue,
             attribute = tes3.attribute.intelligence,
             description = "The cooking skill determines your effectiveness at cooking meals. The higher your cooking skill, the higher the nutritional value of cooked meats and vegetables, and the stronger the buffs given by stews. A higher cooking skill also increases the time before food will burn on a grill.",
             specialization = tes3.specialization.magic

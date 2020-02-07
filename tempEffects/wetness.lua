@@ -3,7 +3,7 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common.common")
-local wetness = common.conditions.wetness
+local wetness = common.staticConfigs.conditionConfig.wetness
 
 --register temp effects
 local temperatureController = require("mer.ashfall.temperatureController")
@@ -19,9 +19,9 @@ local thunderEffect = 300
 local DRYING_MULTI = 125 --dry per hour at max heat
 
 --Boundaries for wetEffects
-this.dampLevel = common.conditions.wetness.states.damp.min
-this.wetLevel = common.conditions.wetness.states.wet.min
-this.soakedLevel = common.conditions.wetness.states.soaked.min
+this.dampLevel = common.staticConfigs.conditionConfig.wetness.states.damp.min
+this.wetLevel = common.staticConfigs.conditionConfig.wetness.states.wet.min
+this.soakedLevel = common.staticConfigs.conditionConfig.wetness.states.soaked.min
 
 --Height at which Player gets wetEfects
 local dampHeight = 50

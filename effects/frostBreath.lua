@@ -6,7 +6,7 @@
 local common = require("mer.ashfall.common.common")
 local this = {}
 
-local coldLevelNeeded = common.conditions.temp.states.veryCold.max
+local coldLevelNeeded = common.staticConfigs.conditionConfig.temp.states.veryCold.max
 
 local function checkEnabled()
     return common.data.mcmSettings.showFrostBreath

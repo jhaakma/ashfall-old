@@ -1,7 +1,7 @@
 --Updates condition spell effect strength based on player stats
 --Uses base version of spell as a reference to get attribute  values without multiplier
 local common = require("mer.ashfall.common.common")
-
+local conditionConfig = common.staticConfigs.conditionConfig
 local this = {}
 
 
@@ -10,7 +10,7 @@ local this = {}
 function this.updateCondition(id)
 
     if not common.data then return end
-    local thisCondition = common.conditions[id]
+    local thisCondition = conditionConfig[id]
 
     if common.data.currentStates[id] == nil then
         common.data.currentStates[id] = thisCondition.default
@@ -25,8 +25,6 @@ function this.updateCondition(id)
         thisCondition:showUpdateMessages()
         thisCondition:updateConditionEffects(currentState)
     end
-    
-
     --Restore fatigue if it drops below 0
     if conditionChanging then
         common.helper.restoreFatigue()
@@ -37,10 +35,29 @@ end
 --Update all conditions - called by the script timer
 function this.updateConditions()
     --if tes3.menuMode() then return end
-    for name, _ in pairs(common.conditions) do
-        this.updateCondition(name)
+    for id, _ in pairs(conditionConfig) do
+        this.updateCondition(id)
     end
 end
+
+local function refreshConditions()
+    for _, condition in pairs(conditionConfig) do
+        condition:updateConditionEffects()
+    end
+end
+
+--Update all conditions on load
+local conditionRefreshTimer
+local function updateConditionsOnLoad()
+    refreshConditions()
+    conditionRefreshTimer = conditionRefreshTimer or timer.start{
+        type = timer.real,
+        duration = 1,
+        iterations = -1, 
+        callback = refreshConditions
+    }
+end
+event.register("loaded", updateConditionsOnLoad)
 
 --Remove and re-add the condition spell if the player healed their stats with a potion or spell. 
 local function refreshAfterRestore(e)
@@ -50,9 +67,9 @@ local function refreshAfterRestore(e)
         not string.startswith(e.source.id, "fw")
     )
     if doRefresh then
-        for id, condition in pairs(common.conditions) do
+        for id, condition in pairs(conditionConfig) do
             local currentState = condition:getCurrentState()
-            local states = common.conditions[id].states
+            local states = conditionConfig[id].states
             if states and currentState then
                 local spell = states[currentState].spell
                 if spell and tes3.player.object.spells:contains(spell) then

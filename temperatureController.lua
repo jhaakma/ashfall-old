@@ -6,7 +6,7 @@ local hud = require("mer.ashfall.ui.hud")
 --Move to Config file
 local INT_MULTI = 100 --Rate of change for player temp
 local MAX_DIFFERENCE = 40
-local MAX_MULTI = 4--Rate of player temp change
+local MAX_MULTI = 1--Rate of player temp change
 -----------------------------------------------
 
 
@@ -94,7 +94,7 @@ local function getExternalHeat()
     for _, heatSource in ipairs(this.externalHeatSources) do
         
         if not common.data[heatSource.id] then
-            common.log.debug("common.data.%s not found", heatSource.id)
+            --common.log.error("common.data.%s not found", heatSource.id)
         else
             
             heat = heat + common.data[heatSource.id]
@@ -114,7 +114,7 @@ local function getInternalHeat()
     local result = 0
     for _, heatSource in ipairs(this.internalHeatSources) do
         if not common.data[heatSource.id] then
-            common.log.debug("common.data.%s not found", heatSource.id)
+            --common.log.error("common.data.%s not found", heatSource.id)
         else
             result = result + common.data[heatSource.id]
         end
@@ -171,7 +171,7 @@ local function getBaseTempMultiplier()
         )
         if addMultiplier then
             if not common.data[multiplier.id] then
-                common.log.debug("common.data.%s not found", multiplier.id)
+                --common.log.error("common.data.%s not found", multiplier.id)
             else
                 result = result * common.data[multiplier.id]
             end
@@ -195,7 +195,7 @@ local function getInternalChangeMultiplier(interval)
         if addMultiplier then
 
             if not common.data[multiplier.id] then
-                common.log.debug("common.data.%s not found", multiplier.id)
+                --common.log.error("common.data.%s not found", multiplier.id)
             else
                 result = result * common.data[multiplier.id]
             end
@@ -205,9 +205,9 @@ local function getInternalChangeMultiplier(interval)
     --Twice as fast movement if moving towards comfortable/warm
     local comfortMulti = 1.0
     local movingTowardsWarm = (
-        common.data.temp > common.conditions.temp.states.warm.min and common.data.temp > common.data.tempLimit
+        common.data.temp > common.staticConfigs.conditionConfig.temp.states.warm.min and common.data.temp > common.data.tempLimit
             or
-        common.data.temp < common.conditions.temp.states.warm.max and common.data.temp < common.data.tempLimit
+        common.data.temp < common.staticConfigs.conditionConfig.temp.states.warm.max and common.data.temp < common.data.tempLimit
     )
     if movingTowardsWarm then
         comfortMulti = 2.0

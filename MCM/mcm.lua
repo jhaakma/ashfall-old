@@ -312,22 +312,147 @@ local function registerModConfig()
     end --\Exclusions Page
 
     do --Dev Options
+        --get a formatted string of all Ashfall data
+        local function recursivePrint()
+            if not tes3.player then return "" end
+            local data = common.data
+
+            local text = ""
+            local indent = 0
+            local function recurse(data)
+                for key, val in pairs(data) do
+                    if type(val) == "table" then
+                        indent = indent + 1
+                        text = string.format("%s%s:\n", text, key)
+                        recurse(val)
+                        indent = indent - 1
+                    else
+                        for i = 0, indent, 1 do
+                            text = text .. " "   
+                        end
+                        text = string.format("%s%s: %s\n", text, key, val)
+                    end
+                end
+
+            end
+            recurse(data)
+            return text
+        end
+
+        --Add settings for each Ashfall data field each time the menu is opened
+        local function postCreateData(self)
+            if not tes3.player then return end
+            --clear the existing components
+            self.elements.subcomponentsContainer:destroyChildren()
+            self.components = {}
+            
+            local path = "Ashfall"
+            local data = common.data
+            local function recurse(component)
+                
+                --Boolean: buttons
+                for key, val in pairs(data) do
+                    if type(val) == "boolean" then
+                        component:createOnOffButton{
+                            label = key, 
+                            variable = mwse.mcm.createPlayerData {
+                                id = key,
+                                path = path
+                            },
+                            getText = function(button)
+                                return button.variable.value and "true" or "false"
+                            end
+                        }
+                    end
+                end
+                --Strings: text fields
+                for key, val in pairs(data) do
+                    if type(val) == "string" then
+                        component:createTextField{
+                            label = key, 
+                            variable = mwse.mcm.createPlayerData {
+                                id = key,
+                                path = path
+                            },
+                        }
+                    end
+                end
+                --numbers: number fields
+                for key, val in pairs(data) do
+                    if type(val) == "number" then
+                        component:createTextField{
+                            label = key, 
+                            variable = mwse.mcm.createPlayerData {
+                                id = key,
+                                path = path
+                            },
+                            numbersOnly = true
+                        }
+                    end
+                end
+                --tables: category, then recurse over the table
+                for key, val in pairs(data) do
+                    if type(val) == "table" and not string.find(key, "__") then
+                        local category = component:createCategory(key)
+                        
+                        local prevData = data
+                        local prevPath = path
+                        path = path .. "." .. key
+                        data = val
+                        recurse(category)
+                        data = prevData
+                        path = prevPath
+                    end
+                end
+            end
+            recurse(self)
+            --Render the new components
+            self:createSubcomponents(self.elements.subcomponentsContainer, self.components)
+        end
+
         local pageDevOptions = template:createSideBarPage{
             label = "Development Options",
             description = "Tools for debugging etc. Don't touch unless you know what you're doing.",
         }
-
+        
         pageDevOptions:createDropdown{
             label = "Log Level",
+            description = "Set the logging level for mwse.log. Keep on INFO unless you are debugging.",
             options = {
                 { label = "DEBUG", value = "DEBUG"},
                 { label = "INFO", value = "INFO"},
                 { label = "ERROR", value = "ERROR"},
                 { label = "NONE", value = "NONE"},
             },
-            variable = createTableVar("logLevel")
+            variable = createTableVar("logLevel"),
         }
 
+        pageDevOptions:createButton{
+            buttonText = "Print data to log",
+            description = "Print all Ashfall data to Morrowind/MWSE.log. If you are having issues with Ashfall, recreate the issue in-game, press this button, then send the MWSE.log file to Merlord at the Morrowind Modding Discord channel.",
+            callback = function() mwse.log("Ashfall Data: \n" .. recursivePrint()) end,
+            inGameOnly = true
+        }
+
+        pageDevOptions:createCategory{
+            label = "Current Values",
+            description = (
+                "Dynamic data for Ashfall. Use with caution, " ..
+                "although the vast majority of these values are " ..
+                "re-calculated every frame so changing them here won't do much."
+            ),
+            postCreate = postCreateData,
+            inGameOnly = true
+        }
+
+        -- pageDevOptions:createInfo{
+        --     label = "Current Data: ",
+        --     inGameOnly = true, 
+        --     text = "",
+        --     postCreate = function(self)
+        --         self.elements.info.text = recursivePrint()
+        --     end
+        -- }
     end --\Dev Options
 
     template:register()

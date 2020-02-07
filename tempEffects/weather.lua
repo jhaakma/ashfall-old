@@ -150,23 +150,23 @@ end
 
 local registerOnce
 local function dataLoaded()
-    
     updateWeather(tes3.getCurrentWeather())
     common.data.weatherTemp = common.data.weatherTemp or common.staticConfigs.interiorTempValues.default
-    if not registerOnce then
-        registerOnce = true
-        cellChanged()
-        event.register('cellChanged', cellChanged)
-        event.register('weatherChangedImmediate', immediateChange)
-        event.register('weatherTransitionFinished', transitionEnd)
-    end
 end
 
 event.register('Ashfall:dataLoaded', dataLoaded)
 
+local function firstDataLoaded()
+    cellChanged()
+    event.register('cellChanged', cellChanged)
+    event.register('weatherChangedImmediate', immediateChange)
+    event.register('weatherTransitionFinished', transitionEnd)
+end
+event.register("Ashfall:dataLoadedOnce", firstDataLoaded)
+
 --Change weather every few hours
 local function setWeatherInterval()
-    local interval = math.random(2, 6)
+    local interval = math.random(1, 6)
     tes3.worldController.weatherController.hoursBetweenWeatherChanges = interval
 end
 

@@ -1,8 +1,5 @@
 local this = {}
 
-this.cookedMultiMin = 2.0
-this.cookedMultiMax = 3.5
-
 this.TYPE = {
     protein = "Protein",
     vegetable = "Vegetable",
@@ -21,15 +18,23 @@ this.stewBuffs = {
     [this.TYPE.herb] = { min = 5, max = 20, id = "ashfall_stew_aromatic"} -- fortify personality
 }
 
+--min: fully cooked multi at lowest cooking skill
+--max fully cooked multi at highest cooking skill
+this.grillValues = {
+    [this.TYPE.protein] = { min = 2.5, max = 3.0 }, 
+    [this.TYPE.vegetable] = { min = 2.2, max = 2.7 },
+    [this.TYPE.mushroom] = { min = 2.0, max = 2.5 },
+}
 
+--Nutrition at weight==1.0
 this.nutrition = {
-    [this.TYPE.protein] = 15,
-    [this.TYPE.vegetable] = 12,
-    [this.TYPE.mushroom] = 10,
-    [this.TYPE.seasoning] = 2,
-    [this.TYPE.herb] = 5,
-    [this.TYPE.food] = 40,
-    [this.TYPE.misc] = 2,
+    [this.TYPE.protein] = 12,
+    [this.TYPE.vegetable] = 14,
+    [this.TYPE.mushroom] = 13,
+    [this.TYPE.seasoning] = 8,
+    [this.TYPE.herb] = 10,
+    [this.TYPE.food] = 30,
+    [this.TYPE.misc] = 5,
 }
 
 this.ingredTypes = {
@@ -131,7 +136,7 @@ this.ingredTypes = {
     ["ingred_saltrice_01"] = this.TYPE.vegetable,
     ["ingred_scales_01"] = this.TYPE.misc,
     ["ingred_scamp_skin_01"] = this.TYPE.misc,
-    ["ingred_scathecraw_01"] = this.TYPE.misc,
+    ["ingred_scathecraw_01"] = this.TYPE.herb,
     ["ingred_scrap_metal_01"] = this.TYPE.misc,
     ["Ingred_scrib_cabbage_01"] = this.TYPE.protein,
     ["ingred_scrib_jelly_01"] = this.TYPE.protein,
@@ -428,6 +433,12 @@ this.ingredTypes = {
     ["ab01ingred_alga02"] = this.TYPE.herb,
     ["ab01ingred_alga01"] = this.TYPE.herb,
 
+
+    
+    --Danae's Cliff Racers
+    ["NOM_food_racer_morsel"] = this.TYPE.protein,
+    ["mc_racer_raw"] = this.TYPE.protein,
+    
     --My custom
 
     ["mer_ingfood_fish"] = this.TYPE.protein,

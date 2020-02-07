@@ -3,15 +3,15 @@
     Doesn't deal with hunger because you just die. 
 ]]
 local common = require("mer.ashfall.common.common")
-local thirst = common.conditions.thirst
-local tiredness = common.conditions.tiredness
+local thirst = common.staticConfigs.conditionConfig.thirst
+local tiredness = common.staticConfigs.conditionConfig.tiredness
 
 --Tired
 local passedOut
 local function passOut()
     local hours = 2.5 + math.random(0.5)
     local secondsTaken = 5
-    local function wakeUp()
+    local function wakeUp(e)
         tiredness:setValue(5)
         tes3.setStatistic{
             reference = tes3.mobilePlayer,
@@ -27,7 +27,8 @@ end
 local function checkTired()
     --Sleep
     local isPassedOut = (
-        tiredness:getValue() <= 0 and 
+        common.data.mcmSettings.enableTiredness and
+        tiredness:getValue() >= 100 and 
         tes3.mobilePlayer.fatigue.current <= 0  and 
         passedOut ~= true
     )
@@ -46,9 +47,22 @@ local function checkTired()
     end
 end
 
+--Heat
+local function checkHot()
+    local temp = common.staticConfigs.conditionConfig.temp
+    if temp:getCurrentState() == "scorching" then
+
+    end
+end
+
+
+
+
+
 
 local function checkStats()
     checkTired()
+    checkHot()
 end
 event.register("simulate", checkStats)
 
@@ -57,6 +71,7 @@ event.register("simulate", checkStats)
 local function applyThirstDamage()
     local doDamage = (
         not tes3.menuMode() and 
+        common.data.mcmSettings.enableThirst and
         tes3.mobilePlayer.health.current > 0 and 
         thirst:getValue() >= thirst.max and
         common.data.mcmSettings.needsCanKill == true and

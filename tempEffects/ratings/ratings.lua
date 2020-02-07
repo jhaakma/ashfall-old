@@ -1,16 +1,17 @@
 local this = {}
-local data = require('mer.ashfall.tempEffects.ratings.ratingsData')
+
 local common = require("mer.ashfall.common.common")
+local ratingsConfig = common.staticConfigs.ratingsConfig
 
 local function getCache()
-    return common.config.get().warmthCache or {
+    return common.getConfig().warmthCache or {
         armor = {},
         clothing = {}
     }
 end
 
 local function saveCache(newCache) 
-    common.config.saveValue("warmthCache", newCache)
+    common.saveConfigValue("warmthCache", newCache)
 end 
 
 
@@ -57,7 +58,7 @@ local function getRawItemWarmth(object)
     else
         local itemName = string.lower(object.name)
         --String search item names
-        for pattern, value in pairs(data.warmth[type].values) do
+        for pattern, value in pairs(ratingsConfig.warmth[type].values) do
             if string.find(itemName, string.lower(pattern)) then
                 cache[type][object.id] = value
                 saveCache(cache)
@@ -70,9 +71,9 @@ local function getRawItemWarmth(object)
     --Don't save to cache in case patterns get added later
     local value
     if object.enchantment then
-        value = data.warmth[type].enchanted
+        value = ratingsConfig.warmth[type].enchanted
     else
-        value = data.warmth[type].default
+        value = ratingsConfig.warmth[type].default
     end
 
     if not value then
@@ -115,11 +116,11 @@ function this.getTotalWarmth()
         end
     end
 
-    return warmth * data.warmth.multiplier
+    return warmth * ratingsConfig.warmth.multiplier
 end
 
 function this.getAdjustedWarmth(value)
-    return value * ( 1 / data.warmth.multiplier )
+    return value * ( 1 / ratingsConfig.warmth.multiplier )
 end
 
 
@@ -142,10 +143,10 @@ local function getItemBodyParts(object)
     local slot
     if object.objectType == tes3.objectType.armor then
         slot = tes3.armorSlot
-        mapper = data.armorPartMapping
+        mapper = ratingsConfig.armorPartMapping
     elseif object.objectType == tes3.objectType.clothing then
         slot = tes3.clothingSlot
-        mapper = data.clothingPartMapping
+        mapper = ratingsConfig.clothingPartMapping
     else
         common.log.error("getItemBodyParts: Not a clothing or armor piece. ")
         return
@@ -163,7 +164,7 @@ function this.getItemCoverage(object)
     if bodyParts then
         local coverage = 0
         for _, part in ipairs(bodyParts) do
-            coverage = coverage + data.bodyParts[part]
+            coverage = coverage + ratingsConfig.bodyParts[part]
         end
         return coverage
     end
@@ -216,7 +217,7 @@ function this.getTotalCoverage()
 
     for part, isCovered in pairs(partsCovered) do
         if isCovered then
-            totalCoverage = totalCoverage + data.bodyParts[part] 
+            totalCoverage = totalCoverage + ratingsConfig.bodyParts[part] 
         end
     end
 

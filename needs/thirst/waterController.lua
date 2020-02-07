@@ -8,35 +8,34 @@
 
 local thirstController = require("mer.ashfall.needs.thirst.thirstController")
 local common = require("mer.ashfall.common.common")
-local activatorConfig = require("mer.ashfall.activators.activatorConfig")
+local activatorConfig = common.staticConfigs.activatorConfig
 
-local thirst = common.conditions.thirst
+local thirst = common.staticConfigs.conditionConfig.thirst
 
 local buttons = {}
 local bDrink = "Drink"
 local bFillBottle = "Fill bottle"
 local bNothing = "Nothing"
+
 local function menuButtonPressed(e)
     local buttonIndex = e.button + 1
-
     --Drink
     if buttons[buttonIndex] == bDrink then
         if thirst:getValue() <= 0.1 then
+            common.log()
             tes3.messageBox("You are fully hydrated.")
-            return
+        else
+            thirstController.callWaterMenuAction(function()
+                thirstController.drinkAmount(100, common.data.drinkingDirtyWater)
+            end)
         end
-        thirstController.callWaterMenuAction(function()
-            thirstController.drinkAmount(100, common.data.drinkingDirtyWater)
-
-        end)
-
     --refill
     elseif buttons[buttonIndex] == bFillBottle then
         thirstController.fillContainer()
-    else
-        common.data.drinkingRain = false
-        common.data.drinkingDirtyWater = false
+        return
     end
+    common.data.drinkingRain = false
+    common.data.drinkingDirtyWater = false
 end
 
 
@@ -54,13 +53,18 @@ end
 --Register events
 event.register(
     "Ashfall:ActivatorActivated", 
-    callWatermenu, 
+    function()
+        common.log.debug("CLEAN water")
+        common.data.drinkingDirtyWater = false
+        callWatermenu()
+    end,
     { filter = activatorConfig.types.waterSource } 
 )
 
 event.register(
     "Ashfall:ActivatorActivated", 
     function()
+        common.log.debug("DIRTY water")
         common.data.drinkingDirtyWater = true
         callWatermenu()
     end, 
@@ -98,6 +102,7 @@ local function checkDrinkRain()
         uncovered
     )
     if doDrink then
+        common.log.debug("common.data.drinkingRain = true")
         common.data.drinkingRain = true
         callWatermenu()
     end
@@ -193,7 +198,7 @@ local function drinkFromContainer(e)
 end
 
 
-event.register("equip", drinkFromContainer, { filter = tes3.player } )
+event.register("equip", drinkFromContainer, { filter = tes3.player, priority = -100 } )
 
 
 --First time entering a cell, add water to random bottles/containers

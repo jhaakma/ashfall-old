@@ -22,7 +22,6 @@ this.list = {
             "ex_vivec_waterfall_05",
             "in_om_waterfall",
             "in_om_waterfall_small",
-            "rm_well"
         }
     },
     well = Activator:new{ 
@@ -31,7 +30,8 @@ this.list = {
         mcmSetting = "enableThirst",
         ids = {
             "ex_nord_well",
-            "furn_well00"
+            "furn_well00",
+            "rm_well"
         }
     },
     keg = Activator:new{ 

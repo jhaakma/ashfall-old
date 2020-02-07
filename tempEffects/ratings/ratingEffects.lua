@@ -18,24 +18,39 @@ local function updateRatings()
     
 end
 
-event.register("Ashfall:dataLoaded", function()
+local function isArmorOrClothing(item)
+    return (
+        item.objectType == tes3.objectType.armor or
+        item.objectType == tes3.objectType.clothing
+    )
+end
+
+local function onUnequipped(e)
+    if isArmorOrClothing(e.item) and e.reference == tes3.player then
+        updateRatings()
+        temperatureController.update()
+        ui.updateRatingsUI()
+    end
+end
+
+local function onEquipped(e)
+    if isArmorOrClothing(e.item) and e.reference == tes3.player then
+        updateRatings()
+        temperatureController.update()
+        ui.updateRatingsUI()
+    end
+end
+
+event.register("Ashfall:dataLoadedOnce", function()
     updateRatings()
     ui.updateRatingsUI()
 
     timer.start({
         duration = 1,
+        iterations = 1,
         callback = function()
-
-            event.register("unequipped", function()
-                updateRatings()
-                temperatureController.update()
-                ui.updateRatingsUI()
-            end)
-            event.register("equipped", function()
-                updateRatings()
-                temperatureController.update()
-                ui.updateRatingsUI()
-            end)
+            event.register("unequipped", onUnequipped)
+            event.register("equipped", onEquipped)
         end
     })
 end)

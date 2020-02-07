@@ -37,18 +37,17 @@ local function callUpdates()
     local interval = hoursPassed - lastTime
     lastTime = hoursPassed
    
-     
-    --Needs:
-    for _, script in pairs(needs) do
-        script.calculate(interval)
-    end
-    statsEffect.calculate()
-
     
     weather.calculateWeatherEffect(interval)
     sunEffect.calculate(interval)
     wetness.calculateWetTemp(interval)
     hungerController.processMealBuffs(interval)
+   
+    --Needs:
+    for _, script in pairs(needs) do
+        script.calculate(interval)
+    end
+    statsEffect.calculate()
 
     --Heavy scripts
     activators.callRayTest()
@@ -97,7 +96,7 @@ end
 
 
 --Register functions
-event.register("Ashfall:dataLoaded", dataLoaded)
+event.register("Ashfall:dataLoadedOnce", dataLoaded)
 
 local function resetTime()
     lastTime = nil

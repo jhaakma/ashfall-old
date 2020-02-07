@@ -16,54 +16,35 @@ Condition.fields = {
 }
 
 
-local function scaleSpellValues(spellID)
+function Condition:scaleSpellValues()
 
-    if not spellID then
-        return
-    end
+    local state = self:getCurrentStateData()
+    if not state.spell then return end
+    if not state.effects then return end
 
-    local BASE_STAT = 60
-    local BASE_LEVEL = 30
-    local ignoreList = {
-        "fw_cond_warm",
-        "fw_wetcond_soaked",
-        "fw_wetcond_wet",
-        "fw_wetcond_damp"
-    }
+    
+    local spell = tes3.getObject(state.spell)
+    for _, stateEffect in ipairs(state.effects) do
+        for _, spellEffect in ipairs(spell.effects) do
 
 
-
-    local baseID = spellID .. "_BASE"
-    --this.log.info("BaseID : %s", baseID)
-    local baseSpell = tes3.getObject(baseID)
-    local realSpell = tes3.getObject(spellID)
-
-    --Warm has a special case
-    for _, id in ipairs(ignoreList) do
-        if spellID == id then
-            return
-        end
-    end
-    --all others
-
-    for i=1, #realSpell.effects do
-
-        local effect = realSpell.effects[i]
-        if effect.id ~= -1 then
-            local baseEffect = baseSpell.effects[i]
-            --Attributes: scale by matching player attribute
-            local attribute  = effect.attribute
-            if attribute ~= -1 then
-                effect.min = baseEffect.min * ( tes3.mobilePlayer.attributes[attribute + 1].base / BASE_STAT ) 
-                effect.max = effect.min
-            else
-                --Other: scale by level
-                effect.min = baseEffect.min * ( tes3.player.object.level / BASE_LEVEL )
-                effect.max = effect.min
+            local doScale = (
+                spellEffect.id == stateEffect.id and 
+                spellEffect.attribute == stateEffect.attribute and
+                stateEffect.amount
+            )
+            if doScale then
+                --For drain/fortify attributes, we scale according
+                --to the player's base amount. 
+                if stateEffect.attribute then
+                    local baseAttr = tes3.mobilePlayer.attributes[stateEffect.attribute + 1].base 
+                    spellEffect.min = baseAttr * stateEffect.amount
+                    spellEffect.max = spellEffect.min
+                end
             end
-            --this.log.info("%s: %s", spellID, effect.min)
         end
     end
+
 end
 
 function Condition:isActive()
@@ -106,23 +87,23 @@ function Condition:getCurrentState()
 end
 
 function Condition:updateConditionEffects(currentState)
+    currentState = currentState or self:getCurrentState()
     for state, values in pairs(self.states) do
         local isCurrentState = ( currentState == state )
         if values.spell then
             if isCurrentState then
-                scaleSpellValues(values.spell)
+                self:scaleSpellValues()
                 mwscript.addSpell({ reference = tes3.player, spell = values.spell })
             else
                 mwscript.removeSpell({ reference = tes3.player, spell =  values.spell })
             end
         end
     end
-
 end
 
 function Condition:getValue()
     if not tes3.player or not tes3.player.data.Ashfall then
-        mwse.log("ERROR: trying to get condition value %s before player was loaded", self.id)
+        --mwse.log("ERROR: trying to get condition value %s before player was loaded", self.id)
         return 0
     end
     return tes3.player.data.Ashfall[self.id] or 0
@@ -131,10 +112,9 @@ end
 
 function Condition:setValue(newVal)
     if not tes3.player or not tes3.player.data.Ashfall then
-        mwse.log("ERROR: trying to set condition value %s before player was loaded", self.id)
+        --mwse.log("ERROR: trying to set condition value %s before player was loaded", self.id)
         return
     end
-    --mwse.log("Set %s to %s", self.id, newVal)
     tes3.player.data.Ashfall[self.id] = math.clamp(newVal, self.min, self.max)
 end
 

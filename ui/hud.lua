@@ -198,7 +198,7 @@ local function updateTooltips()
                             --Show how much has been removed from the base value and why. E.g "Thirsty: -7"
                             debuffText = text.parent:createLabel({ id = tes3ui.registerID("Ashfall_stat_debuff_text")})
                             local newValueText
-                            local stateText = common.conditions[needData.needId]:getCurrentStateData().text
+                            local stateText = common.staticConfigs.conditionConfig[needData.needId]:getCurrentStateData().text
                             local negValText = (stat.base - maxStat)
                             newValueText =  string.format("%s: -%d", 
                                 stateText,
