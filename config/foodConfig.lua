@@ -442,6 +442,32 @@ this.ingredTypes = {
     --My custom
 
     ["mer_ingfood_fish"] = this.TYPE.protein,
+
+    --TR
+    ["T_IngSpice_Saffron_01"] = this.TYPE.seasoning,
+	["T_IngSpice_Pepper_01"] = this.TYPE.seasoning,
+	["T_IngSpice_Nigella_01"] = this.TYPE.seasoning,	
+	["T_IngSpice_Muscat_01"] = this.TYPE.seasoning,
+	["T_IngSpice_Hibiscus_01"] = this.TYPE.herb,
+	["T_IngSpice_Curcuma_01"] = this.TYPE.seasoning,
+	["T_IngSpice_Cardamon_01"] = this.TYPE.seasoning,
+	["T_IngSpice_Anise_01"] = this.TYPE.seasoning,
+	["T_IngFood_MeatHorse_01"] = this.TYPE.protein,
+	["T_IngFood_MeatArenthJerky_01"]= this.TYPE.food,
+	["T_IngFood_Gooseb01"] = this.TYPE.food,
+	["T_IngFood_EggSeagull_01"] = this.TYPE.protein,
+	["T_IngFood_BridethornBerry_01"] = this.TYPE.food,
+	["T_IngFlor_SummerBolete_01"] = this.TYPE.mushroom,
+	["T_IngFlor_RustRussula_01"] = this.TYPE.mushroom,
+	["T_IngFlor_Primrose_01"] = this.TYPE.herb,
+	["T_IngFlor_Lavender_01"] = this.TYPE.herb,
+	["T_IngFlor_KingBolete_01"] = this.TYPE.mushroom,
+	["T_IngFlor_Ginseng_01"] = this.TYPE.herb,
+	["T_IngFlor_Chokeberry_01"] = this.TYPE.herb,
+	["T_IngFlor_CairnBolete_01"] = this.TYPE.mushroom,
+	["T_IngFlor_Cabbage_02"] = this.TYPE.vegetable,
+	["T_IngFlor_Cabbage_01"] = this.TYPE.vegetable,
+	["T_IngFlor_AspyrTea_01"] = this.TYPE.herb,
 }
 
 return this

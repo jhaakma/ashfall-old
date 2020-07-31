@@ -4,9 +4,10 @@ local conditionConfig = common.staticConfigs.conditionConfig
 
 
 local function getMaxHealth()
-    local minHeath = common.data and common.data.mcmSettings.needsCanKill and 0 or 1
+    local minHeath = common.data and common.config.getConfig().needsCanKill and 0 or 1
     local multiplier = conditionConfig.hunger:getStatMultiplier()
-    return math.max( minHeath, math.floor(tes3.mobilePlayer.health.base * multiplier ) )
+    local maxHealth = math.max( minHeath, math.floor(tes3.mobilePlayer.health.base * multiplier ) )
+    return maxHealth
 end
 local function getMaxMagicka()
     local minMagicka = 0
@@ -19,9 +20,7 @@ local function getMaxFatigue()
     return math.max(minFatigue, math.floor(tes3.mobilePlayer.fatigue.base * multiplier ) )
 end
 
-
 local baseHealthCache
-
 local function calcHealth()
     --Health, including rest until healed bullshit
     if baseHealthCache then
@@ -33,6 +32,7 @@ local function calcHealth()
         baseHealthCache = nil
     else
         if not tes3.menuMode() then
+            
             local max =  getMaxHealth()
             if tes3.mobilePlayer.health.current > max then
                 tes3.setStatistic({

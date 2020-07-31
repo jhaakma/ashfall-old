@@ -10,10 +10,9 @@
 ]]
 
 local common = require ("mer.ashfall.common.common")
-local activatorConfig = common.staticConfigs.activatorConfig
 local foodConfig = common.staticConfigs.foodConfig
-local thirstController = require("mer.ashfall.needs.thirst.thirstController")
-local hungerController = require("mer.ashfall.needs.hunger.hungerController")
+local thirstController = require("mer.ashfall.needs.thirstController")
+local hungerController = require("mer.ashfall.needs.hungerController")
 local fastTime = require("mer.ashfall.effects.fastTime")
 --STATIC VARS------------------------------------------------------------
 local cfConfigs = {
@@ -40,8 +39,7 @@ local minFuelWaterHeat = 5--min fuel multiplier on water heating
 local maxFuelWaterHeat = 10--max fuel multiplier on water heating
 
 --Skills
-local skillCookingGrillingIncrement = 10
-local skillSurvivalGrillingIncrement = 4
+
 local skillCookingStewIngredIncrement = 5
 local skillSurvivalStewIngredIncrement  = 1
 local skillSurvivalLightFireIncrement = 5
@@ -73,15 +71,6 @@ event.register("Ashfall:dataLoadedOnce", firstDataLoaded)
 
 --Calculators
 
---How much fuel level affects grill cook speed
-local function calculateCookMultiplier(fuelLevel)
-    return 350 * math.min(math.remap(fuelLevel, 0, 10, 0.5, 1.5), 1.5)
-end
-
---How much ingredient weight affects grill cook speed
-local function calculateCookWeightModifier(ingredObject)
-    return math.remap(ingredObject.weight, 1, 2, 1, 0.5)
-end
 
 --How much water heat affects stew cook speed
 local function calculateWaterHeatEffect(waterHeat)
@@ -106,27 +95,7 @@ end
 
 ------------------------------------------------------------------
 
---call a function on all currently loaded campfires
-local function iterateCampfires(callback)
-    --local before = os.clock()
 
-    for _, cell in pairs( tes3.getActiveCells() ) do
-        for campfire in cell:iterateReferences(tes3.objectType.light) do
-            if not campfire.disabled then
-                local id = string.lower(campfire.object.id)
-                for _, pattern in ipairs(activatorConfig.list.campfire.ids) do
-                    if string.find(id, pattern) then
-                        callback(campfire)
-                        break
-                    end
-                end
-            end
-        end
-    end
-   --common.log.debug("iterateCampfires execution time: %s", os.clock() - before)
-
-   --Max Execution time: 0.001 seconds
-end
 
 --Empty a cooking pot, reseting all data
 local function clearCookingPot(campfire)
@@ -180,6 +149,16 @@ local switchNodeValues = {
             campfire.data.waterHeat and
             campfire.data.waterHeat >= cfConfigs.hotWaterHeatValue
         )
+        return showSteam and state.ON or state.OFF
+    end,
+    SWITCH_KETTLE_STEAM = function(campfire)
+        local state = { OFF = 0, ON = 1 } 
+        local showSteam = ( 
+            campfire.data.hasKettle and 
+            campfire.data.waterHeat and
+            campfire.data.waterHeat >= cfConfigs.hotWaterHeatValue
+        )
+        --if showSteam then mwse.log("Showing steam") end
         return showSteam and state.ON or state.OFF
     end,
     SWITCH_STEW = function(campfire)
@@ -299,6 +278,9 @@ local function updateVisuals(campfire)
     campfire:updateSceneGraph()
 end
 
+local function hasUtensil(campfire)
+    return campfire.data.hasKettle or campfire.data.hasCookingPot
+end
 
 
 local function initialiseActiveCampfires()
@@ -338,7 +320,7 @@ local function initialiseActiveCampfires()
         end) 
     end
 
-    iterateCampfires(doUpdate)
+    common.helper.iterateCampfires(doUpdate)
 end
 
 --[[
@@ -479,7 +461,7 @@ local menuButtons = {
     removeSupports = {
         text = "Remove Supports",
         requirements = function(campfire)
-            return campfire.data.hasSupports and not campfire.data.hasUtensil
+            return campfire.data.hasSupports and not hasUtensil(campfire)
         end,
         callback = function(campfire)
             mwscript.addItem{
@@ -536,14 +518,13 @@ local menuButtons = {
         requirements = function(campfire)
             return (
                 campfire.data.hasSupports and 
-                not campfire.data.hasUtensil and
+                not hasUtensil(campfire) and
                 mwscript.getItemCount{ reference = tes3.player, item = "ashfall_kettle"} > 0
             )
         end,
         callback = function(campfire)
             mwscript.removeItem{ reference = tes3.player, item = "ashfall_kettle" }
             campfire.data.hasKettle = true
-            campfire.data.hasUtensil = true
             tes3.playSound{ reference = tes3.player, sound = "Item Misc Down"  }
             updateVisuals(campfire)
         end
@@ -552,14 +533,14 @@ local menuButtons = {
         text = "Remove Kettle",
         requirements = function(campfire)
             return (
-                campfire.data.hasKettle
+                campfire.data.hasKettle and
+                ( not campfire.data.waterAmount or
+                campfire.data.waterAmount == 0 )
             )
         end,
         callback = function(campfire)
             mwscript.addItem{ reference = tes3.player, item = "ashfall_kettle" }
             campfire.data.hasKettle = false
-            campfire.data.hasUtensil = false
-            campfire.data.waterAmount = nil
             tes3.playSound{ reference = tes3.player, sound = "Item Misc Up"  }
             updateVisuals(campfire)
         end
@@ -572,7 +553,7 @@ local menuButtons = {
                 campfire.data.waterAmount < cfConfigs.maxWaterLevel
             )
             local hasUtensil = (
-                campfire.data.hasUtensil
+                hasUtensil(campfire)
             )
             return needsWater and hasUtensil
         end,
@@ -751,14 +732,13 @@ local menuButtons = {
         requirements = function(campfire)
             return (
                 campfire.data.hasSupports and 
-                not campfire.data.hasUtensil and
+                not hasUtensil(campfire) and
                 mwscript.getItemCount{ reference = tes3.player, item = cookingPotId} > 0
             )
         end,
         callback = function(campfire)
             mwscript.removeItem{ reference = tes3.player, item = cookingPotId }
             campfire.data.hasCookingPot = true
-            campfire.data.hasUtensil = true
             tes3.playSound{ reference = tes3.player, sound = "Item Misc Down"  }
             updateVisuals(campfire)
         end
@@ -776,7 +756,6 @@ local menuButtons = {
             mwscript.addItem{ reference = tes3.player, item = cookingPotId }
             clearCookingPot(campfire)
             campfire.data.hasCookingPot = false
-            campfire.data.hasUtensil = false
             tes3.playSound{ reference = tes3.player, sound = "Item Misc Up"  }
             updateVisuals(campfire)
         end
@@ -923,14 +902,14 @@ local menuButtons = {
         end,
         callback = function(campfire)
             --fill bottle
-            thirstController.fillContainer(
-                campfire.data,
-                function()
-                    if campfire.data.waterAmount == 0 then
+            thirstController.fillContainer{
+                source = campfire.data,
+                callback = function()
+                    if campfire.data.waterAmount <= 0 then
                         clearCookingPot(campfire)
                     end
                 end
-            )
+            }
 
         end
     },
@@ -970,15 +949,7 @@ local menuButtons = {
 
             extinguish(campfire)
             updateVisuals(campfire)
-            tes3.setEnabled({
-                reference = campfire,
-                enabled = false
-            })
-            --[[timer.delayOneFrame(function()
-                mwscript.setDelete{
-                    reference = campfire
-                }
-            end)]]
+            common.helper.yeet(campfire)
         end
     },
     cancel = {
@@ -1076,14 +1047,38 @@ end
 event.register(
     "Ashfall:ActivatorActivated", 
     onActivateCampfire, 
-    { filter = activatorConfig.types.campfire } 
+    { filter = common.staticConfigs.activatorConfig.types.campfire } 
 )
 
 ----------------------
 --FIREWOOD
 ----------------------
-local function placeCampfire(e)
 
+
+
+local skipActivate
+local function pickupFirewood(ref)
+    timer.delayOneFrame(function()
+        skipActivate = true
+        tes3.player:activate(ref)
+        skipActivate = false
+    end)
+end
+
+local function placeCampfire(e)
+    --Check how steep the land is
+    local maxSteepness = 0.3
+    local ground = common.helper.getGroundBelowRef(e.target)
+    local tooSteep = (
+        ground.normal.x > maxSteepness or
+        ground.normal.x < -maxSteepness or
+        ground.normal.y > maxSteepness or
+        ground.normal.y < -maxSteepness
+    ) 
+    if tooSteep then 
+        tes3.messageBox{ message = "The ground is too steep here.", buttons = {tes3.findGMST(tes3.gmst.sOK).value}}
+        return
+    end
     
     mwscript.disable({ reference = e.target })
 
@@ -1098,24 +1093,19 @@ local function placeCampfire(e)
 
 end
 
-local skipActivate
+
 local function onActivateFirewood(e)
     if skipActivate then return end
     if tes3.menuMode() then return end
 
-    local function pickupFirewood(ref)
-        timer.delayOneFrame(function()
-            skipActivate = true
-            tes3.player:activate(ref)
-            skipActivate = false
-        end)
-    end
+
 
     if string.lower(e.target.object.id) == firewoodID then
         local cell =tes3.getPlayerCell()
         if cell.restingIsIllegal then
             return
         end
+
         common.helper.messageBox({
             message = string.format("You have %d %s.", e.target.stackSize, e.target.object.name),
             buttons = {
@@ -1177,7 +1167,7 @@ local function updateCampfireValues(e)
         difference = e.timestamp - campfire.data.lastWaterUpdated
         if difference > cfConfigs.campfireUpdateInterval then
             local hasFilledPot = (
-                campfire.data.hasUtensil and 
+                hasUtensil(campfire) and 
                 campfire.data.waterAmount and 
                 campfire.data.waterAmount > 0
             )
@@ -1226,173 +1216,18 @@ local function updateCampfireValues(e)
         end
         updateVisuals(campfire)
     end
-    iterateCampfires(doUpdate)
+    common.helper.iterateCampfires(doUpdate)
     
 end
 
 event.register("simulate", updateCampfireValues)
 
--------------------------------------------------------
---COOKING----------------------------------------------
--------------------------------------------------------
-
-----------------------------
---Grilling
------------------------------
-
---Checks if the ingredient has been placed on a campfire
-local function findCampfireForCooking(ingredient, cookingType)
-    local distance
-    local minHeight
-    local maxHeight
-    if cookingType == "grilling" then
-        minHeight = 21
-        maxHeight = 35
-        distance = 40
-    elseif cookingType == "boiling" then
-        minHeight = 50
-        maxHeight = 500
-        distance = 500
-    else
-        common.log.error("findCampfireForCooking: invalid cooking type")
-        return
-    end
-    local campfire
-    local function checkDistance(ref)
-        --food sitting on grill
-        local heightDistance = ingredient.position.z - ref.position.z
-        if heightDistance < maxHeight and heightDistance > minHeight then
-            
-            local thisDistance = ingredient.position:distance(ref.position)
-            if thisDistance < distance then
-                distance = thisDistance
-                campfire = ref
-            end
-        end
-    end
-    iterateCampfires(checkDistance)
-    return campfire
-end
-
-local function grillFoodItem(ingredient, timestamp)
-    if ingredient.object.objectType == tes3.objectType.ingredient then
-        local foodType = foodConfig.ingredTypes[ingredient.object.id]
-        --Can only grill certain types of food
-        if foodConfig.grillValues[foodType] then
-            local campfire = findCampfireForCooking(ingredient, "grilling")
-            if campfire then
-                if campfire.data.hasGrill and campfire.data.isLit then
-                    ingredient.data.lastCookUpdated = ingredient.data.lastCookUpdated or timestamp
-                    ingredient.data.cookedAmount = ingredient.data.cookedAmount or 0
-
-                    local difference = timestamp - ingredient.data.lastCookUpdated
-                    if difference > 0.008 then
-                        ingredient.data.lastCookUpdated = timestamp
-                        local before = ingredient.data.cookedAmount
-
-                        local thisCookMulti = calculateCookMultiplier(campfire.data.fuelLevel)
-                        local weightMulti = calculateCookWeightModifier(ingredient.object)
-                        ingredient.data.cookedAmount = ingredient.data.cookedAmount + ( difference * thisCookMulti * weightMulti)
-                        local after = ingredient.data.cookedAmount
-
-                        
-
-                        --Only play sounds/messages if not transitioning from cell
-                        if difference < 0.01 then
-                            --Cooked your food
-                            if before < 100 and after > 100 then
-                                tes3.messageBox("%s is fully cooked.", ingredient.object.name)
-                                tes3.playSound{ sound = "potion fail", pitch = 0.7, reference = ingredient }
-                                common.skills.cooking:progressSkill(skillCookingGrillingIncrement)
-                                common.skills.survival:progressSkill(skillSurvivalGrillingIncrement)
-                            end
-                            --burned your food
-                            local burnLevel = hungerController.getBurnLimit()
-                            if before < burnLevel and after > burnLevel then
-                                tes3.messageBox("%s has become burnt.", ingredient.object.name)
-                                tes3.playSound{ sound = "potion fail", pitch = 0.9, reference = ingredient }
-                            end
-                        end
-                        local helpMenu = tes3ui.findHelpLayerMenu(tes3ui.registerID("HelpMenu"))
-                        if helpMenu and helpMenu.visible == true then
-                            tes3ui.refreshTooltip()
-                        end
-                    end
-                else
-                    --reset grill time if campfire is unlit
-                    ingredient.data.lastCookUpdated = nil
-                end
-            end
-        end
-    end
-end
-
---update any food that is currently grilling
-local function grillFoodSimulate(e)
-    for _, cell in pairs( tes3.getActiveCells() ) do
-        for ingredient in cell:iterateReferences(tes3.objectType.ingredient) do
-            grillFoodItem(ingredient, e.timestamp)
-        end
-    end
-end
-event.register("simulate", grillFoodSimulate)
-
---Reset grill time when item is placed
-local function ingredientPlaced(e)
-    if e.reference and e.reference.object then
-        local foodType = foodConfig.ingredTypes[e.reference.object.id]
-        if foodConfig.grillValues[foodType] then
-                --Reset grill time for meat and veges
-            timer.frame.delayOneFrame(function()
-                local ingredient = e.reference
-                local campfire = findCampfireForCooking(ingredient, "grilling")
-                if campfire and campfire.data.hasGrill and campfire.data.isLit then
-                    local count = ingredient.attachments.variables and ingredient.attachments.variables.count or 1
-                    if count > 1 then
-                        mwscript.addItem{ reference = tes3.player, item = ingredient.object, count = (count - 1) }
-                        ingredient.attachments.variables.count = 1
-                    end
-
-                    ingredient.data.lastCookUpdated = e.timestamp
-                    tes3.messageBox("%s begins to cook.", ingredient.object.name)
-                    tes3.playSound{ sound = "potion fail", pitch = 0.8, reference = ingredient }
-                end
-            end)
-            grillFoodItem(e.reference, tes3.getSimulationTimestamp())
-        end
-    end
-end
-event.register("referenceSceneNodeCreated" , ingredientPlaced)
-
-
---Update Stew buffs
---local  i = 0
-local function updateBuffs(e)
-    if common.data.stewBuffTimeLeft and common.data.stewBuffTimeLeft > 0 then
-
-        common.data.lastStewBuffUpdated = common.data.lastStewBuffUpdated or e.timestamp
-
-        local interval = e.timestamp - common.data.lastStewBuffUpdated
-        common.data.stewBuffTimeLeft = math.max((common.data.stewBuffTimeLeft - interval), 0)
-        --time's up, remove spells and heat
-        if common.data.stewBuffTimeLeft == 0 then
-
-            common.data.stewWarmEffect = 0 
-
-            for _, stewBuff in pairs(foodConfig.stewBuffs) do
-                mwscript.removeSpell({ reference = tes3.player, spell = stewBuff.id})
-            end
-            common.helper.restoreFatigue()
-        end
-    end
-    common.data.lastStewBuffUpdated = e.timestamp
-end
-event.register("simulate", updateBuffs)
 
 ------------------
 --Tooltips
 -----------------
 local function updateTooltip(e)
+    common.log:debug("Campfire tooltip")
     local function centerText(element)
         element.autoHeight = true
         element.autoWidth = true
@@ -1400,8 +1235,8 @@ local function updateTooltip(e)
         element.justifyText = "center" 
     end
     local label = e.label
-    local labelBorder = e.labelBorder
-    local campfire = e.campfire
+    local labelBorder = e.element
+    local campfire = e.reference
     local parentNode = e.parentNode
 
     --Do some fancy campfire stuff
@@ -1514,4 +1349,4 @@ local function updateTooltip(e)
     end
 end
 
-event.register("Ashfall:CampfireTooltip", updateTooltip)
+event.register("Ashfall:Activator_tooltip", updateTooltip, { filter = "campfire" })

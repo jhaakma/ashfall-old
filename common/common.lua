@@ -1,39 +1,29 @@
 --Common
 local this = {}
-
+this.config = require("mer.ashfall.config.config")
 this.staticConfigs = require("mer.ashfall.config.staticConfigs")
-this.log = require("mer.ashfall.common.logger")
 this.helper = require("mer.ashfall.common.helperFunctions")
+this.defaultValues = require ("mer.ashfall.MCM.defaultConfig")
+
+--set up logger
+local logLevel = this.config.getConfig().logLevel
+
+this.log = require("mer.ashfall.common.logger").new{
+    name = "Ashfall",
+    --outputFile = "Ashfall.log",
+    logLevel = logLevel
+}
 
 
-local configPath = "ashfall"
-local inMemConfig
-function this.getConfig()
-    return inMemConfig and inMemConfig or mwse.loadConfig(configPath)
+--Returns if an object is blocked by the MCM
+function this.getIsBlocked(obj)
+    local cfg = this.config.getConfig()
+    local mod = obj.sourceMod and obj.sourceMod:lower()
+    return (
+        cfg.blocked[obj.id] or
+        cfg.blocked[mod]
+    )
 end
-
-function this.saveConfig(newConfig)
-    inMemConfig = newConfig
-    mwse.saveConfig(configPath, newConfig)
-end
-
-function this.getConfigValue(value)
-    local config = this.getConfig()
-    if config then
-        return config[value]
-    else
-        return nil
-    end
-end
-
-function this.saveConfigValue(key, val)
-    local config = this.getConfig()
-    if config then
-        config[key] = val
-        mwse.saveConfig(configPath, config)
-    end
-end
-
 --[[
     Skills
 ]]
@@ -42,26 +32,7 @@ this.skills = {}
 --INITIALISE SKILLS--
 this.skillStartValue = 10
 local function onSkillsReady()
-    if not skillModule then
-        timer.start({
-            callback = function()
-                tes3.messageBox({message = "Please install Skills Module", buttons = {"Okay"} })
-            end,
-            type = timer.simulate,
-            duration = 1.0
-        })
 
-    end
-
-    if ( skillModule.version == nil ) or ( skillModule.version < 1.4 ) then
-        timer.start({
-            callback = function()
-                tes3.messageBox({message = string.format("Please update Skills Module"), buttons = {"Okay"} })
-            end,
-            type = timer.simulate,
-            duration = 1.0
-        })
-    end
 
     skillModule.registerSkill(
         "Ashfall:Survival", 
@@ -70,7 +41,7 @@ local function onSkillsReady()
             icon = "Icons/ashfall/survival.dds",
             value = this.skillStartValue,
             attribute = tes3.attribute.endurance,
-            description = "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively. A higher survival skill also reduces the chance of getting food poisoning or dysentry from drinking dirty water.",
+            description = "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively. A higher survival skill also reduces the chance of getting food poisoning or dysentery from drinking dirty water.",
             specialization = tes3.specialization.stealth
         }
     )
@@ -90,18 +61,18 @@ local function onSkillsReady()
     this.skills.survival = skillModule.getSkill("Ashfall:Survival")
     this.skills.cooking = skillModule.getSkill("Ashfall:Cooking")
 
-    this.log.info("Ashfall skills registered")
+    this.log:info("Ashfall skills registered")
 end
 event.register("OtherSkills:Ready", onSkillsReady)
 
 
 --Setup local configs. 
-local function initialiseLocalSettings(mcmData)
-    --this.log.info("initialising category %s", category.id)
-    for setting, value in pairs(mcmData) do
-        if this.data.mcmSettings[setting] == nil then
-            this.data.mcmSettings[setting] = value
-            this.log.info( "Initialising local data %s to %s", setting, value )
+local function initialiseLocalSettings()
+    --this.log:info("initialising category %s", category.id)
+    for setting, value in pairs(this.defaultValues) do
+        if this.config.getConfig()[setting] == nil then
+            this.config.getConfig()[setting] = value
+            this.log:info( "Initialising local data %s to %s", setting, value )
         end
     end
 end
@@ -111,8 +82,42 @@ end
 local dataLoadedOnce = false
 local function onLoaded()
     if not skillModule then
-        tes3.messageBox("WARNING: Skills module not installed!")
+        this.helper.messageBox({
+            message = "Skills Module is not installed! This is a requirement for Ashfall and the mod will NOT work without it.", 
+            buttons = {
+                {
+                    text = "Exit game and go to Skills Module Nexus page",
+                    callback = function()
+                        os.execute("start https://www.nexusmods.com/morrowind/mods/46034")
+                        os.exit()
+                    end
+                },
+                {
+                    text = "Continue with a broken game"
+                }
+            } 
+        })
     end
+
+    if ( skillModule.version == nil ) or ( skillModule.version < 1.4 ) then
+
+        this.helper.messageBox({
+            message = "Outdated version of Skills Module detected.", 
+            buttons = {
+                {
+                    text = "Exit game and go to Skills Module Nexus page",
+                    callback = function()
+                        os.execute("start https://www.nexusmods.com/morrowind/mods/46034")
+                        os.exit()
+                    end
+                },
+                {
+                    text = "Continue"
+                }
+            } 
+        })
+    end
+
     --Persistent data stored on player reference 
     -- ensure data table exists
     local data = tes3.player.data
@@ -123,12 +128,10 @@ local function onLoaded()
 
     this.data.currentStates = this.data.currentStates or {}
     this.data.wateredCells = this.data.wateredCells or {}
-    this.data.mcmSettings = this.data.mcmSettings or {}
     --initialise mod config
-    local mcmData = require ("mer.ashfall.MCM.mcmData")
-    initialiseLocalSettings(mcmData)
+    initialiseLocalSettings()
 
-    this.log.info("Common Data loaded successfully")
+    this.log:info("Common Data loaded successfully")
     event.trigger("Ashfall:dataLoaded")
 
     if not dataLoadedOnce then
@@ -137,5 +140,6 @@ local function onLoaded()
     end
 end
 event.register("loaded", onLoaded)
+
 
 return this

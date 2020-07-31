@@ -29,13 +29,13 @@ function CampFirePart:attach(reference)
     if node then
         local nif = self:loadMesh()  
         if nif then
-            common.log.info("attaching nif")
+            common.log:info("attaching nif")
             node:attachChild(nif, true)
             reference:updateSceneGraph()
             reference.sceneNode:updateNodeEffects()
         end
     else
-        common.log.info("No 'attach' node found for %s", reference.id)
+        common.log:info("No 'attach' node found for %s", reference.id)
     end
 end
 

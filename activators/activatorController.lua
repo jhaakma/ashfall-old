@@ -52,7 +52,7 @@ local function doActivate()
     return (
         this.current and 
         not tes3.menuMode() and 
-        common.data.mcmSettings[this.getCurrentActivator().mcmSetting] ~= false
+        common.config.getConfig()[this.getCurrentActivator().mcmSetting] ~= false
     )
 end
 
@@ -92,15 +92,16 @@ local function createActivatorIndicator()
             centerText(label)
 
             
-            if this.current == "campfire" then
-                local eventData = {
-                    label = label,
-                    parentNode = this.parentNode,
-                    labelBorder = labelBorder,
-                    campfire = this.currentRef
-                }
-                event.trigger("Ashfall:CampfireTooltip", eventData)
-            end
+
+            local eventData = {
+                label = label,
+                parentNode = this.parentNode,
+                element = labelBorder,
+                reference = this.currentRef
+            } 
+            common.log:debug("Triggering activator tooltip event for %s", this.current)
+            event.trigger("Ashfall:Activator_tooltip", eventData, {filter = this.current })
+
 
         else
             if mainBlock then
@@ -118,47 +119,28 @@ end
 function this.callRayTest()
     this.current = nil
     this.currentRef = nil
-    --Figure out camera position
-    local rayPosition
-    local rayDirection
-    
-    if tes3.is3rdPerson() then
-        local head = tes3.player.sceneNode:getObjectByName("Bip01 Head")
-        rayPosition = head.worldTransform.translation
-        rayDirection = tes3vector3.new (
-            tes3.player.orientation.x,
-            --tes3.player.orientation.y,
-            tes3.getCameraVector().y,
-            tes3.player.orientation.z
-        )
-    else
-        rayPosition = tes3.getCameraPosition()
-        rayDirection = tes3.getCameraVector()
-    end
-    local oldCulledValue = tes3.player.sceneNode.appCulled
-    tes3.player.sceneNode.appCulled = true
+
     local result = tes3.rayTest{
-        position = rayPosition,
-        direction = rayDirection,
+        position = tes3.getPlayerEyePosition(),
+        direction = tes3.getPlayerEyeVector(),
+        ignore = { tes3.player }
     }
-    tes3.player.sceneNode.appCulled = oldCulledValue
+
     if result then
         
         if (result and result.reference ) then 
             
-            local distance = rayPosition:distance(result.intersection)
+            local distance = tes3.player.position:distance(result.intersection)
 
             --Look for activators from list
             if distance < 200 then
                 local targetRef = result.reference
                 if targetRef then
                     for activatorId, activator in pairs(this.list) do
-                        for _, pattern in ipairs(activator.ids) do
-                            if string.find(string.lower(targetRef.id), pattern) then
-                                this.current = activatorId
-                                this.currentRef = targetRef
-                                this.parentNode = result.object.parent
-                            end
+                        if activator:isActivator(targetRef.id) then
+                            this.current = activatorId
+                            this.currentRef = targetRef
+                            this.parentNode = result.object.parent
                         end
                     end
                     createActivatorIndicator()
@@ -172,12 +154,12 @@ function this.callRayTest()
         local waterLevel = cell.waterLevel or 0
         local intersection = result.intersection
         local adjustedIntersection = tes3vector3.new( intersection.x, intersection.y, waterLevel )
-        local adjustedDistance = rayPosition:distance(adjustedIntersection)
+        local adjustedDistance = tes3.player.position:distance(adjustedIntersection)
         if adjustedDistance < 300 and cell.hasWater then
             local blockedBySomething =
                 result.reference and
                 result.reference.object.objectType ~= tes3.objectType.static
-            local cameraIsAboveWater = rayPosition.z > waterLevel
+            local cameraIsAboveWater = tes3.player.position.z > waterLevel
             local isLookingAtWater = intersection.z < waterLevel
             if cameraIsAboveWater and isLookingAtWater and not blockedBySomething then
                 this.current = "water"

@@ -6,7 +6,7 @@
 ]]--
  
 
-local thirstController = require("mer.ashfall.needs.thirst.thirstController")
+local thirstController = require("mer.ashfall.needs.thirstController")
 local common = require("mer.ashfall.common.common")
 local activatorConfig = common.staticConfigs.activatorConfig
 
@@ -22,7 +22,6 @@ local function menuButtonPressed(e)
     --Drink
     if buttons[buttonIndex] == bDrink then
         if thirst:getValue() <= 0.1 then
-            common.log()
             tes3.messageBox("You are fully hydrated.")
         else
             thirstController.callWaterMenuAction(function()
@@ -54,7 +53,7 @@ end
 event.register(
     "Ashfall:ActivatorActivated", 
     function()
-        common.log.debug("CLEAN water")
+        common.log:debug("CLEAN water")
         common.data.drinkingDirtyWater = false
         callWatermenu()
     end,
@@ -64,7 +63,7 @@ event.register(
 event.register(
     "Ashfall:ActivatorActivated", 
     function()
-        common.log.debug("DIRTY water")
+        common.log:debug("DIRTY water")
         common.data.drinkingDirtyWater = true
         callWatermenu()
     end, 
@@ -75,7 +74,7 @@ event.register(
 --Look straight up at the rain and activate to bring up water menu
 local function checkDrinkRain()
     --thirst active
-    local thirstActive = common.data and common.data.mcmSettings.enableThirst
+    local thirstActive = common.data and common.config.getConfig().enableThirst
     --activate button
     local inputController = tes3.worldController.inputController
     local pressedActivate = inputController:keybindTest(tes3.keybind.activate)
@@ -102,7 +101,7 @@ local function checkDrinkRain()
         uncovered
     )
     if doDrink then
-        common.log.debug("common.data.drinkingRain = true")
+        common.log:debug("common.data.drinkingRain = true")
         common.data.drinkingRain = true
         callWatermenu()
     end
@@ -133,11 +132,8 @@ end
 
 --Player activates a bottle with water in it
 local function doDrinkWater(e)
-
-    local thisSipSize = 100
-
     --Only drink as much in bottle
-    thisSipSize = math.min( thisSipSize, e.itemData.data.waterAmount )
+    local thisSipSize = math.min( 100, e.itemData.data.waterAmount )
 
     --Only drink as much as player needs
     local hydrationNeeded = thirst:getValue()
@@ -149,55 +145,53 @@ local function doDrinkWater(e)
     thirstController.drinkAmount(thisSipSize, e.itemData.data.waterDirty)
 end
 
+
 local function drinkFromContainer(e)
-    local potionSipSize = 15
     
+    if common.getIsBlocked(e.item) then return end
     --First check potions, gives a little hydration
     if e.item.objectType == tes3.objectType.alchemy then
-        local thisSipSize = potionSipSize
+        local thisSipSize = common.staticConfigs.capacities.potion
         thisSipSize = math.min( thirst:getValue(), thisSipSize)
         thirstController.drinkAmount(thisSipSize)
-    end
-
-
     
-    local itemData = e.itemData and e.itemData.data
-    local liquidLevel = (
-        itemData and
-        itemData.waterAmount
-    )
-    local doDrink = (
-        common.data.mcmSettings.enableThirst and
-        liquidLevel
-    )
-    if doDrink then
-        if itemData.waterDirty then
-            common.helper.messageBox{
-                message = "This water is dirty.",
-                buttons = {
-                    { 
-                        text = "Drink Dirty Water", 
-                        callback = function() doDrinkWater(e) end 
-                    },
-                    { 
-                        text = "Empty Container", 
-                        callback = function()
-                            e.itemData.data.waterAmount = 0
-                            handleEmpties(e)
-                            tes3.playSound({reference = tes3.player, sound = "Swim Left"})
-                        end
-                    },
-                    { text = tes3.findGMST(tes3.gmst.sCancel).value }
-                }
-            }
-        else
-            doDrinkWater(e)
-        end
+    else
 
+        local itemData = e.itemData and e.itemData.data
+        local liquidLevel = (
+            itemData and
+            itemData.waterAmount
+        )
+        local doDrink = (
+            common.config.getConfig().enableThirst and
+            liquidLevel
+        )
+        if doDrink then
+            if itemData.waterDirty then
+                common.helper.messageBox{
+                    message = "This water is dirty.",
+                    buttons = {
+                        { 
+                            text = "Drink Dirty Water", 
+                            callback = function() doDrinkWater(e) end 
+                        },
+                        { 
+                            text = "Empty Container", 
+                            callback = function()
+                                e.itemData.data.waterAmount = 0
+                                handleEmpties(e)
+                                tes3.playSound({reference = tes3.player, sound = "Swim Left"})
+                            end
+                        },
+                        { text = tes3.findGMST(tes3.gmst.sCancel).value }
+                    }
+                }
+            else
+                doDrinkWater(e)
+            end
+        end
     end
 end
-
-
 event.register("equip", drinkFromContainer, { filter = tes3.player, priority = -100 } )
 
 

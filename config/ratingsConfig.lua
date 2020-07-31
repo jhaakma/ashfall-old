@@ -30,6 +30,7 @@ this.warmth = {
             ['Iron '] = 15,
             ['Netch '] = 45,
             ['Fur '] = 80,
+            [' Fur'] = 80,
             ['Nordic Mail'] = 70,
             ['Nordic Ring'] = 60,
             ['Nordic Troll'] = 65,
@@ -68,9 +69,10 @@ this.bodyParts = {
     rightWrist = 0.05,
     leftHand = 0.10,
     rightHand = 0.10,
-    chest = 0.25,
-    legs = 0.15,
+    chest = 0.20,
+    legs = 0.20,
     feet = 0.10,
+    back = 0.05
 }
 
 this.armorPartMapping = {
@@ -84,6 +86,7 @@ this.armorPartMapping = {
     [tes3.armorSlot.rightGauntlet] =  { "rightHand" },
     [tes3.armorSlot.leftBracer] =  { "leftWrist" },
     [tes3.armorSlot.rightBracer] =  { "rightWrist" },
+    [11] = { "back" }--backpack
 }
 
 this.clothingPartMapping = {

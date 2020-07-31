@@ -49,11 +49,8 @@ end
 
 --Check Ids to see if this light is a firepit of some kind
 local function checkForFirePit(id)
-    local patterns = activatorConfig.list.fire.ids
-    for _, pattern in pairs(patterns) do
-        if string.find( string.lower(id), pattern) then
-            return true
-        end
+    if activatorConfig.list.fire:isActivator(id) then
+        return true
     end
     return false
 end
@@ -72,7 +69,7 @@ function this.calculateFireEffect()
                     local maxHeat = heatDefault
                     --Firepits have special logic for hand warming
                     
-                    if ref.object.id == "ashfall_campfire_01" then
+                    if ref.object.id == common.staticConfigs.objectIds.campfire then
                         if ref.data.isLit then
                             local fuel = ref.data.fuelLevel
                             if fuel then
@@ -82,7 +79,7 @@ function this.calculateFireEffect()
                         
                                 checkWarmHands()
                                 if warmingHands then
-                                    maxHeat = maxHeat * warmHandsBonus
+                                    maxHeat = maxHeat * warmHandsBonus 
                                 end
                             else 
                                 maxHeat = 0
@@ -103,7 +100,7 @@ function this.calculateFireEffect()
                         for pattern, heatValue in pairs(heatValues) do
                             if string.find(string.lower(ref.object.id), pattern) then
                                 maxHeat = heatValue
-                                --common.log.info("Fire source: %s", ref.object.id)
+                                --common.log:info("Fire source: %s", ref.object.id)
                             end
                         end
                     end

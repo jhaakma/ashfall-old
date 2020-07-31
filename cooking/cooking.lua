@@ -10,8 +10,8 @@ local function onActivate()
     if pressedActivateKey then
         local cookingActive = (
             common.data and
-            common.data.mcmSettings.enableHunger and
-            common.data.mcmSettings.enableCooking
+            common.config.getConfig().enableHunger and
+            common.config.getConfig().enableCooking
         )
         if cookingActive then
             local currentActivator = activators.getCurrentActivator()
@@ -20,14 +20,14 @@ local function onActivate()
                 currentActivator.type == activatorConfig.cookingUtensil.type
             )
             if lookingAtUtensil then
-                common.log.info("Creating %s menu", currentActivator.name)
+                common.log:info("Creating %s menu", currentActivator.name)
                 local menu = CookingMenu:new({
                     name = currentActivator.name
                 })
                 menu:create()
                 return
             else
-                common.log.info("Not looking at a utensil")
+                common.log:info("Not looking at a utensil")
             end
         end
     end

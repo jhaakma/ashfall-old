@@ -34,7 +34,7 @@ local wetTempMax = -25
 function this.checkForShelter()
     local sheltered = common.helper.checkRefSheltered()
     if sheltered ~= nil then
-        common.data.isSheltered = sheltered  
+        common.data.isSheltered = sheltered
     end
 end
 
@@ -44,10 +44,17 @@ end
     Called by tempTimer
 ]]--
 function this.calculateWetTemp(timeSinceLastRan)
-    if not common.data then return end
-
+    if not common.data then 
+        --mwse.log("no copmmon.datya")
+        return 
+    end
+    -- if tes3ui.menuMode() then 
+    --     mwse.log("Why did we block menuMOde???")
+    --     return 
+    -- end
+    this.checkForShelter()
     --Check if Ashfall is disabled
-    if not common.data.mcmSettings.enableTemperatureEffects then
+    if not common.config.getConfig().enableTemperatureEffects then
         common.data.wetness = 0
         common.data.wetTemp = 0
         common.data.wetCoolingRate = 1
@@ -87,7 +94,10 @@ function this.calculateWetTemp(timeSinceLastRan)
     
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
-    if weather and weather.rainActive and not cell.isInterior then
+    local sheltered = common.data.isSheltered or cell.isInterior
+
+    --wet from rain
+    if (sheltered ~= true) and (weather and weather.rainActive == true) then
         --Raining
         if weather.index == tes3.weather.rain and common.data.isSheltered == false then
             currentWetness = currentWetness + rainEffect * timeSinceLastRan * ( 1.0 - coverage )
@@ -96,11 +106,9 @@ function this.calculateWetTemp(timeSinceLastRan)
         elseif weather.index == tes3.weather.thunder and common.data.isSheltered == false then
             currentWetness = currentWetness + thunderEffect * timeSinceLastRan * ( 1.0 - coverage )
         end
-    else
-        common.data.isSheltered = true
     end
     --Drying off (indoors or clear weather)
-    if common.data.isSheltered then
+    if (sheltered == true) or ( weather and weather.rainActive ~= true ) then
         local dryCoverageEffect = math.remap(common.data.coverageRating, 0, 1.0, 1.0, 0.5)
         local tempMultiplier = math.remap(math.max(playerTemp, 0), 0, 100, 1.0, 3.0)
         local dryChange = ( tempMultiplier * timeSinceLastRan * dryCoverageEffect * DRYING_MULTI )

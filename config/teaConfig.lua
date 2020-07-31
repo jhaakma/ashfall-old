@@ -60,7 +60,7 @@ this.teaTypes = {
     },
 
     ["ingred_bc_coda_flower"] = {
-        teaDescription = "Tea made from the coda flower produces a mild psychotropic effect: a feeling of transcendanc ",
+        teaDescription = "Tea made from the coda flower produces a mild psychotropic effect, allowing the drinker to detect nearby lifeforms. ",
         effectDescription = "Detect Animal 20 points"
     },
     

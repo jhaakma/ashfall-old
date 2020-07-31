@@ -16,7 +16,7 @@ end
 
 local function checkConditions()
     if not common.data then return end
-    if not common.data.mcmSettings.enableTemperatureEffects then return end
+    if not common.config.getConfig().enableTemperatureEffects then return end
 
     local totalIncrease = 0
     --Increase when out in bad weather

@@ -11,22 +11,22 @@ end
 
 function this.showThirst()
     return (
-        common.data.mcmSettings.enableThirst and 
-        common.data.mcmSettings.thirstRate > 0
+        common.config.getConfig().enableThirst and 
+        common.config.getConfig().thirstRate > 0
     )
 end
 
 function this.showHunger()
     return (
-        common.data.mcmSettings.enableHunger and 
-        common.data.mcmSettings.hungerRate > 0
+        common.config.getConfig().enableHunger and 
+        common.config.getConfig().hungerRate > 0
     )
 end
 
 function this.showTiredness()
     return (
-        common.data.mcmSettings.enableTiredness and 
-        common.data.mcmSettings.loseSleepRate > 0
+        common.config.getConfig().enableTiredness and 
+        common.config.getConfig().loseSleepRate > 0
     )
 end
 
@@ -100,9 +100,9 @@ function this.updateNeedsUI()
         --Check Ashfall active
         local needsBlock = inventoryMenu:findChild(this.UIData.needsBlock)
         local needsActive = (
-            common.data.mcmSettings.enableHunger or
-            common.data.mcmSettings.enableThirst or
-            common.data.mcmSettings.enableTiredness 
+            common.config.getConfig().enableHunger or
+            common.config.getConfig().enableThirst or
+            common.config.getConfig().enableTiredness 
         )
         needsBlock.visible = needsActive
         --Update UIs

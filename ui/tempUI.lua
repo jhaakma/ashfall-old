@@ -7,23 +7,31 @@ local needsUI = require("mer.ashfall.needs.needsUI")
 local IDs = {
     
     mainHUDBlock = tes3ui.registerID("Ashfall:HUD_mainHUDBlock"),
-    outerBlock = tes3ui.registerID("Ashfall:HUD_outerBlock"),
+    bottomBlock = tes3ui.registerID("Ashfall:HUD_bottomBlock"),
     topHUDBlock = tes3ui.registerID("Ashfall:HUD_topHUDBlock"),
+    
     wetnessBlock = tes3ui.registerID("Ashfall:HUD_wetnessBlock"),
     wetnessBar = tes3ui.registerID("Ashfall:HUD_wetnessBar"),
+    
+    shelteredBlock = tes3ui.registerID("Ashfall:HUD_shelteredBlock"),
+    unshelteredIcon = tes3ui.registerID("Ashfall:HUD_unshelteredIcon"),
+    shelteredIcon = tes3ui.registerID("Ashfall:HUD_shelteredIcon"),
+
     conditionLabelBlock = tes3ui.registerID("Ashfall:HUD_conditionLabelBlock"),
     conditionLabel = tes3ui.registerID("Ashfall:HUD_conditionLabel"),
     conditionIcon = tes3ui.registerID("Ashfall:HUD_conditionIcon"),
+    
     leftTempPlayerBar = tes3ui.registerID("Ashfall:HUD_leftTempPlayerBar"),
     rightTempPlayerBar = tes3ui.registerID("Ashfall:HUD_rightTempPlayerBar"),
+    
     leftTempLimitBar = tes3ui.registerID("Ashfall:HUD_leftTempLimitBar"),
     rightTempLimitBar = tes3ui.registerID("Ashfall:HUD_rightTempLimitBar"),
 
     needsBlock = tes3ui.registerID("Ashfall:HUD_NeedsBlock"),
     hunger = tes3ui.registerID("Ashfall:HUD_HungerBar"),
+    
     thirst = tes3ui.registerID("Ashfall:HUD_ThirstBar"),
     tiredness = tes3ui.registerID("Ashfall:HUD_SleepBar"),
-
 
     healthBlocker = tes3ui.registerID("Ashfall:HUD_healthBlocker"),
     magicBlocker = tes3ui.registerID("Ashfall:HUD_magicBlocker"),
@@ -41,25 +49,34 @@ function this.updateHUD()
     local mainHUDBlock = findHUDElement(IDs.mainHUDBlock)
 
     --Hide HUD if Ashfall is disabled
-    if common.data.mcmSettings.enableTemperatureEffects then
+    if common.config.getConfig().enableTemperatureEffects then
         mainHUDBlock.visible = true
 
-        local outerBlock = findHUDElement(IDs.outerBlock)
-        if outerBlock then
-            --Get values
-            local tempPlayer = math.clamp((common.data.temp or 0), -100, 100) or 0
-            local tempLimit = math.clamp((common.data.tempLimit), -100, 100) or 0
-
-            local condition = common.staticConfigs.conditionConfig.temp.states[( common.data.currentStates.temp  or "comfortable" )].text
+        local bottomBlock = findHUDElement(IDs.bottomBlock)
+        if bottomBlock then
+            
+            
             local wetness = common.data.wetness or 0
             wetness = math.clamp(wetness, 0, 100) or 0
+            local wetnessBar = findHUDElement(IDs.wetnessBar)
+            wetnessBar.widget.current = wetness
+
+            
+            local shelteredIcon = findHUDElement(IDs.shelteredIcon)
+            shelteredIcon.visible = common.data.isSheltered
+            local unshelteredIcon = findHUDElement(IDs.unshelteredIcon)
+            unshelteredIcon.visible = not common.data.isSheltered
 
 
+            local condition = common.staticConfigs.conditionConfig.temp.states[( common.data.currentStates.temp  or "comfortable" )].text
             local conditionLabel = findHUDElement(IDs.conditionLabel)
             conditionLabel.text = condition
 
 
+            
+            
             --Update Temp Player bars
+            local tempPlayer = math.clamp((common.data.temp or 0), -100, 100) or 0
             local leftTempPlayerBar = findHUDElement(IDs.leftTempPlayerBar)
             local rightTempPlayerBar = findHUDElement(IDs.rightTempPlayerBar)
             --Cold
@@ -80,6 +97,7 @@ function this.updateHUD()
             end
 
             --Update Temp Limit bars
+            local tempLimit = math.clamp((common.data.tempLimit), -100, 100) or 0
             local leftTempLimitBar = findHUDElement(IDs.leftTempLimitBar)
             local rightTempLimitBar = findHUDElement(IDs.rightTempLimitBar)
             if tempLimit < 0 then
@@ -97,10 +115,9 @@ function this.updateHUD()
                 bar.width = 0
             end
 
-            local wetnessBar = findHUDElement(IDs.wetnessBar)
-            wetnessBar.widget.current = wetness
 
-            outerBlock:updateLayout()
+
+            bottomBlock:updateLayout()
         end
     else
         mainHUDBlock.visible = false
@@ -111,9 +128,9 @@ function this.updateHUD()
         
         --Hide or show based on mcmSettings
         local hasNeeds = (
-            common.data.mcmSettings.enableHunger or
-            common.data.mcmSettings.enableThirst or
-            common.data.mcmSettings.enableTiredness
+            common.config.getConfig().enableHunger or
+            common.config.getConfig().enableThirst or
+            common.config.getConfig().enableTiredness
         )
         if hasNeeds then
             needsBlock.visible = true
@@ -172,12 +189,12 @@ end
 
 
 local function createTempHUD(parent)
-    local tempBarWidth = 70
+    local tempBarWidth = 80
     local tempBarHeight = 10
     local limitBarHeight = 12
 
         ---\
-            --fill background of outerBlock with blackj
+            --fill background of bottomBlock with blackj
             local colorBlock = parent:createRect({color = tes3ui.getPalette("black_color")})
             colorBlock.flowDirection = "top_to_bottom"
             colorBlock = quickFormat(colorBlock, 0)
@@ -216,16 +233,6 @@ local function createTempHUD(parent)
                         bar = leftTempLimitBar:findChild(tes3ui.registerID("PartFillbar_colorbar_ptr"))
                         bar.layoutOriginFractionX = 1.0                
                         
-                ---\        
-                    --[[local centretempIndicatorBlock = tempIndicatorBlock:createThinBorder({"Ashfall:centretempIndicatorBlock"})
-                    --centretempIndicatorBlock.flowDirection = "top_to_bottom"
-                    centretempIndicatorBlock = quickFormat(centretempIndicatorBlock, 2)
-                    
-                    --cond icon: color based on player condition
-                    local conditionIcon = centretempIndicatorBlock:createImage({id = IDs.conditionIcon, path="Textures/Ashfall/indicators/chilly.dds"})
-                    conditionIcon.height = tempBarHeight + limitBarHeight - 4
-                    conditionIcon.width = 5
-                    conditionIcon.scaleMode = true]]--
                     
                 ---\        
                     local righttempIndicatorBlock = tempIndicatorBlock:createBlock()
@@ -295,79 +302,100 @@ end
 
 -- end
 
+local function createWetnessIndicator(parentBlock)
+    local wetnessBlock = parentBlock:createBlock({id = IDs.wetnessBlock})
+    
+    --Register Tooltip
+    wetnessBlock:register("help", tooltips.wetnessIndicator )
+    wetnessBlock = quickFormat(wetnessBlock, 0)
+    ---\
+        local wetnessBackground = wetnessBlock:createRect({color = {0.0, 0.05, 0.1} })
+        wetnessBackground.height = 20
+        wetnessBackground.width = 36
+        wetnessBackground.layoutOriginFractionX = 0.0
+    
+    ---\
+        local wetnessBar = wetnessBlock:createFillBar({id = IDs.wetnessBar, current = 50, max = 100})
+        wetnessBar.widget.fillColor = {0.5, 1.0, 1.0}
+        wetnessBar.widget.showText = false
+        wetnessBar.height = 20
+        wetnessBar.width = 36
+        wetnessBar.borderBottom = 1
+        wetnessBar.layoutOriginFractionX = 0.0
+
+    ---\
+        local wetnessIcon = wetnessBlock:createImage({path="Textures/Ashfall/indicators/wetness.dds"})
+        wetnessIcon.height = 16
+        wetnessIcon.width = 32
+        wetnessIcon.borderAllSides = 2
+        wetnessBar.layoutOriginFractionX = 0.0
+
+    return wetnessBlock
+end
+
+local function createShelteredIndicator(parentBlock)
+    local shelteredBlock = parentBlock:createThinBorder({id = IDs.shelteredBlock})
+    shelteredBlock = quickFormat(shelteredBlock, 0)
+    --Register Tooltip
+    shelteredBlock:register("help", tooltips.shelteredIndicator )
+    
+    local unshelteredIcon = shelteredBlock:createImage({path="Icons/ashfall/hud/unsheltered.tga", id = IDs.unshelteredIcon})
+    unshelteredIcon.height = 16
+    unshelteredIcon.width = 16
+    unshelteredIcon.borderAllSides = 2
+
+    local shelteredIcon = shelteredBlock:createImage({path="Icons/ashfall/hud/sheltered.tga", id = IDs.shelteredIcon})
+    shelteredIcon.height = 16
+    shelteredIcon.width = 16
+    shelteredIcon.borderAllSides = 2
+    return shelteredBlock
+end
+
+local function createConditionStateIndicator(parentBlock)
+    local conditionLabelBlock = parentBlock:createBlock{id = IDs.conditionLabelBlock}
+    conditionLabelBlock = quickFormat(conditionLabelBlock, 0)
+    conditionLabelBlock.widthProportional = 1.0
+    conditionLabelBlock.borderAllSides = 1
+
+    local conditionLabel = conditionLabelBlock:createLabel({id = IDs.conditionLabel, text = "Comfortable" })
+    conditionLabel.layoutOriginFractionX = 0.0
+    --register tooltip
+    conditionLabelBlock:register("help", tooltips.conditionIndicator )
+end
+
+
 
 function this.createHUD(e)
     if not e.newlyCreated then return end
-
-
     local multiMenu = e.element
 
     -- Find the UI element that holds the sneak icon indicator.
     local mainBlock = multiMenu:findChild(tes3ui.registerID("MenuMulti_weapon_layout")).parent.parent.parent
-
-
-
-
-    local mainHUDBlock = mainBlock:createBlock({id = IDs.mainHUDBlock})
-    
+    local mainHUDBlock = mainBlock:createBlock({id = IDs.mainHUDBlock}) 
     --createNeedsHUD(mainBlock)
-    
     mainHUDBlock = quickFormat(mainHUDBlock, 2)
     --mainHUDBlock.layoutOriginFractionX = 0
     mainHUDBlock.flowDirection = "top_to_bottom"
-    ---\
-        ---TOPBLOCK - Wetness Indicator and Condition state---
-        local topBlock = mainHUDBlock:createBlock({id = IDs.topHUDBlock})
 
-        topBlock.flowDirection = "left_to_right"
-        topBlock = quickFormat(topBlock, 0)
-        ---\
-            ---WETNESS INDICATOR---    
-            local wetnessBlock = topBlock:createBlock({id = IDs.wetnessBlock})
-            --Register Tooltip
-            wetnessBlock:register("help", tooltips.wetnessIndicator )
-            wetnessBlock = quickFormat(wetnessBlock, 0)
-            ---\
-                local wetnessBackground = wetnessBlock:createRect({color = {0.0, 0.05, 0.1} })
-                wetnessBackground.height = 20
-                wetnessBackground.width = 36
-                wetnessBackground.layoutOriginFractionX = 0.0
-            
-            ---\
-                local wetnessBar = wetnessBlock:createFillBar({id = IDs.wetnessBar, current = 50, max = 100})
-                wetnessBar.widget.fillColor = {0.5, 1.0, 1.0}
-                wetnessBar.widget.showText = false
-                wetnessBar.height = 20
-                wetnessBar.width = 36
-                wetnessBar.layoutOriginFractionX = 0.0
-    
-            ---\
-                local wetnessIcon = wetnessBlock:createImage({path="Textures/Ashfall/indicators/wetness.dds"})
-                wetnessIcon.height = 16
-                wetnessIcon.width = 32
-                wetnessIcon.borderAllSides = 2
-                wetnessBar.layoutOriginFractionX = 0.0
-            
-            
-            ---CONDITION STATE---    
-            local conditionLabelBlock = topBlock:createBlock({id = IDs.conditionLabelBlock})
 
-            conditionLabelBlock = quickFormat(conditionLabelBlock, 0)
-            conditionLabelBlock.paddingLeft = 2
-            ---\
-                local conditionLabel = conditionLabelBlock:createLabel({id = IDs.conditionLabel, text = "Comfortable" })
-                --register tooltip
-                conditionLabel:register("help", tooltips.conditionIndicator )
+    local topBlock = mainHUDBlock:createBlock({id = IDs.topHUDBlock})  
+    topBlock.flowDirection = "left_to_right"
+    topBlock = quickFormat(topBlock, 0)
+    topBlock.widthProportional = 1
 
+
+
+    createWetnessIndicator(topBlock)
+    createShelteredIndicator(topBlock)
+    createConditionStateIndicator(topBlock)
                 
-    ---\        
-        ---OUTER FRAME - sits below wetness and condition, houses temperature fillbars---
-        local outerBlock = mainHUDBlock:createThinBorder({id = IDs.outerBlock})
-        outerBlock.flowDirection = "top_to_bottom"
-        outerBlock = quickFormat(outerBlock, 0)
-        createTempHUD(outerBlock)
+    local bottomBlock = mainHUDBlock:createThinBorder({id = IDs.bottomBlock})
+    bottomBlock.flowDirection = "top_to_bottom"
+    bottomBlock = quickFormat(bottomBlock, 0)
 
-        mainBlock:reorderChildren(1, -2, 2)
+    createTempHUD(bottomBlock)
+
+    mainBlock:reorderChildren(1, -2, 2)
 
 end
 

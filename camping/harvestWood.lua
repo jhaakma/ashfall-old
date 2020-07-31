@@ -8,14 +8,17 @@ local lastRef
 local swingsNeeded
 local swings = 0
 
-
 local function onAttack(e)
+    -- for i=1, 100 do
+    --     logger:info("INFO %s", i)
+    --     logger:debug("DEBUG")
+    -- end
 --[[
     Use an axe on a tree to chop firewood
     - Number of swings is based on the size of your swing
     - Number of wood collected is based on the size of swing and axe attack power
 ]]--
-    if not common.data.mcmSettings.enableTemperatureEffects then
+    if not common.config.getConfig().enableTemperatureEffects then
         return
     end
     local lookingAtWood = activatorController.getCurrentType() == activatorConfig.types.woodSource
@@ -57,7 +60,7 @@ local function onAttack(e)
                 
                 --Check if legal to harvest wood
                 local illegalToHarvest = ( 
-                    common.data.mcmSettings.illegalHarvest and
+                    common.config.getConfig().illegalHarvest and
                     tes3.getPlayerCell().restingIsIllegal
                 )
                 if illegalToHarvest then
@@ -104,10 +107,10 @@ local function onAttack(e)
                         else
                             tes3.messageBox("You have harvested %d pieces of firewood", numWood)
                         end
+                        
                         tes3.playSound({reference=tes3.player, sound="Item Misc Up"})
                         mwscript.addItem{reference=tes3.player, item=common.staticConfigs.objectIds.firewood, count=numWood}
-                        
-                        
+                        event.trigger("Ashfall:triggerPackUpdate")
                         common.skills.survival:progressSkill(swingsNeeded*2)
                         --reset swings
                         swings = 0

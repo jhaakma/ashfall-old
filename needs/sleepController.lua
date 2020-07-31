@@ -9,7 +9,7 @@ local isWaiting
 local bedWarmth = 20
 
 local temperatureController = require("mer.ashfall.temperatureController")
-temperatureController.registerInternalHeatSource("bedTemp")
+temperatureController.registerInternalHeatSource({ id = "bedTemp", coldOnly = true })
 
 local conditionConfig = common.staticConfigs.conditionConfig
 local coldRestLimit = conditionConfig.temp.states.veryCold.min
@@ -59,12 +59,12 @@ local function activateRestMenu (e)
 
     if isUsingBed then
         --manually update tempLimit so you can see what it will be with the bedTemp added
-        --if common.data.tempLimit < 0 then
+        if common.data.temp < 0 then
             common.data.bedTemp = bedWarmth
             common.data.tempLimit = common.data.tempLimit + bedWarmth
-        --end
-        require("mer.ashfall.temperatureController").update()
-        common.log.debug("Is Scripted: adding warmth")
+        end
+        event.trigger("Ashfall:updateTemperature", { source = "activateRestMenu"})
+        common.log:debug("Is Scripted: adding warmth")
     end
 
     local tempLimit = common.data.tempLimit + common.data.bedTemp
@@ -115,7 +115,7 @@ local function checkSleeping(interval)
     local restingOrWaiting = (
         interval > 0 and 
         tes3.menuMode() and 
-        common.data.mcmSettings.enableTemperatureEffects and 
+        common.config.getConfig().enableTemperatureEffects and 
         tes3.player.data.Ashfall.fadeBlock ~= true
     )
 
@@ -123,7 +123,7 @@ local function checkSleeping(interval)
 
         --Slow down real time it takes to wait. This gives us room to breath, 
         -- see the weather change, react to conditions etc.
-        wait(interval * 0.10)
+        --wait(interval * 0.10)
 
         local tempLimit = common.data.tempLimit
         --Temperature
@@ -169,19 +169,23 @@ end
 function this.calculate(scriptInterval, forceUpdate)
     checkSleeping(scriptInterval)
 
-    if not forceUpdate and scriptInterval == 0 then return end
-    if not common.data.mcmSettings.enableTiredness then
+    if scriptInterval == 0 and not forceUpdate then return end
+    if not tiredness:isActive() then
         tiredness:setValue(0)
+        return
     end
     if common.data.blockNeeds == true then
         return
     end
+    if common.data.blockSleepLoss == true then
+        return
+    end
 
     local currentTiredness = tiredness:getValue()
-    local loseSleepRate = common.data.mcmSettings.loseSleepRate / 10
-    local loseSleepWaiting = common.data.mcmSettings.loseSleepWaiting / 10
-    local gainSleepRate = common.data.mcmSettings.gainSleepRate / 10  
-    local gainSleepBed = common.data.mcmSettings.gainSleepBed / 10
+    local loseSleepRate = common.config.getConfig().loseSleepRate / 10
+    local loseSleepWaiting = common.config.getConfig().loseSleepWaiting / 10
+    local gainSleepRate = common.config.getConfig().gainSleepRate / 10  
+    local gainSleepBed = common.config.getConfig().gainSleepBed / 10
     
 
     if tes3.mobilePlayer.sleeping then

@@ -10,29 +10,23 @@ local statsEffect = require("mer.ashfall.needs.statsEffect")
 local temperatureController = require("mer.ashfall.temperatureController")
 temperatureController.registerBaseTempMultiplier({ id = "hungerEffect", coldOnly = true })
 
-local coldMulti = 5.0
+local coldMulti = 4.0
+local foodPoisonMulti = 5.0
 local HUNGER_EFFECT_LOW = 1.3
 local HUNGER_EFFECT_HIGH = 1.0
 local restMultiplier = 1.0
 
+
 local hunger = common.staticConfigs.conditionConfig.hunger
 local foodConfig = common.staticConfigs.foodConfig
 
-function this.isFood(foodObject)
-    local config = common.getConfig()
-    local mod = foodObject.sourceMod and foodObject.sourceMod:lower()
-    return (
-        foodObject.objectType == tes3.objectType.ingredient and
-        not config.blocked[foodObject.id] and
-        not config.blocked[mod]
-    )
-end
+
 
 function this.getBurnLimit()
     --TODO: Use cooking skill to determine
     local cooking = common.skills.cooking.value
     if not cooking then
-        common.log.error("No cooking skill found")
+        common.log:error("No cooking skill found")
         return 150
     end
     
@@ -41,12 +35,8 @@ function this.getBurnLimit()
 end
 
 function this.getFoodValue(object, itemData)
-
-    if not foodConfig.nutrition[foodConfig.ingredTypes[object.id]] then
-        common.log.error("No value found for %s", object.id)
-    end
-    local ingredType = foodConfig.ingredTypes[object.id]
-    local value = foodConfig.nutrition[ingredType] or foodConfig.nutrition[foodConfig.TYPE.misc]
+    local ingredType = foodConfig.ingredTypes[object.id] or foodConfig.TYPE.misc
+    local value = foodConfig.nutrition[ingredType] 
     --scale by weight
     value = value * math.remap(object.weight, 1, 2, 1, 1.5)
 
@@ -76,7 +66,7 @@ end
 
 
 function this.eatAmount( amount ) 
-    if not common.data.mcmSettings.enableHunger then
+    if not common.config.getConfig().enableHunger then
         return
     end
 
@@ -95,11 +85,10 @@ function this.eatAmount( amount )
         reference = tes3.mobilePlayer,
         current = healthIncrease,
         name = "health",
-        limit = true
     }
     conditionsCommon.updateCondition("hunger")
     this.update()
-    temperatureController.update("eatAmount")
+    event.trigger("Ashfall:updateTemperature", { source = "eatAmount" })
     needsUI.updateNeedsUI()
     hud.updateHUD()
     return amountAte
@@ -123,7 +112,7 @@ end
 
 
 function this.calculate(scriptInterval, forceUpdate)
-    if not forceUpdate and scriptInterval == 0 then return end
+    if scriptInterval == 0 and not forceUpdate then return end
 
     --Check Ashfall disabled
     if not hunger:isActive() then
@@ -133,16 +122,22 @@ function this.calculate(scriptInterval, forceUpdate)
     if common.data.blockNeeds == true then
         return
     end
+    if common.data.blockHunger == true then
+        return
+    end
 
-    local hungerRate = common.data.mcmSettings.hungerRate / 10
+    local hungerRate = common.config.getConfig().hungerRate / 10
 
     local newHunger = hunger:getValue()
     
     local temp = common.staticConfigs.conditionConfig.temp
+
     --Colder it gets, the faster you grow hungry
     local coldEffect = math.clamp(temp:getValue(), temp.states.freezing.min, temp.states.chilly.max) 
-    
     coldEffect = math.remap( coldEffect, temp.states.freezing.min,  temp.states.chilly.max, coldMulti, 1.0)
+
+     --if you have food poisoning you get hungry more quickly
+    local foodPoisonEffect = common.staticConfigs.conditionConfig.foodPoison:isAffected() and foodPoisonMulti or 1.0
 
     --calculate newHunger
     local resting = (
@@ -150,9 +145,9 @@ function this.calculate(scriptInterval, forceUpdate)
         tes3.menuMode()
     )
     if resting then
-        newHunger = newHunger + ( scriptInterval * hungerRate * coldEffect * restMultiplier )
+        newHunger = newHunger + ( scriptInterval * hungerRate * coldEffect * foodPoisonEffect * restMultiplier )
     else
-        newHunger = newHunger + ( scriptInterval * hungerRate * coldEffect )
+        newHunger = newHunger + ( scriptInterval * hungerRate * coldEffect * foodPoisonEffect )
     end
     hunger:setValue(newHunger)
 
@@ -170,29 +165,52 @@ local function applyFoodBuff(foodId)
     for _, meal in pairs(meals) do 
         if meal.id == foodId then
             meal:applyBuff()
-            temperatureController.update("applyFoodBuff")
+            event.trigger("Ashfall:updateTemperature", { source = "applyFoodBuff" } )
         end
     end
 end
 
-local function onEquip(e)
-    if this.isFood(e.item) then
-        this.eatAmount(this.getFoodValue(e.item, e.itemData))
-        applyFoodBuff(e.item.id)
+local function addFoodPoisoning(e)
+    --Check for food poisoning
+    if foodConfig.ingredTypes[e.item.id] == foodConfig.TYPE.protein then
+        local cookedAmount = e.itemData and e.itemData.data.cookedAmount or 0
+        local foodPoison = common.staticConfigs.conditionConfig.foodPoison
+        local poisonAmount = math.random(100 - cookedAmount)
+        common.log:debug("Adding %s food poisoning", poisonAmount)
+        foodPoison:setValue(foodPoison:getValue() + poisonAmount)
+    end
+end
 
-        --Check for food poisoning
-        if foodConfig.ingredTypes[e.item.id] == foodConfig.TYPE.protein then
-            local cookedAmount = e.itemData and e.itemData.data.cookedAmount or 0
-            if cookedAmount then
-                local chance = 1 - ( cookedAmount / 100 )
-                if math.random() < chance then
-                    common.helper.tryContractDisease("ashfall_d_foodPoison")
-                end
+local function addDisease(e)
+    if common.config.getConfig().enableDiseasedMeat then
+        common.log:debug("addDisease()")
+        if e.itemData then
+            common.log:debug("has data")
+            local diseaseData = e.itemData.data.mer_disease
+            if diseaseData ~= nil then
+                common.log:debug("Trying to contract %s", diseaseData.id)
+                common.helper.tryContractDisease(diseaseData.id)
             end
         end
     end
 end
 
-event.register("equip", onEquip, { filter = tes3.player, priority = -100 } )
+local function onEat(e)
+    common.log:debug("onEat()")
+    if common.getIsBlocked(e.item) then 
+        common.log:debug("Is Blocked")
+        return 
+    end
+    common.log:debug("Item data: %s", e.itemData)
+    if e.item.objectType == tes3.objectType.ingredient then
+        common.log:debug("Is ingredient")
+        this.eatAmount(this.getFoodValue(e.item, e.itemData))
+        applyFoodBuff(e.item.id)
+        addFoodPoisoning(e)
+        addDisease(e)
+    end
+end
+
+event.register("equip", onEat, { filter = tes3.player, priority = -100 } )
 
 return this

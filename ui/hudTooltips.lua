@@ -36,40 +36,46 @@ function this.wetnessIndicator()
     if not common.data then return end
     if not common.staticConfigs.conditionConfig.wetness.states[common.data.currentStates.wetness] then return end
 
-    local headerText = "Wet level: " .. common.staticConfigs.conditionConfig.wetness.states[common.data.currentStates.wetness].text--:lower()
+    local headerText = common.staticConfigs.conditionConfig.wetness.states[common.data.currentStates.wetness].text
     local labelText = "The wetter you are, the longer it takes to warm up, the quicker you cool down, and the more susceptible you are to shock damage."
     createTooltip(headerText, labelText)
+end
 
+function this.shelteredIndicator()
+    if not common.data then return end
+    local headerText = common.data.isSheltered and "Sheltered" or "Not Sheltered"
+    local labelText = "Find shelter to avoid getting wet from the rain."
+    createTooltip(headerText, labelText)
 end
 
 function this.conditionIndicator()
     if not common.data then return end
-    if not common.staticConfigs.conditionConfig.temp.states[common.data.currentStates.wetness] then return end 
+    if not common.staticConfigs.conditionConfig.temp.states[common.data.currentStates.temp] then return end 
     
-    local headerText = "Condition: " .. common.staticConfigs.conditionConfig.temp.states[common.data.currentStates.wetness].text--:lower()
-    local labelText = "The player's current condition, determined by Player Temperature."
+    local headerText = common.staticConfigs.conditionConfig.temp.states[common.data.currentStates.temp].text
+    local labelText = "Your current temperature condition."
     createTooltip(headerText, labelText)
 end
 function this.playerLeftIndicator()
     local headerText = string.format("Player Temperature: %.2f", common.data.temp )
-    local labelText = "The player's current temperature. This directly determines hot and cold condition effects."
+    local labelText = "Your current temperature. This directly determines hot and cold condition effects."
     createTooltip(headerText, labelText)
 end
 function this.playerRightIndicator()
     local headerText = string.format("Player Temperature: %.2f", common.data.temp  )
-    local labelText = "Directly determines hot and cold condition effects."
+    local labelText = "Your current temperature. This directly determines hot and cold condition effects."
     createTooltip(headerText, labelText)  
 end
 
 function this.limitLeftIndicator()
     local headerText = string.format("Temperature Limit: %.2f", common.data.tempLimit)
-    local labelText = "Represents the temperature the player will reach if the current conditions remain."
+    local labelText = "Represents the temperature you will reach if the current conditions remain."
     createTooltip(headerText, labelText)
 end
 
 function this.limitRightIndicator()
     local headerText = string.format("Temperature Limit: %.2f", common.data.tempLimit)
-    local labelText = "Represents the temperature the player will reach if the current conditions remain."
+    local labelText = "Represents the temperature you will reach if the current conditions remain."
     createTooltip(headerText, labelText)
 end
 

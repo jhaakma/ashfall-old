@@ -1,15 +1,8 @@
 local common = require("mer.ashfall.common.common")
-
-local playerDataPath = "Ashfall.mcmSettings"
+ 
 local configPath = "ashfall"
 
-local config = common.getConfig()
-if not config then 
-    config = {}
-end
-config.blocked = config.blocked or {}
-config.logLevel = config.logLevel or "INFO"
-mwse.saveConfig(configPath, config)
+local config = common.config.getConfig()
 
 local function createTableVar(id)
     return mwse.mcm.createTableVariable{ id = id, table = config }
@@ -43,19 +36,69 @@ local function registerModConfig()
     local template = mwse.mcm.createTemplate{ name = "Ashfall", headerImagePath = "textures/ashfall/MCMHeader.tga" }
     template:saveOnClose(configPath, config)
 
-    local function createplayerVar(id, default)
-        return mwse.mcm.createPlayerData{
-            id = id,
-            path = playerDataPath,
-            defaultSetting = default
-        }  
-    end
-
-
     do --General Settings Page
-        local pageGeneral = template:createSideBarPage("General Settings")
+        local pageGeneral = template:createSideBarPage({
+            label = "General Settings",
+        })
         addSideBar(pageGeneral)
-        pageGeneral.noScroll = true
+
+        do --Default Settings Category
+            local categoryOverrides = pageGeneral:createCategory{
+                label = "Overrides",
+                description = "Set what vanilla values are overriden when you start a new game."
+            }
+            categoryOverrides:createYesNoButton{
+                label = "Override Item Values",
+                description = (
+                    "Adjusts the weight and value of a few vanilla ingredients such as bread and meat, "..
+                    "as well as water containers like bottles and pots, to account for their additional " ..
+                    "usefulness in survival mechanics."
+                ),
+                variable = mwse.mcm.createTableVariable{ 
+                    id = "overrideFood", 
+                    table = config, 
+                    restartRequired = true,  
+                    --restartRequiredMessage = "Changing this setting requires a game restart to come into effect."
+                }
+            }
+
+            categoryOverrides:createYesNoButton{
+                label = "Override TimeScale",
+                description = (
+                    "This will adjust the timescale on each new game. To adjust the timescale of the "..
+                    "current game, toggle this to true and adjust on the slider below."
+                ),
+                variable = createTableVar("overrideTimeScale"),
+                callback = function(self)
+                    if tes3.player then
+                        if self.variable.value == true then
+                            local newTimeScale = common.config.getConfig().manualTimeScale
+                            tes3.setGlobal("TimeScale", newTimeScale)
+                        end
+                    end
+                end
+            }
+
+            categoryOverrides:createSlider{
+                label = "Default Time Scale",
+                description = ("Changes the speed of the day/night cycle. A value of 1 makes the day go at real-time speed; "
+                .."an in-game day would last 24 hours in real life. A value of 10 will make it ten times as fast as real-time "
+                .."(i.e., one in-game day lasts 2.4 hours), etc. "
+                .."\n\nThe vanilla timescale is 30 (1 in-game day = 48 real minutes), however a value of 15-25 is highly recommended."),
+                min = 0,
+                max = 50,
+                step = 1,
+                jump = 5,
+                variable = createTableVar("manualTimeScale"),
+                callback = function(self)
+                    if tes3.player then
+                        if common.config.getConfig().overrideTimeScale == true then
+                            tes3.setGlobal("TimeScale", self.variable.value)
+                        end
+                    end
+                end
+            }
+        end
 
         do --Survival Mechanics Category
             local categorySurvival = pageGeneral:createCategory{ 
@@ -70,7 +113,7 @@ local function registerModConfig()
                     "In hotter climates, make sure you remain hydrated, wear clothing with low warmth ratings and avoid sources of heat like fire, lava or steam. \n\n" ..
                     "Getting wet will cool you down significantly, as well as increase your fire resistance and lower your shock resistance.\n\n" 
                 ),
-                variable = createplayerVar("enableTemperatureEffects", true)
+                variable = createTableVar("enableTemperatureEffects"),
             }
             categorySurvival:createYesNoButton{
                 label = "Enable Hunger",
@@ -78,7 +121,7 @@ local function registerModConfig()
                     "When enabled, you must eat food regularly in order to survive. " .. 
                     "Ingredients provide a small amount of nutritional value, but you can also cook meals at campfires, cooking pots and stoves. " 
                 ),
-                variable = createplayerVar("enableHunger", true)
+                variable = createTableVar("enableHunger"),
             }
             categorySurvival:createYesNoButton{
                 label = "Enable Thirst",
@@ -86,7 +129,7 @@ local function registerModConfig()
                     "When enabled, you must drink water regularly in order to survive " ..
                     "Fill bottles with water at any nearby stream, well or keg. You can also drink directly from water sources."    
                 ),
-                variable = createplayerVar("enableThirst", true),
+                variable = createTableVar("enableThirst"),
                 callback = tes3ui.updateInventoryTiles --to clear water bottle icons
             }
             categorySurvival:createYesNoButton{
@@ -95,18 +138,9 @@ local function registerModConfig()
                     "When enabled, you must tiredness regularly or face debuffs from tiredness deprivation. " .. 
                     "Sleeping in a bed or bedroll will allow you to become \"Well Rested\", while sleeping out in the open will not fully recover your tiredness."
                 ),
-                variable = createplayerVar("enableTiredness", true)
+                variable = createTableVar("enableTiredness"),
             }
-            categorySurvival:createYesNoButton{
-                label = "Enable Cooking (In Development)",
-                description = (
-                    "This mechanic is a WIP and should remain disabled"
-                ),
-                variable = createplayerVar("enableCooking", true),
-                postCreate = function(self)
-                    self:disable()--Visible only, can still be toggles
-                end
-            }
+
         end --\Survival Mechanics Category
 
         do --Condition Updates Category
@@ -118,27 +152,27 @@ local function registerModConfig()
             categoryConditions:createOnOffButton{
                 label = "Temperature updates",
                 description = "Show update messages when temperature condition changes.",
-                variable = createplayerVar("showTemp", true)
+                variable = createTableVar("showTemp"),
             }
             categoryConditions:createOnOffButton{
                 label = "Hunger updates",
                 description = "Show update messages when hunger condition changes.",
-                variable = createplayerVar("showHunger", true)
+                variable = createTableVar("showHunger"),
             }
             categoryConditions:createOnOffButton{
                 label = "Thirst updates",
                 description = "Show update messages when thirst condition changes.",
-                variable = createplayerVar("showThirst", true)
+                variable = createTableVar("showThirst"),
             }
             categoryConditions:createOnOffButton{
                 label = "Sleep updates",
                 description = "Show update messages when tiredness condition changes.",
-                variable = createplayerVar("showTiredness", true)
+                variable = createTableVar("showTiredness"),
             }
             categoryConditions:createOnOffButton{
                 label = "Wetness updates",
                 description = "Show update messages when wetness condition changes.",
-                variable = createplayerVar("showWetness", true)
+                variable = createTableVar("showWetness"),
             }
         end --\Condition Updates Category
 
@@ -153,7 +187,7 @@ local function registerModConfig()
                 description = (
                     "When enabled, you can die of hunger or thirst. Otherwise you will drop to 1 health."
                 ),
-                variable = createplayerVar("needsCanKill", false)
+                variable = createTableVar("needsCanKill"),
             }
 
             categoryMisc:createYesNoButton{
@@ -162,15 +196,25 @@ local function registerModConfig()
                     "Adds a frost breath effect to NPCs and the player in cold temperatures. \n\n" ..
                     "Does not require weather survival mechanics to be active. "
                 ),
-                variable = createplayerVar("showFrostBreath", true)
+                variable = createTableVar("showFrostBreath"),
             }
             categoryMisc:createYesNoButton{
                 label = "Harvest Wood in Wilderness Only",
                 description = (
                     "If this is enabled, you can not harvest wood with an axe while in town."   
                 ),
-                variable = createplayerVar("illegalHarvest", true)
+                variable = createTableVar("illegalHarvest"),
             }
+
+            categoryMisc:createYesNoButton{
+                label = "Diseased Meat",
+                description = (
+                    "If this is enabled, meat harvested from diseased or blighted animals can make you sick if you eat it."   
+                ),
+                variable = createTableVar("enableDiseasedMeat"),
+            }
+
+
         end --\Miscellanious Category
 
     end -- \General Settings Page
@@ -180,23 +224,26 @@ local function registerModConfig()
             label = "Mod Values"
         }
         addSideBar(pageModValues)
+        pageModValues.noScroll = true
+        -- do --Time Category
+        --     local categoryTime = pageModValues:createCategory{
+        --         label = "Time",
+        --         description = "Change time components."
+        --     }
 
-        do --Time Category
-            local categoryTime = pageModValues:createCategory{
-                label = "Time",
-                description = "Change time components."
-            }
-
-            categoryTime:createSlider{
-                label = "Time Scale",
-                description = "Changes the speed of the day/night cycle. A value of 1 makes the day go at real-time speed; an in-game day would last 24 hours in real life. A value of 10 will make it ten times as fast as real-time (i.e., one in-game day lasts 2.4 hours), etc. The default timescale is 30 (1 in-game day = 48 real minutes).",
-                min = 0,
-                max = 50,
-                step = 1,
-                jump = 5,
-                variable = mwse.mcm:createGlobal{ id = "timeScale"}
-            }
-        end --\Time category
+        --     -- categoryTime:createSlider{
+        --     --     label = "Time Scale",
+        --     --     description = ("Changes the speed of the day/night cycle. A value of 1 makes the day go at real-time speed; "
+        --     --     .."an in-game day would last 24 hours in real life. A value of 10 will make it ten times as fast as real-time "
+        --     --     .."(i.e., one in-game day lasts 2.4 hours), etc. "
+        --     --     .."\n\nThe default timescale is 30 (1 in-game day = 48 real minutes), however a value of 15-25 is highly recommended."),
+        --     --     min = 0,
+        --     --     max = 50,
+        --     --     step = 1,
+        --     --     jump = 5,
+        --     --     variable = mwse.mcm:createGlobal{ id = "timeScale"}
+        --     -- }
+        -- end --\Time category
 
         do --Hunger Category
             local categoryTime = pageModValues:createCategory{
@@ -204,14 +251,20 @@ local function registerModConfig()
                 description = "Change hunger components.",
             }
 
+            
             categoryTime:createSlider{
                 label = "Hunger Rate",
-                description = "Determines how much hunger you gain per hour. When set to 10, you gain 1% hunger every hour (not taking into account temperature effects). The default hunger rate is 20.",
+                description = string.format(
+                    "Determines how much hunger you gain per hour. When set to 10, you gain 1%% hunger every hour "
+                    .."(not taking into account temperature effects). "
+                    .."\n\nThe default hunger rate is %s.", 
+                    common.defaultValues.hungerRate
+                ),
                 min = 0,
                 max = 100,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("hungerRate", 20)
+                variable = createTableVar("hungerRate"),
             }
         end --\Hunger category
 
@@ -223,12 +276,17 @@ local function registerModConfig()
 
             categoryThirst:createSlider{
                 label = "Thirst Rate",
-                description = "Determines how much thirst you gain per hour. When set to 10, you gain 1% thirst every hour (not taking into account temperature effects). The default thirst rate is 30.",
+                description = string.format(
+                    "Determines how much thirst you gain per hour. When set to 10, you gain 1%% thirst every hour "
+                    .."(not taking into account temperature effects). "
+                    .."\n\nThe default thirst rate is %s.", 
+                    common.defaultValues.thirstRate
+                ),
                 min = 0,
                 max = 100,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("thirstRate", 30)
+                variable = createTableVar("thirstRate"),
             }
         end--\Thirst Category
 
@@ -239,43 +297,59 @@ local function registerModConfig()
             }
 
             categorySleep:createSlider{
-                label = "Sleep Loss Rate",
-                description = (
-                    "Determines how much tiredness you lose per hour. When set to 10, you lose 1% tiredness every hour. The default lose tiredness rate is 50."
+                label = "Tiredness Rate",
+                description = string.format(
+                    "Determines how much tiredness you gain per hour. When set to 10, you lose 1%% tiredness every hour. "
+                    .."\n\nThe default tiredness rate is %s.",
+                    common.defaultValues.loseSleepRate
                 ),
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("loseSleepRate", 50)
+                variable = createTableVar("loseSleepRate"),
             }
             categorySleep:createSlider{
-                label =  "Sleep Loss Rate (Waiting)",
-                description = "Determines how much tiredness you lose per hour while waiting. When set to 10, you lose 1% tiredness every hour. The default rate is 28 (i.e tiredness goes from 100% to 0% in 30.",
+                label =  "Tiredness Rate (Waiting)",
+                description = string.format(
+                    "Determines how much tiredness you gain per hour while waiting. When set to 10, you lose 1%% tiredness every hour. "
+                    .."\n\nThe default tiredness (waiting) rate is %s.",
+                    common.defaultValues.loseSleepWaiting
+                ),
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("loseSleepWaiting", 30)
+                variable = createTableVar("loseSleepWaiting"),
             }
 
             categorySleep:createSlider{
-                label = "Gain Sleep Rate",
-                description = "Determines how much tiredness you gain per hour while resting on the ground. When set to 10, you gain 1% tiredness every hour. The default gain tiredness rate is 80.",
+                label = "Sleep Rate (Ground)",
+                description = string.format(
+                    "Determines how much tiredness you recover per hour while resting on the ground. "
+                    .."When set to 10, you gain 1%% tiredness every hour. "
+                    .."\n\nThe default sleep rate (ground) is %s.",
+                    common.defaultValues.gainSleepRate
+                ),
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("gainSleepRate", 80)
+                variable = createTableVar("gainSleepRate"),
             }
             categorySleep:createSlider{
-                label = "Gain Sleep Rate (Bed)",
-                description = "Determines how much tiredness you gain per hour while resting while using a bed. When set to 10, you gain 1% tiredness every hour. The default gain tiredness rate is 120.",
+                label = "Sleep Rate (Bed)",
+                description = string.format(
+                    "Determines how much tiredness you recover per hour while resting while using a bed. "
+                    .."When set to 10, you gain 1%% tiredness every hour. "
+                    .."\n\nThe default sleep rate (bed) is %s.",
+                    common.defaultValues.gainSleepBed
+                ),
                 min = 0,
                 max = 200,
                 step = 1,
                 jump = 10,
-                variable = createplayerVar("gainSleepBed", 120)
+                variable = createTableVar("gainSleepBed"),
             }
         end --\Sleep Category
 
@@ -283,12 +357,9 @@ local function registerModConfig()
 
     do --Exclusions Page
         template:createExclusionsPage{
-            label = "Exclusions",
+            label = "Food/Drink Blacklist",
             description = (
-                "This mod by default will support all characters and equipment in your game. " .. 
-                "In some cases this is not ideal, and you may prefer to exclude certain objects from being processed. " .. 
-                "This page provides an interface to accomplish that. " ..
-                "Using the lists below you can easily view or edit which objects are to be blocked and which are to be allowed."
+                "Select which food and drinks will not be counted in thirst/hunger in Ashfall. You can also blacklist entire plugins so all the items they add will not be counted."
             ),
             variable = createTableVar("blocked"),
             filters = {
@@ -311,6 +382,91 @@ local function registerModConfig()
 
     end --\Exclusions Page
 
+    do --Camping gear merchants
+        template:createExclusionsPage{
+            label = "Camping Merchants",
+            description = "Move merchants into the left list to allow them to sell camping gear. Changes won't take effect until the next time you enter the cell where the merchant is. Note that removing a merchant from the list won't remove the equipment if you have already visited the cell they are in.",
+            variable = mwse.mcm.createTableVariable{ id = "campingMerchants", table = config },
+            leftListLabel = "Merchants who sell camping equipment",
+            rightListLabel = "Merchants",
+            filters = {
+                {
+                    label = "Merchants",
+                    callback = function()
+                        --Check if npc is able to sell any guar gear
+                        local function canSellGear(obj)
+                            if obj.class then
+                                local bartersFields = {
+                                    "bartersMiscItems",
+                                }
+                                for _, field in ipairs(bartersFields) do
+                                    if obj.class[field] == true then
+                                        return true
+                                    end
+                                end
+                            end
+                            return false
+                        end
+    
+                        local merchants = {}
+                        for obj in tes3.iterateObjects(tes3.objectType.npc) do
+                            if not (obj.baseObject and obj.baseObject.id ~= obj.id ) then
+                                if canSellGear(obj) then
+                                    merchants[#merchants+1] = (obj.baseObject or obj).id:lower()
+                                end
+                            end
+                        end
+                        table.sort(merchants)
+                        return merchants
+                    end
+                }
+            }
+        }
+    end
+
+    do --Camping gear merchants
+        template:createExclusionsPage{
+            label = "Food/Water Merchants",
+            description = "Move merchants into the left list to allow them to sell additional food and offer water refill services. Changes won't take effect until the next time you enter the cell where the merchant is. Note that removing a merchant from the list won't remove the equipment if you have already visited the cell they are in.",
+            variable = mwse.mcm.createTableVariable{ id = "foodWaterMerchants", table = config },
+            leftListLabel = "Merchants who sell food/refill water",
+            rightListLabel = "Merchants",
+            filters = {
+                {
+                    label = "Merchants",
+                    callback = function()
+                        --Check if npc is able to sell any guar gear
+                        local function canSellGear(obj)
+                            if obj.class then
+                                local bartersFields = {
+                                    "bartersAlchemy",
+                                    "bartersIngredients"
+                                }
+                                for _, field in ipairs(bartersFields) do
+                                    if obj.class[field] == true then
+                                        return true
+                                    end
+                                end
+                            end
+                            return false
+                        end
+    
+                        local merchants = {}
+                        for obj in tes3.iterateObjects(tes3.objectType.npc) do
+                            if not (obj.baseObject and obj.baseObject.id ~= obj.id ) then
+                                if canSellGear(obj) then
+                                    merchants[#merchants+1] = (obj.baseObject or obj).id:lower()
+                                end
+                            end
+                        end
+                        table.sort(merchants)
+                        return merchants
+                    end
+                }
+            }
+        }
+    end
+
     do --Dev Options
         --get a formatted string of all Ashfall data
         local function recursivePrint()
@@ -319,7 +475,7 @@ local function registerModConfig()
 
             local text = ""
             local indent = 0
-            local function recurse(data)
+            local function recurse()
                 for key, val in pairs(data) do
                     if type(val) == "table" then
                         indent = indent + 1
@@ -335,7 +491,7 @@ local function registerModConfig()
                 end
 
             end
-            recurse(data)
+            recurse()
             return text
         end
 
@@ -415,16 +571,26 @@ local function registerModConfig()
             description = "Tools for debugging etc. Don't touch unless you know what you're doing.",
         }
         
+        pageDevOptions:createYesNoButton{
+            label = "Show Config Menu on Startup",
+            description = "The next time you load a new or existing game, show the startup config menu. This is mostly for testing, use the General Settings MCM page to adjsut startup settings.",
+            variable = createTableVar("doIntro")
+        }
+
         pageDevOptions:createDropdown{
             label = "Log Level",
             description = "Set the logging level for mwse.log. Keep on INFO unless you are debugging.",
             options = {
+                { label = "TRACE", value = "TRACE"},
                 { label = "DEBUG", value = "DEBUG"},
                 { label = "INFO", value = "INFO"},
                 { label = "ERROR", value = "ERROR"},
                 { label = "NONE", value = "NONE"},
             },
             variable = createTableVar("logLevel"),
+            callback = function(self)
+                common.log:setLogLevel(self.variable.value)
+            end
         }
 
         pageDevOptions:createButton{

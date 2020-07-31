@@ -42,7 +42,7 @@ local function calculateDamageTemp(e)
 
     elseif e.effectId == tes3.effect.frostDamage then
         tes3.messageBox("Frost dam: %s", (e.effect.magnitude))
-        --common.log.info("Frost dam: %s", (e.effect.magnitude))
+        --common.log:info("Frost dam: %s", (e.effect.magnitude))
     end
 end
 

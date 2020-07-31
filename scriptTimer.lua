@@ -22,11 +22,11 @@ local activators = require("mer.ashfall.activators.activatorController")
 --Needs
 local needsUI = require("mer.ashfall.needs.needsUI")
 local needs = {
-    thirst = require("mer.ashfall.needs.thirst.thirstController"),
-    hunger = require("mer.ashfall.needs.hunger.hungerController"),
-    tiredness = require("mer.ashfall.needs.sleep.sleepController")
+    thirst = require("mer.ashfall.needs.thirstController"),
+    hunger = require("mer.ashfall.needs.hungerController"),
+    tiredness = require("mer.ashfall.needs.sleepController"),
+    sickness = require("mer.ashfall.needs.sicknessController"),
 }
-local hungerController = require("mer.ashfall.needs.hunger.hungerController")
 --How often the script should run in gameTime
 
 local lastTime
@@ -41,7 +41,7 @@ local function callUpdates()
     weather.calculateWeatherEffect(interval)
     sunEffect.calculate(interval)
     wetness.calculateWetTemp(interval)
-    hungerController.processMealBuffs(interval)
+    needs.hunger.processMealBuffs(interval)
    
     --Needs:
     for _, script in pairs(needs) do
@@ -51,7 +51,6 @@ local function callUpdates()
 
     --Heavy scripts
     activators.callRayTest()
-    tentController.checkTent()
     --temp effects
     raceEffects.calculateRaceEffects()
     torch.calculateTorchTemp()
@@ -59,10 +58,10 @@ local function callUpdates()
     magicEffects.calculateMagicEffects()
     hazardEffects.calculateHazards()
     survivalEffect.calculate()
-    wetness.checkForShelter() 
     conditions.updateConditions()
     
     --visuals
+
     frostBreath.doFrostBreath()
 
     tes3.player.data.Ashfall.valuesInitialised = true

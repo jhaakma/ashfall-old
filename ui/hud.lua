@@ -32,7 +32,7 @@ local function findElementInMultiMenu(id, menu)
         if element then
             return element
         else
-            common.log.error("%s not found in menu", id)
+            common.log:error("%s not found in menu", id)
         end
     end
 end

@@ -1,10 +1,10 @@
 local Parent = require("mer.ashfall.objects.Object")
 local Condition = Parent:new()
-
+local config = require("mer.ashfall.config.config")
 Condition.type = "Condition"
 Condition.fields = {
     id = true,
-    default = true,
+    default = true, 
     showMessageOption = true,
     enableOption = true,
     states = true,
@@ -13,21 +13,25 @@ Condition.fields = {
     max = true,
     minCallback = true,
     maxCallback = true,
+    getCurrentStateMessage = true,
+    isAffected = true,
+    getCurrentSpellObj = true,
+    conditionChanged = true,
+    updateConditionEffects = true,
+    hasBlight = true,
+    getBlights = true,
 }
 
 
 function Condition:scaleSpellValues()
 
     local state = self:getCurrentStateData()
-    if not state.spell then return end
+    local spell = self:getCurrentSpellObj(state)
+    if not spell then return end
     if not state.effects then return end
-
     
-    local spell = tes3.getObject(state.spell)
     for _, stateEffect in ipairs(state.effects) do
         for _, spellEffect in ipairs(spell.effects) do
-
-
             local doScale = (
                 spellEffect.id == stateEffect.id and 
                 spellEffect.attribute == stateEffect.attribute and
@@ -48,19 +52,37 @@ function Condition:scaleSpellValues()
 end
 
 function Condition:isActive()
-    return ( tes3.player.data.Ashfall.mcmSettings[self.enableOption] == true )
+    return ( 
+        config.getConfig()[self.enableOption] == true 
+    )
+end
+
+function Condition:conditionChanged(newState)
+    self:showUpdateMessages()
+    self:playConditionSound()
+    self:updateConditionEffects(newState)
 end
 
 function Condition:showUpdateMessages()
     if (
         self:isActive() and
         ( tes3.player.data.Ashfall.fadeBlock ~= true ) and
-        ( tes3.player.data.Ashfall.mcmSettings[self.showMessageOption] == true ) 
+        ( config.getConfig()[self.showMessageOption] == true ) 
     ) then
-        tes3.messageBox(self:getCurrentStateMessage())
+        local message = self:getCurrentStateMessage()
+        if message then
+            tes3.messageBox(message)
+        end
     end
 end
 
+function Condition:playConditionSound()
+    if not self:isActive() then return end 
+    local sound = self:getCurrentStateData().sound
+    if sound then
+        tes3.playSound{ sound = sound } 
+    end
+end
 
 function Condition:getCurrentStateMessage()
     return string.format("You are %s.", self:getCurrentStateData().text )
@@ -68,6 +90,14 @@ end
 
 function Condition:getCurrentStateData()
     return self.states[self:getCurrentState()]
+end
+
+function Condition:getCurrentSpellObj(stateData)
+    stateData = stateData or self:getCurrentStateData()
+    local spellId =  type(stateData.spell) == "function" and stateData.spell() or stateData.spell
+    if spellId then
+        return tes3.getObject(spellId)
+    end
 end
 
 --[[
@@ -86,16 +116,28 @@ function Condition:getCurrentState()
     return currentState
 end
 
+function Condition:isAffected(stateData)
+    stateData = stateData or self:getCurrentStateData()
+    return tes3.player.mobile:isAffectedByObject(self:getCurrentSpellObj(stateData))
+end
+
 function Condition:updateConditionEffects(currentState)
+    if tes3ui.menuMode() then return end
     currentState = currentState or self:getCurrentState()
-    for state, values in pairs(self.states) do
+    for state, stateData in pairs(self.states) do
         local isCurrentState = ( currentState == state )
-        if values.spell then
-            if isCurrentState then
+        local spell = self:getCurrentSpellObj(stateData)
+        if spell then
+            local hasCondition = self:isAffected(stateData)
+            if isCurrentState and self:isActive() then
                 self:scaleSpellValues()
-                mwscript.addSpell({ reference = tes3.player, spell = values.spell })
+                if not hasCondition then
+                    mwscript.addSpell({ reference = tes3.player, spell = spell })
+                end
             else
-                mwscript.removeSpell({ reference = tes3.player, spell =  values.spell })
+                if hasCondition then
+                    mwscript.removeSpell({ reference = tes3.player, spell = spell })
+                end
             end
         end
     end

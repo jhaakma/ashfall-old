@@ -27,7 +27,7 @@ end
 local function checkTired()
     --Sleep
     local isPassedOut = (
-        common.data.mcmSettings.enableTiredness and
+        common.config.getConfig().enableTiredness and
         tiredness:getValue() >= 100 and 
         tes3.mobilePlayer.fatigue.current <= 0  and 
         passedOut ~= true
@@ -55,7 +55,7 @@ local function checkHot()
     end
 end
 
-
+ 
 
 
 
@@ -71,10 +71,10 @@ event.register("simulate", checkStats)
 local function applyThirstDamage()
     local doDamage = (
         not tes3.menuMode() and 
-        common.data.mcmSettings.enableThirst and
+        common.config.getConfig().enableThirst and
         tes3.mobilePlayer.health.current > 0 and 
         thirst:getValue() >= thirst.max and
-        common.data.mcmSettings.needsCanKill == true and
+        common.config.getConfig().needsCanKill == true and
         common.data.blockForFade ~= true
     )
     if doDamage then

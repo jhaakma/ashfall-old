@@ -22,8 +22,7 @@ function this.updateCondition(id)
     local conditionChanging = ( currentState ~= previousState )
     if conditionChanging then
         common.data.currentStates[id] = currentState
-        thisCondition:showUpdateMessages()
-        thisCondition:updateConditionEffects(currentState)
+        thisCondition:conditionChanged(currentState)
     end
     --Restore fatigue if it drops below 0
     if conditionChanging then
@@ -47,31 +46,31 @@ local function refreshConditions()
 end
 
 --Update all conditions on load
-local conditionRefreshTimer
+
 local function updateConditionsOnLoad()
     refreshConditions()
-    conditionRefreshTimer = conditionRefreshTimer or timer.start{
+    timer.start{
         type = timer.real,
         duration = 1,
         iterations = -1, 
         callback = refreshConditions
-    }
+    } 
 end
 event.register("loaded", updateConditionsOnLoad)
 
 --Remove and re-add the condition spell if the player healed their stats with a potion or spell. 
 local function refreshAfterRestore(e)
+    if e.target ~= tes3.player then return end
     local doRefresh = (
         e.effectInstance.state == tes3.spellState.ending and
         --We aren't checking Ashfall spells, we're checking other spells that might have healed the ashfall spells
-        not string.startswith(e.source.id, "fw")
+        not ( string.startswith(e.source.id, "fw") or string.startswith(e.source.id, "ashfall_") )
     )
     if doRefresh then
         for id, condition in pairs(conditionConfig) do
-            local currentState = condition:getCurrentState()
             local states = conditionConfig[id].states
-            if states and currentState then
-                local spell = states[currentState].spell
+            if states then
+                local spell = condition:getCurrentSpellObj()
                 if spell and tes3.player.object.spells:contains(spell) then
                     mwscript.addSpell({ reference = tes3.player, spell = spell })
                 end

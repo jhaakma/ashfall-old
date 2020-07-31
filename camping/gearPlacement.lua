@@ -1,0 +1,43 @@
+local common = require("mer.ashfall.common.common")
+
+--[[
+    Orients a placed object and lowers it into the ground so it lays flat against the terrain,
+]]
+
+
+local function onDropGear(e)
+    local gearValues = common.staticConfigs.placementConfig[string.lower(e.reference.object.id)]
+    if gearValues then
+        if gearValues.blockIllegal then
+            if tes3.player.cell.restingIsIllegal then
+                tes3.addItem{
+                    reference = tes3.player,
+                    item = e.reference.object,
+                    updateGUI = true,
+                    count =  1
+                }
+                e.reference:disable()
+                mwscript.setDelete{ reference = e.reference}
+                tes3.messageBox("You can't place that here, resting is illegal.")
+                return
+            end
+        end
+
+        timer.frame.delayOneFrame(function()
+            if gearValues.maxSteepness then
+                common.helper.orientRefToGround{ ref = e.reference, maxSteepness = gearValues.maxSteepness }
+            end
+            if gearValues.drop then
+                common.log:debug("Dropping %s by %s", e.reference.object.name, gearValues.drop)
+                e.reference.position = {
+                    e.reference.position.x, 
+                    e.reference.position.y, 
+                    e.reference.position.z - gearValues.drop, 
+                }
+                
+            end
+        end)
+    end
+end
+
+event.register("itemDropped", onDropGear)

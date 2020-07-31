@@ -49,7 +49,7 @@ end
 
 
 function CookingMenu:createMenu()
-    common.log.info("Creating Cooking menu")
+    common.log:info("Creating Cooking menu")
     local menu = tes3ui.createMenu{ id = self.menuUID, fixedFrame = true }
     tes3ui.enterMenuMode(self.menuUID)
     self.elements.menu = menu
@@ -105,7 +105,7 @@ end
 
 
 function CookingMenu:createRecipeSelect(parentBlock, recipe)
-    common.log.info("recipeID on create: %s", recipe.id)
+    common.log:info("recipeID on create: %s", recipe.id)
     local background = parentBlock:createRect({ id = tes3ui.registerID(recipe.id)})
     background.widthProportional = 1.0
     background.autoHeight = true
@@ -129,7 +129,7 @@ function CookingMenu:createRecipeList(parentBlock)
     recipeList.autoHeight = true
     self.elements.recipeList = recipeList
 
-    common.log.info("%s type = %s", self.utensil.name, self.utensil.recipeType)
+    common.log:info("%s type = %s", self.utensil.name, self.utensil.recipeType)
     for _, recipe in pairs(self.recipes) do
         self:createRecipeSelect(recipeList, recipe )
     end
@@ -242,7 +242,7 @@ function CookingMenu:createEffectsList(parentBlock, recipe)
                 end
             end
         else
-            common.log.info("Spell not found")
+            common.log:info("Spell not found")
         end
     end
 
@@ -406,7 +406,7 @@ function CookingMenu:cookMeal()
 
     if self.selectedRecipe:checkIngredients() then
         self:close()
-        tes3.playSound({ sound = "a_boil" })
+        tes3.playSound({ sound = "ashfall_boil" })
         local hours = self.selectedRecipe.duration / 60
         common.helper.fadeTimeOut( hours, 2.5, finishCooking  )
     end

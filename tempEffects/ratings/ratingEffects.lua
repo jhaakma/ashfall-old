@@ -14,8 +14,6 @@ local function updateRatings()
     local coverage = ratings.getTotalCoverage()
     common.data.coverageRating = coverage
     common.data.coverageMulti = math.remap(coverage, 0, 1, 1, 0.25 )
-
-    
 end
 
 local function isArmorOrClothing(item)
@@ -28,7 +26,7 @@ end
 local function onUnequipped(e)
     if isArmorOrClothing(e.item) and e.reference == tes3.player then
         updateRatings()
-        temperatureController.update()
+        event.trigger("Ashfall:updateTemperature")
         ui.updateRatingsUI()
     end
 end
@@ -36,15 +34,17 @@ end
 local function onEquipped(e)
     if isArmorOrClothing(e.item) and e.reference == tes3.player then
         updateRatings()
-        temperatureController.update()
+        event.trigger("Ashfall:updateTemperature")
         ui.updateRatingsUI()
     end
 end
 
-event.register("Ashfall:dataLoadedOnce", function()
+event.register("Ashfall:dataLoaded", function()
     updateRatings()
     ui.updateRatingsUI()
+end)
 
+event.register("Ashfall:dataLoadedOnce", function()
     timer.start({
         duration = 1,
         iterations = 1,

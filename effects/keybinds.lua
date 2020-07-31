@@ -31,7 +31,7 @@ local function keyPressed(e)
     local config = mwse.loadConfig("ashfall")
     local doCrafting = (
         common.data and
-        common.data.mcmSettings.enableCrafting
+        common.config.getConfig().enableCrafting
     )    
     if doCrafting then
         for var, callback in pairs(actions) do

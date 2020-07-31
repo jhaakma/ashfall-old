@@ -3,15 +3,20 @@ local this = {}
 local common = require("mer.ashfall.common.common")
 local ratingsConfig = common.staticConfigs.ratingsConfig
 
+local cache = {
+    armor = {},
+    clothing = {}
+}
 local function getCache()
-    return common.getConfig().warmthCache or {
-        armor = {},
-        clothing = {}
-    }
+    return cache
+    -- common.config.getConfig().warmthCache or {
+    --     armor = {},
+    --     clothing = {}
+    -- }
 end
 
 local function saveCache(newCache) 
-    common.saveConfigValue("warmthCache", newCache)
+    common.config.saveConfigValue("warmthCache", newCache)
 end 
 
 
@@ -44,7 +49,7 @@ local function getRawItemWarmth(object)
     elseif object.objectType == tes3.objectType.clothing then
         type = "clothing"
     else
-        common.log.error("Tried to get warmth value of incompatabile item type %s" .. object.objectType )
+        common.log:error("Tried to get warmth value of incompatabile item type %s" .. object.objectType )
         return
     end
 
@@ -77,7 +82,7 @@ local function getRawItemWarmth(object)
     end
 
     if not value then
-        common.log.error("No warmth value found for %s!", object.name)
+        common.log:error("No warmth value found for %s!", object.name)
         value = 0
     end
     return value
@@ -115,12 +120,20 @@ function this.getTotalWarmth()
             warmth = warmth + this.getItemWarmth(stack.object)
         end
     end
+    local backpack = tes3.getEquippedItem{
+        actor = tes3.player,
+        objectType = tes3.objectType.armor,
+        slot = 11
+    }
+    if backpack then
+        warmth = warmth + this.getItemWarmth(backpack.object)
+    end
 
     return warmth * ratingsConfig.warmth.multiplier
 end
 
 function this.getAdjustedWarmth(value)
-    return value * ( 1 / ratingsConfig.warmth.multiplier )
+    return math.floor(value * ( 1 / ratingsConfig.warmth.multiplier ) )
 end
 
 
@@ -148,7 +161,7 @@ local function getItemBodyParts(object)
         slot = tes3.clothingSlot
         mapper = ratingsConfig.clothingPartMapping
     else
-        common.log.error("getItemBodyParts: Not a clothing or armor piece. ")
+        common.log:error("getItemBodyParts: Not a clothing or armor piece. ")
         return
     end
 

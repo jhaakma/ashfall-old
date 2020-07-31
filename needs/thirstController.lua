@@ -8,7 +8,8 @@ local statsEffect = require("mer.ashfall.needs.statsEffect")
 local temperatureController = require("mer.ashfall.temperatureController")
 temperatureController.registerBaseTempMultiplier({ id = "thirstEffect", warmOnly = true })
 
-local heatMulti = 5.0
+local heatMulti = 4.0
+local dysentryMulti = 5.0
 local THIRST_EFFECT_LOW = 1.3
 local THIRST_EFFECT_HIGH = 1.0
 local restMultiplier = 1.0
@@ -17,10 +18,8 @@ local conditionConfig = common.staticConfigs.conditionConfig
 local thirst = conditionConfig.thirst
 
 function this.calculate(scriptInterval, forceUpdate)
-    if not forceUpdate and scriptInterval == 0 then return end
-
-    local thirstRate = common.data.mcmSettings.thirstRate / 10
-
+    if  scriptInterval == 0 and not forceUpdate then return end
+    
     if not thirst:isActive() then
         thirst:setValue(0)
         return
@@ -31,7 +30,11 @@ function this.calculate(scriptInterval, forceUpdate)
     if common.data.blockNeeds == true then
         return
     end
+    if common.data.blockThirst == true then
+        return
+    end
 
+    local thirstRate = common.config.getConfig().thirstRate / 10
     local currentThirst = thirst:getValue()
     local temp = conditionConfig.temp
 
@@ -39,15 +42,18 @@ function this.calculate(scriptInterval, forceUpdate)
     local heatEffect = math.clamp(temp:getValue(), temp.states.warm.min, temp.states.scorching.max )
     heatEffect = math.remap(heatEffect, temp.states.warm.min, temp.states.scorching.max, 1.0, heatMulti)
     
+     --if you have dysentry you get thirsty more quickly
+     local dysentryEffect = common.staticConfigs.conditionConfig.dysentery:isAffected() and dysentryMulti or 1.0
+
     --Calculate thirst
     local resting = (
         tes3.mobilePlayer.sleeping or
         tes3.menuMode()
     )
     if resting then
-        currentThirst = currentThirst + ( scriptInterval * thirstRate * heatEffect * restMultiplier )
+        currentThirst = currentThirst + ( scriptInterval * thirstRate * heatEffect * dysentryEffect * restMultiplier )
     else
-        currentThirst = currentThirst + ( scriptInterval * thirstRate * heatEffect )
+        currentThirst = currentThirst + ( scriptInterval * thirstRate * heatEffect * dysentryEffect )
     end
     currentThirst = math.clamp(currentThirst, 0, 100) 
 
@@ -67,6 +73,12 @@ function this.getBottleData(id)
     return common.staticConfigs.bottleList[string.lower(id)]
 end
 
+
+local function addDysentry()
+    local dysentery = common.staticConfigs.conditionConfig.dysentery
+    local dysentryAmount = math.random(100)
+    dysentery:setValue(dysentery:getValue() + dysentryAmount)
+end
 
 function this.drinkAmount( amount, drinkingDirtyWater )
     if not conditionConfig.thirst:isActive() then return end
@@ -88,18 +100,17 @@ function this.drinkAmount( amount, drinkingDirtyWater )
         reference = tes3.mobilePlayer,
         current = magickaIncrease,
         name = "magicka",
-        limit = true
     }
     conditionsCommon.updateCondition("thirst")
     this.update()
-    temperatureController.update("drinkAmount")
+    event.trigger("Ashfall:updateTemperature", { source = "drinkAmount" } )
     needsUI.updateNeedsUI()
     hud.updateHUD()
 
     tes3.playSound({reference = tes3.player, sound = "Drink"})
 
     if drinkingDirtyWater == true then
-        common.helper.tryContractDisease("ashfall_d_dysentry")
+        addDysentry()
     end
     return amountDrank
 end
@@ -107,7 +118,7 @@ end
 
 
 function this.callWaterMenuAction(callback)
-    common.log.debug("if common.data.drinkingRain then")
+    common.log:debug("if common.data.drinkingRain then")
     if common.data.drinkingRain then
         common.data.drinkingRain = false
         common.helper.fadeTimeOut( 0.25, 2, callback )
@@ -118,7 +129,11 @@ function this.callWaterMenuAction(callback)
 end
 
 --Fill a bottle to max water capacity
-function this.fillContainer(source, returnFunction)
+function this.fillContainer(params)
+    params = params or {}
+    local cost = params.cost
+    local source = params.source
+    local callback = params.callback
     timer.delayOneFrame(function()
         tes3ui.showInventorySelectMenu{
             title = "Select Water Container",
@@ -148,7 +163,7 @@ function this.fillContainer(source, returnFunction)
 
                         --dirty container if drinking from raw water
                         if common.data.drinkingDirtyWater == true then
-                            common.log.debug("Fill water DIRTY")
+                            common.log:debug("Fill water DIRTY")
                             itemData.data.waterDirty = true
                             common.data.drinkingDirtyWater = nil
                         end
@@ -182,14 +197,21 @@ function this.fillContainer(source, returnFunction)
                             (itemData.data.waterDirty and "dirty " or "")
                         )
 
-                        if returnFunction then returnFunction() end
+                        if callback then callback() end
                         
+                        if cost then
+                            mwscript.removeItem({ reference = tes3.player, item = "Gold_001", count = cost})
+                            local message = string.format(tes3.findGMST(tes3.gmst.sNotifyMessage63).value, cost, "Gold")
+                            tes3.messageBox(message)
+                            tes3.playSound{ reference = tes3.player, sound = "Item Gold Down"}
+                        end
+
                     end)
                 end
             end
         }
         timer.delayOneFrame(function()
-            common.log.debug("common.data.drinkingRain = false fill")
+            common.log:debug("common.data.drinkingRain = false fill")
             common.data.drinkingRain = false
             common.data.drinkingDirtyWater = false
         end)

@@ -6,105 +6,329 @@ this.foodConfig = require("mer.Ashfall.config.foodConfig")
 this.ratingsConfig = require("mer.Ashfall.config.ratingsConfig")
 
 this.objectIds = {
-    firewood = "a_firewood",
-    branch = "ashfall_firewood",
-    campfire = "ashfall_campfire_01",
+    firewood = "ashfall_firewood",
+    campfire = "ashfall_campfire",
     cookingPot = "ashfall_cooking_pot",
     grill = "ashfall_grill",
-    kettle = "ashfall_kettle"
+    kettle = "ashfall_kettle",
+    bedroll = "ashfall_bedroll",
+    bedroll_ashl = "ashfall_bedroll_ashl",
+    coveredBedroll = "ashfall_cbroll_misc",
+    canvasTent = "ashfall_tent_misc",
+    ashlanderTent = "ashfall_tent_ashl_misc",
+    woodaxe = "ashfall_woodaxe",
+    pack_b = "ashfall_backpack_b",
+    pack_w = "ashfall_backpack_w",
+    pack_n = "ashfall_backpack_n",
+}
+this.crateIds = {
+    camping = "ashfall_crate_camping",
+    food = "ashfall_crate_food",
+}
+
+
+--Tent mappings for activating a misc item into activator
+this.tentMiscToActiveMap = {
+    ashfall_tent_test_misc = "ashfall_tent_test_active",
+    ashfall_tent_misc = "ashfall_tent_active",
+    ashfall_tent_ashl_misc = "ashfall_tent_ashl_active",
+    ashfall_tent_canv_b_misc = "ashfall_tent_canv_b_active",
+    
+}
+this.tentActiveToMiscMap = {}
+for miscId, activeId in pairs(this.tentMiscToActiveMap) do
+    this.tentActiveToMiscMap[activeId] = miscId
+end
+
+
+--Ids for various fallen branches
+this.branchIds = {
+    ashfall_branch_ac_01 = "ashfall_branch_ac_01",
+    ashfall_branch_ac_02 = "ashfall_branch_ac_02",
+    ashfall_branch_ac_03 = "ashfall_branch_ac_03",
+
+
+    ashfall_branch_ai_01 = "ashfall_branch_ai_01",
+    ashfall_branch_ai_02 = "ashfall_branch_ai_02",
+    ashfall_branch_ai_03 = "ashfall_branch_ai_03",
+
+    ashfall_branch_ash_01 = "ashfall_branch_ash_01",
+    ashfall_branch_ash_02 = "ashfall_branch_ash_02",
+    ashfall_branch_ash_03 = "ashfall_branch_ash_03",
+
+    ashfall_branch_bc_01 = "ashfall_branch_bc_01",
+    ashfall_branch_bc_02 = "ashfall_branch_bc_02",
+    ashfall_branch_bc_03 = "ashfall_branch_bc_03",
+
+    ashfall_branch_gl_01 = "ashfall_branch_gl_01",
+    ashfall_branch_gl_02 = "ashfall_branch_gl_02",
+    ashfall_branch_gl_03 = "ashfall_branch_gl_03",
+
+    ashfall_branch_wg_01 = "ashfall_branch_wg_01",
+    ashfall_branch_wg_02 = "ashfall_branch_wg_02",
+    ashfall_branch_wg_03 = "ashfall_branch_wg_03",
+}
+
+--sort branches into general groups
+local branchGroups = {
+    azurasCoast = {
+        this.branchIds.ashfall_branch_ac_01,
+        this.branchIds.ashfall_branch_ac_02,
+        this.branchIds.ashfall_branch_ac_03,
+    },
+    ascadianIsles = {
+        this.branchIds.ashfall_branch_ai_01,
+        this.branchIds.ashfall_branch_ai_02,
+        this.branchIds.ashfall_branch_ai_03,
+    },
+    ashlands = {
+        this.branchIds.ashfall_branch_ash_01,
+        this.branchIds.ashfall_branch_ash_02,
+        this.branchIds.ashfall_branch_ash_03,
+    },
+    bitterCoast = {
+        this.branchIds.ashfall_branch_bc_01,
+        this.branchIds.ashfall_branch_bc_02,
+        this.branchIds.ashfall_branch_bc_03,
+    },
+    grazelands = {
+        this.branchIds.ashfall_branch_gl_01,
+        this.branchIds.ashfall_branch_gl_02,
+        this.branchIds.ashfall_branch_gl_03,
+    },
+    westGash = {
+        this.branchIds.ashfall_branch_wg_01,
+        this.branchIds.ashfall_branch_wg_02,
+        this.branchIds.ashfall_branch_wg_03,
+    },
+
+}
+this.defaultBranchGroup = branchGroups.ascadianIsles
+--assign regions to branch groups
+this.branchRegions = {
+    --solsthiem
+    ['Moesring Mountains Region'] = branchGroups.solstheim,
+    ['Felsaad Coast Region'] = branchGroups.solstheim,
+    ['Isinfier Plains Region'] = branchGroups.solstheim,
+    ['Brodir Grove Region'] = branchGroups.solstheim,
+    ['Thirsk Region'] = branchGroups.solstheim,
+    ['Hirstaang Forest Region'] = branchGroups.solstheim,
+    --Vvardenfell
+    ['Sheogorad'] = branchGroups.azurasCoast,
+
+    ["Azura's Coast Region"] = branchGroups.azurasCoast,
+    ['Ascadian Isles Region'] = branchGroups.ascadianIsles,
+    ['Grazelands Region'] = branchGroups.grazelands,
+    ['Bitter Coast Region'] = branchGroups.bitterCoast,
+    ['West Gash Region'] = branchGroups.westGash,
+    ['Ashlands Region'] = branchGroups.ashlands,
+    ['Molag Mar Region'] = branchGroups.ashlands,
+    ['Red Mountain Region'] = branchGroups.ashlands,
+}
+
+--For placement magic
+this.placementConfig = {
+    ashfall_bedroll_ashl = { blockIllegal = true, maxSteepness = 0.4 },
+    ashfall_bedroll = { blockIllegal = true, maxSteepness = 0.4 },
+    ashfall_cbroll_misc = { blockIllegal = true, maxSteepness = 0.4, drop = -15 },
+    
+    ashfall_tent_misc = { maxSteepness = 0.3, drop = -8},
+    ashfall_tent_ashl_misc = { maxSteepness = 0.3, drop = -8},
+    ashfall_tent_canv_b_misc = { maxSteepness = 0.3, drop = -8},
+    ashfall_tent_test_misc = { maxSteepness = 0.3, drop = -8},
+
+    ashfall_tent_active = { maxSteepness = 0.3, drop = 50},
+    ashfall_tent_ashl_active = { maxSteepness = 0.3, drop = 50},
+    ashfall_tent_canv_b_active = { maxSteepness = 0.3, drop = 50},
+    ashfall_tent_test_active = { maxSteepness = 0.3, drop = 50},
+
+    a_bed_roll = { blockIllegal = true, maxSteepness = 0.4 },
+}
+
+this.capacities = {
+    cookingPot = 150,
+    kettle = 120,
+    potion = 15,
+    MAX = 240
+}
+
+this.bottleConfig = {
+    cup = { capacity = 25, weight = 2 },
+    glass = { capacity = 25, weight = 2 },
+    goblet = { capacity = 25, weight = 2 },
+    mug = { capacity = 30, weight = 2 },
+    tankard = { capacity = 30, weight = 2 },
+
+
+    --expensive, small, good weight efficiency
+    flask = { 
+        capacity = 90, 
+        value = 9,
+        weight = 3 ,
+    }, --waterPerDollar = 10, waterPerWeight = 30
+
+    --cheap, small, medium weight efficiency
+    bottle = { 
+        capacity = 100, 
+        value = 3,
+        weight = 4,
+    },-- waterPerDollar = 33, waterPerWeight = 25
+
+    --Pots: cheap, medium sized, low weight efficiency
+    pot = {
+        capacity = 120,
+        value = 4,
+        weight = 6
+    },--waterPerDollar = 30, waterPerWeight = 20
+    redwarePot = {
+        capacity = 120,
+        value = 7,
+        weight = 5
+    },--waterPerDollar = 17, waterPerWeight = 24
+
+    --cheap, very large, low weight efficiency
+    jug = { 
+        capacity = 220, 
+        value = 5, 
+        weight = 10 
+    },--waterPerDollar = 44, waterPerWeight = 22
+
+    --Pitchers tend to be best for large storage at home, not very portable
+
+    --cheap, large, low weight efficiency
+    pitcher = { 
+        capacity = 200, 
+        value = 7, 
+        weight = 8,
+    },--waterPerDollar = 25, waterPerWeight = 25
+
+    --very cheap, large, very low weight efficiency
+    metalPitcher = {
+        capacity = 200, 
+        value = 5, 
+        weight = 8 
+    },--waterPerDollar = 100, waterPerWeight = 25
+
+    --expensive, large, medium weight efficiency
+    redwarePitcher = { 
+        capacity = 220, 
+        value = 12, 
+        weight = 8 
+    },--waterPerDollar = 25, waterPerWeight = 27.5
+
+    --Expensive, large, medium weight efficiency
+    silverwarePitcher = { 
+        capacity = 210, 
+        value = 30, 
+        weight = 7,
+    },--waterPerDollar = 7, waterPerWeight = 28.5
+
+
+    --Expensive, large, medium weight efficiency
+    dwarvenPitcher = { 
+        capacity = 240, 
+        value = 40, 
+        weight = 8 
+    }, --waterPerDollar = 5.5, waterPerWeight = 30
 } 
 
 
-this.capacities = {
-    cup = 50,
-    goblet = 50,
-    mug = 60,
-    flask = 70,
-    tankard = 90,
-    bottle = 110,
-    jug = 140,
-    pitcher = 150,
-    cookingPot = 150,
-    kettle = 120,
-    MAX = 150
-}
-
 this.bottleList = {
+    --glasses
+    misc_de_glass_green_01 = this.bottleConfig.glass,
+    misc_de_glass_yellow_01 = this.bottleConfig.glass,
     --cups
-    misc_com_redware_cup = { capacity = this.capacities.cup },
-    misc_com_wood_cup_01 = { capacity = this.capacities.cup },
-    misc_com_wood_cup_02 = { capacity = this.capacities.cup },
-    misc_lw_cup = { capacity = this.capacities.cup },
-    misc_imp_silverware_cup = { capacity = this.capacities.cup },
-    misc_imp_silverware_cup_01 = { capacity = this.capacities.cup },
+    misc_com_redware_cup = this.bottleConfig.cup,
+    misc_com_wood_cup_01 = this.bottleConfig.cup,
+    misc_com_wood_cup_02 = this.bottleConfig.cup,
+    misc_lw_cup = this.bottleConfig.cup,
+    misc_imp_silverware_cup = this.bottleConfig.cup,
+    misc_imp_silverware_cup_01 = this.bottleConfig.cup,
 
     --goblets
-    misc_com_metal_goblet_01 = { capacity = this.capacities.goblet },
-    misc_com_metal_goblet_02 = { capacity = this.capacities.goblet },
-    misc_de_goblet_01 = { capacity = this.capacities.goblet },
-    misc_de_goblet_02 = { capacity = this.capacities.goblet },
-    misc_de_goblet_03 = { capacity = this.capacities.goblet },
-    misc_de_goblet_04 = { capacity = this.capacities.goblet },
-    misc_de_goblet_05 = { capacity = this.capacities.goblet },
-    misc_de_goblet_06 = { capacity = this.capacities.goblet },
-    misc_de_goblet_07 = { capacity = this.capacities.goblet },
-    misc_de_goblet_08 = { capacity = this.capacities.goblet },
-    misc_de_goblet_09 = { capacity = this.capacities.goblet },
-    misc_dwrv_goblet00 = { capacity = this.capacities.goblet },
-    misc_dwrv_goblet10 = { capacity = this.capacities.goblet },
-    misc_dwrv_goblet00_uni = { capacity = this.capacities.goblet },
-    misc_dwrv_goblet10_uni = { capacity = this.capacities.goblet },
-    misc_dwrv_goblet10_tgcp = { capacity = this.capacities.goblet },
-    misc_de_goblet_01_redas = { capacity = this.capacities.goblet },
+    misc_com_metal_goblet_01 = this.bottleConfig.goblet,
+    misc_com_metal_goblet_02 = this.bottleConfig.goblet,
+    misc_de_goblet_01 = this.bottleConfig.goblet,
+    misc_de_goblet_02 = this.bottleConfig.goblet,
+    misc_de_goblet_03 = this.bottleConfig.goblet,
+    misc_de_goblet_04 = this.bottleConfig.goblet,
+    misc_de_goblet_05 = this.bottleConfig.goblet,
+    misc_de_goblet_06 = this.bottleConfig.goblet,
+    misc_de_goblet_07 = this.bottleConfig.goblet,
+    misc_de_goblet_08 = this.bottleConfig.goblet,
+    misc_de_goblet_09 = this.bottleConfig.goblet,
+    misc_dwrv_goblet00 = this.bottleConfig.goblet,
+    misc_dwrv_goblet10 = this.bottleConfig.goblet,
+    misc_dwrv_goblet00_uni = this.bottleConfig.goblet,
+    misc_dwrv_goblet10_uni = this.bottleConfig.goblet,
+    misc_dwrv_goblet10_tgcp = this.bottleConfig.goblet,
+    misc_de_goblet_01_redas = this.bottleConfig.goblet,
 
     --tankards
-    misc_com_tankard_01 = { capacity = this.capacities.tankard },
-    misc_de_tankard_01 = { capacity = this.capacities.tankard },
+    misc_com_tankard_01 = this.bottleConfig.tankard,
+    misc_de_tankard_01 = this.bottleConfig.tankard,
 
 
     --mugs
-    misc_dwrv_mug00 = { capacity = this.capacities.mug },
-    misc_dwrv_mug00_uni = { capacity = this.capacities.mug },
+    misc_dwrv_mug00 = this.bottleConfig.mug,
+    misc_dwrv_mug00_uni = this.bottleConfig.mug,
 
     --flasks
-    misc_flask_01 = { capacity = this.capacities.flask },
-    misc_flask_02 = { capacity = this.capacities.flask },
-    misc_flask_03 = { capacity = this.capacities.flask },
-    misc_flask_04 = { capacity = this.capacities.flask },
-    misc_com_redware_flask = { capacity = this.capacities.flask },
-    misc_lw_flask = { capacity = this.capacities.flask },
+    misc_flask_01 = this.bottleConfig.flask,
+    misc_flask_02 = this.bottleConfig.flask,
+    misc_flask_03 = this.bottleConfig.flask,
+    misc_flask_04 = this.bottleConfig.flask,
+    misc_com_redware_flask = this.bottleConfig.flask,
+    misc_lw_flask = this.bottleConfig.flask,
 
     --bottles
-    misc_com_bottle_01 = { capacity = this.capacities.bottle },
-    misc_com_bottle_02 = { capacity = this.capacities.bottle },
-    misc_com_bottle_04 = { capacity = this.capacities.bottle },
-    misc_com_bottle_05 = { capacity = this.capacities.bottle },
-    misc_com_bottle_06 = { capacity = this.capacities.bottle },
+    misc_com_bottle_01 = this.bottleConfig.bottle,
+    misc_com_bottle_02 = this.bottleConfig.bottle,
+    misc_com_bottle_04 = this.bottleConfig.bottle,
+    misc_com_bottle_05 = this.bottleConfig.bottle,
+    misc_com_bottle_06 = this.bottleConfig.bottle,
     
-    misc_com_bottle_08 = { capacity = this.capacities.bottle },
-    misc_com_bottle_09 = { capacity = this.capacities.bottle },
-    misc_com_bottle_10 = { capacity = this.capacities.bottle },
-    misc_com_bottle_11 = { capacity = this.capacities.bottle },
-    misc_com_bottle_13 = { capacity = this.capacities.bottle },
-    misc_com_bottle_14 = { capacity = this.capacities.bottle },
-    misc_com_bottle_14_float = { capacity = this.capacities.bottle },
-    misc_com_bottle_15 = { capacity = this.capacities.bottle },
+    misc_com_bottle_08 = this.bottleConfig.bottle,
+    misc_com_bottle_09 = this.bottleConfig.bottle,
+    misc_com_bottle_10 = this.bottleConfig.bottle,
+    misc_com_bottle_11 = this.bottleConfig.bottle,
+    misc_com_bottle_13 = this.bottleConfig.bottle,
+    misc_com_bottle_14 = this.bottleConfig.bottle,
+    misc_com_bottle_14_float = this.bottleConfig.bottle,
+    misc_com_bottle_15 = this.bottleConfig.bottle,
+
+    --pots
+    misc_de_pot_blue_01 = this.bottleConfig.pot,
+    misc_de_pot_blue_02 = this.bottleConfig.pot,
+    misc_de_pot_glass_peach_01 = this.bottleConfig.pot,
+    misc_de_pot_glass_peach_02 = this.bottleConfig.pot,
+    misc_de_pot_green_01 = this.bottleConfig.pot,
+    misc_de_pot_mottled_01 = this.bottleConfig.pot,
+    --redware pots
+    misc_de_pot_redware_01 = this.bottleConfig.redwarePot,
+    misc_de_pot_redware_02 = this.bottleConfig.redwarePot,
+    misc_de_pot_redware_03 = this.bottleConfig.redwarePot,
+    misc_de_pot_redware_04 = this.bottleConfig.redwarePot,
+    misc_de_pot_redware_04_uni = this.bottleConfig.redwarePot,
 
     --jugs
-    misc_com_bottle_03 = { capacity = this.capacities.jug },
-    misc_com_bottle_07 = { capacity = this.capacities.jug },
-    misc_com_bottle_07_float = { capacity = this.capacities.jug },
-    misc_com_bottle_12 = { capacity = this.capacities.jug },
+    misc_com_bottle_03 = this.bottleConfig.jug,
+    misc_com_bottle_07 = this.bottleConfig.jug,
+    misc_com_bottle_07_float = this.bottleConfig.jug,
+    misc_com_bottle_12 = this.bottleConfig.jug,
 
     --pitchers
-    misc_de_pitcher_01 = { capacity = this.capacities.pitcher },
-    misc_com_redware_pitcher = { capacity = this.capacities.pitcher },
-    misc_com_pitcher_metal_01 = { capacity = this.capacities.pitcher },
-    misc_dwrv_pitcher00 = { capacity = this.capacities.pitcher },
-    misc_dwrv_pitcher00_uni = { capacity = this.capacities.pitcher },
-    misc_imp_silverware_pitcher = { capacity = this.capacities.pitcher },
-    misc_imp_silverware_pitcher_uni = { capacity = this.capacities.pitcher },
+    misc_de_pitcher_01 = this.bottleConfig.pitcher,
+    misc_com_redware_pitcher = this.bottleConfig.redwarePitcher,
+    misc_com_pitcher_metal_01 = this.bottleConfig.metalPitcher,
+    misc_imp_silverware_pitcher = this.bottleConfig.silverwarePitcher,
+    misc_imp_silverware_pitcher_uni = this.bottleConfig.silverwarePitcher,
+
+    misc_dwrv_pitcher00 = this.bottleConfig.dwarvenPitcher,
+    misc_dwrv_pitcher00_uni = this.bottleConfig.dwarvenPitcher,
 }
+
+
 
 this.interiorTempValues = {
     default = 0,
@@ -113,7 +337,7 @@ this.interiorTempValues = {
     ruin = -35,
     dungeon = -40,
     cave = -45,
-    tomb = -50,
+    tomb = -50, 
     barrow = -65
 }
 this.interiorTempPatterns = {

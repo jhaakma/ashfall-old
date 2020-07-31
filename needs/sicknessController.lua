@@ -1,0 +1,184 @@
+local this = {}
+local common = require("mer.ashfall.common.common")
+local foodPoison = common.staticConfigs.conditionConfig.foodPoison
+local dysentery = common.staticConfigs.conditionConfig.dysentery
+local blightness = common.staticConfigs.conditionConfig.blightness
+
+local drainRateHealthy = 200
+local drainRateSick = 3
+
+local blightGainRate = 300
+local blightDrainRate = 400
+
+local diceRollChance = 0.02
+
+local function calculateFoodPoison(scriptInterval)
+    local drainRate
+    if foodPoison:getCurrentState() == foodPoison.default then
+        common.log:trace("calculateFoodPoison using healthy rate")
+        drainRate = drainRateHealthy
+    else
+        common.log:trace("calculateFoodPoison using sick rate")
+        drainRate = drainRateSick
+    end
+
+    local newVal = foodPoison:getValue() - ( scriptInterval * drainRate)
+    foodPoison:setValue(newVal)
+    common.log:trace("new food poison value: %.f", newVal)
+end
+
+local function calculateDysentry(scriptInterval)
+    local drainRate
+    if dysentery:getCurrentState() == dysentery.default then
+        common.log:trace("calculateDysentry using healthy rate")
+        drainRate = drainRateHealthy
+    else
+        common.log:trace("calculateDysentry using sick rate")
+        drainRate = drainRateSick
+    end
+
+    local newVal = dysentery:getValue() - ( scriptInterval * drainRate)
+    
+    common.log:trace("New dysentery value: %s", newVal)
+    dysentery:setValue(newVal)
+end
+
+
+local weatherController
+local function calculateBlightness(scriptInterval)
+
+    --already has blight, set to 0
+    local hasBlight = blightness:hasBlight()
+    if hasBlight then
+        common.log:trace("Already has blight, setting to 0")
+        blightness:setValue(0)
+        return
+    end
+
+    weatherController = weatherController or tes3.worldController.weatherController
+    local weather = weatherController.currentWeather
+    local isBlightWeather = weather and weather.index == tes3.weather.blight 
+    local isOutside = not tes3.player.cell.isInterior
+    local isInTent = common.helper.getInTent()
+    --caught in a blight storm, check coverage and face covered and add to blightness
+    if isBlightWeather and isOutside and not isInTent then
+
+        common.log:trace("In a blight storm")
+        local coverage = common.data.coverageRating
+        --half from coverage
+        local coverageMulti = math.remap(coverage, 0.0, 1.0, 0.5, 0.0)
+        common.log:trace("coverageMulti : %s", coverageMulti)
+        --half from face covered
+        local faceMulti = common.data.faceCovered == true and 0.0 or 0.5
+        common.log:trace("faceMulti : %s", faceMulti)
+        --add them up to 0-1.0
+        local coveragePlusFaceMulti = coverageMulti + faceMulti
+
+        common.log:trace("----------------Blight coverage: %s", coveragePlusFaceMulti)
+
+        common.log:trace("----------------blight per hour: %s", blightGainRate * coveragePlusFaceMulti)
+
+        local rand = math.random()
+        if rand < diceRollChance then
+            local newVal = blightness:getValue() + ( scriptInterval * blightGainRate * coveragePlusFaceMulti / diceRollChance )
+            blightness:setValue(newVal)
+        end
+    --not exposed to blight, reduce blightness
+    else
+        common.log:trace("Not exposed to blight")
+        local newVal = blightness:getValue() - ( scriptInterval * blightDrainRate )
+        blightness:setValue(newVal)
+    end
+
+    common.log:trace("New blightness value: %s", blightness:getValue() )
+end
+
+
+local function calculateFlu(scriptInterval)
+
+end
+
+
+function this.calculate(scriptInterval, forceUpdate)
+    if scriptInterval == 0 and not forceUpdate then return end
+    if not foodPoison:isActive() then
+        foodPoison:setValue(0)
+    end
+    if not dysentery:isActive() then
+        dysentery:setValue(0)
+    end
+    if not blightness:isActive() then
+        blightness:setValue(0)
+    end
+    if common.data.blockNeeds == true then
+        return
+    end
+    if foodPoison:isActive() then
+        calculateFoodPoison(scriptInterval)
+    end
+    if dysentery:isActive() then
+        calculateDysentry(scriptInterval)
+    end
+    if blightness:isActive() then
+        calculateBlightness(scriptInterval)
+    end
+end
+
+--[[
+    Check whether the player's face is covered to protect against the blight
+]]
+local parts = {
+    head = 0,
+    hair = 1
+}
+
+local function checkFaceCovered(e)
+    if not common.data then return end
+    if (e.reference ~= tes3.player) then
+        return 
+    end
+
+    if not e.bodyPart then
+        return
+    end
+
+    if e.object then
+        if e.object.objectType == tes3.objectType.armor and e.object.slot == tes3.armorSlot.helmet then
+            common.log:trace("is helmet")
+            common.log:trace("partType: %s", e.bodyPart.partType)
+            common.log:trace("part: %s", e.bodyPart.part)
+            if e.bodyPart.part == parts.head then
+                common.log:trace("Face is covered")
+                common.data.faceCovered = true
+            else
+                common.log:trace("Helmet but is exposed")
+                common.data.faceCovered = false
+            end
+        end
+    else
+        common.log:trace("not an object")
+        if e.bodyPart.part == parts.head then
+            common.log:trace("e.bodyPart.part == parts.head ")
+            common.data.faceCovered = false
+        end
+
+        if e.bodyPart == tes3.mobilePlayer.head then
+            common.log:trace("no helmet, Face exposed")
+            common.data.faceCovered = false
+        end
+    end
+end
+event.register("bodyPartAssigned", checkFaceCovered)
+
+event.register("loaded", function() 
+    if not tes3.player.data.equipmentUpdated then
+        mwse.log("Player equipment updated")
+        tes3.player:updateEquipment() 
+        tes3.player.data.equipmentUpdated = true
+        timer.delayOneFrame(function()
+            tes3.player.data.equipmentUpdated = nil
+        end)
+    end
+end )
+
+return this

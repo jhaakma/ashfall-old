@@ -34,13 +34,10 @@ local function createRatingsUI()
         outerBlock.autoWidth = true
         outerBlock.autoHeight = true 
 
-        local warmthText = "Warmth: "
-        local warmthLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:WarmthRating"), text = warmthText }) 
+        outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:WarmthRating"), text = "" }) 
 
         local coverageText = "Coverage: "
-        outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:CoverageRating"), text = coverageText }) 
-        --characterBox:reorderChildren(0, outerBlock, 1)
-
+        outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:CoverageRating"), text = "" }) 
         inventoryMenu:updateLayout()
     end
 end
@@ -55,8 +52,8 @@ function this.updateRatingsUI()
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local warmthLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:WarmthRating"))
-        local warmthValue = math.floor(common.data.warmthRating)
-        warmthLabel.text = "Warmth: " .. warmthValue .. "    "
+        local warmthValue = ratingsCommon.getAdjustedWarmth(common.data.warmthRating)
+        warmthLabel.text = string.format("Warmth: %d    " , warmthValue)
 
         local coverageLabel = inventoryMenu:findChild(tes3ui.registerID("Ashfall:CoverageRating"))
         local coverageValue = ratingsCommon.getAdjustedCoverage(  common.data.coverageRating )
@@ -82,7 +79,7 @@ local IDs = {
 ]]
 local function insertRatingsTooltips(e)
 
-    if not common.data.mcmSettings.enableTemperatureEffects then
+    if not common.config.getConfig().enableTemperatureEffects then
         return
     end
 
@@ -132,8 +129,9 @@ local function insertRatingsTooltips(e)
         quickFormat(warmthHeader)
         --warmthHeader.color = tes3ui.getPalette("header_color")
         
-        local warmth = " " .. ratingsCommon.getItemWarmth( e.object )
-        local warmthValue = warmthBlock:createLabel({ id = IDs.warmthValue, text = warmth })
+        local warmth = ratingsCommon.getItemWarmth( e.object )
+        local warmthText = string.format(" %d", warmth)
+        local warmthValue = warmthBlock:createLabel({ id = IDs.warmthValue, text = warmthText })
         warmthValue.autoHeight = true
         warmthValue.autoWidth = true
         
@@ -147,8 +145,9 @@ local function insertRatingsTooltips(e)
         quickFormat(coverageHeader)
         --coverageHeader.color = tes3ui.getPalette("header_color")
         
-        local coverage = " " .. ratingsCommon.getAdjustedCoverage( ratingsCommon.getItemCoverage( e.object ) )
-        local coverageValue = coverageBlock:createLabel({ id = IDs.coverageValue, text = coverage })
+        local coverage = ratingsCommon.getAdjustedCoverage( ratingsCommon.getItemCoverage( e.object ) )
+        local coverageText = string.format(" %d", coverage )
+        local coverageValue = coverageBlock:createLabel({ id = IDs.coverageValue, text = coverageText })
         coverageValue.autoHeight = true
         coverageValue.autoWidth = true            
         
@@ -163,7 +162,7 @@ local function checkAshfallEnabled()
     local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
     if inventoryMenu then
         local outerBlock = inventoryMenu:findChild(tes3ui.registerID("Ashfall:armorRatings"))
-        outerBlock.visible = common.data.mcmSettings.enableTemperatureEffects
+        outerBlock.visible = common.config.getConfig().enableTemperatureEffects
     end
 end
 

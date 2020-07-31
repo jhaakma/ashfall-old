@@ -36,7 +36,7 @@ local function onSkillsReady()
             icon = "Icons/ashfall/survival.dds",
             value = skills.skillStartValue,
             attribute = tes3.attribute.endurance,
-            description = "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively. A higher survival skill also reduces the chance of getting food poisoning or dysentry from drinking dirty water.",
+            description = "The Survival skill determines your ability to deal with harsh weather conditions and perform actions such as chopping wood and creating campfires effectively. A higher survival skill also reduces the chance of getting food poisoning or dysentery from drinking dirty water.",
             specialization = tes3.specialization.stealth
         }
     )

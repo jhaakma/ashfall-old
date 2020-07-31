@@ -1,5 +1,7 @@
 local this = {}
+local staticConfigs = require("mer.ashfall.config.staticConfigs")
 local skillModule = include("OtherSkills.skillModule")
+local refController = require("mer.ashfall.referenceController")
 --[[
     Returns a human readable timestamp of the given time (or else the current time)
 ]]
@@ -13,12 +15,13 @@ function this.hourToClockTime ( time )
         gameTime = gameTime - 12
     end
     
-    local hourString
-    if gameTime < 10 then 
-        hourString = string.sub(gameTime, 1, 1)
-    else
-        hourString  = string.sub(gameTime, 1, 2)
-    end
+
+    local hourString = math.floor(gameTime)
+    -- if gameTime < 10 then 
+    --     hourString = string.sub(gameTime, 1, 1)
+    -- else
+    --     hourString  = string.sub(gameTime, 1, 2)
+    -- end
 
     local minuteTime = ( gameTime - hourString ) * 60
     local minuteString
@@ -27,7 +30,9 @@ function this.hourToClockTime ( time )
     else
         minuteString = string.sub ( minuteTime , 1, 2)
     end
-    formattedTime = hourString .. ":" .. minuteString .. (isPM and " pm" or " am")
+
+    formattedTime = string.format("%d:%d %s", hourString, minuteString, (isPM and "pm" or "am"))
+
     return ( formattedTime )
 end
 
@@ -44,27 +49,71 @@ end
 
     This is an expensive function! To see if the player is sheltered, use common.data.isSheltered instead.
 ]]
+
+function this.getInTent()
+    return tes3.player.data.Ashfall.tentTemp > 0
+end
+
+function this.setInTent(inTent)
+    tes3.player.data.Ashfall.tentTemp = inTent and 20 or 0
+end
+
+function this.getTentActiveFromMisc(miscRef)
+    return staticConfigs.tentMiscToActiveMap[miscRef.object.id:lower()]
+end
+
+function this.getTentMiscFromActive(activeRef)
+    return staticConfigs.tentActiveToMiscMap[activeRef.object.id:lower()]
+end
+
 function this.checkRefSheltered(reference)
+    local sheltered = false
+    local inTent
     reference = reference or tes3.player
 
     local oldCulledValue = reference.sceneNode.appCulled
     reference.sceneNode.appCulled = true
-    local result = tes3.rayTest{
+    local results = tes3.rayTest{
         position = reference.position,
         direction = {0, 0, 1},
-        --useBackTriangles = true
+        findAll = true,
+        maxDistance = 1000,
+        ignore = {reference}
     }
     reference.sceneNode.appCulled = oldCulledValue
+    if results then
+        for _, result in ipairs(results) do
+            if result and result.reference and result.reference.object then
+                sheltered = 
+                    ( result.reference.object.objectType == tes3.objectType.static or
+                    result.reference.object.objectType == tes3.objectType.activator ) == true
 
-    local sheltered =  (
-        result and result.reference and result.reference.object and 
-        ( result.reference.object.objectType == tes3.objectType.static 
-            or
-        result.reference.object.objectType == tes3.objectType.activator )
-    ) == true
+                if this.getTentMiscFromActive(result.reference) then
+                    --We're covered by a tent, so we are a bit warmer
+                    inTent = true
+                end
+                --this looks weird but it makes sense because we don't break out 
+                --of the for loop if sheletered is false
+                if sheltered == true then break end
+            end
+        end
+    end
+    if reference == tes3.player then
+        this.setInTent(inTent)
+    end
     return sheltered
 end
 
+function this.yeet(reference)
+    tes3.positionCell{
+        reference = reference, 
+        position = { 0, 0, 10000, },
+    }
+    reference:disable()
+    timer.delayOneFrame(function()
+        mwscript.setDelete{ reference = reference}
+    end)
+end
 
 --[[
     Allows the creation of messageboxes using buttons that each have their own callback.
@@ -77,7 +126,7 @@ end
 ]]
 function this.messageBox(params)
     --[[
-        Button = { text, callback}
+        Button = { text = string, callback = function }
     ]]--
     local message = params.message
     local buttons = params.buttons
@@ -228,22 +277,34 @@ function this.restoreFatigue()
         end
     }
 end
-
+ 
 --[[
     Attempt to contract a disease
 ]]
+local defaultChance = 1.0
+local maxSurvivalEffect = 0.5
 function this.tryContractDisease(spellID)
+    local spell = tes3.getObject(spellID)
+    mwse.log("tryContractDisease() Spell: %s", spellID)
     local resistDisease = tes3.mobilePlayer.resistCommonDisease 
+    if spell.castType == tes3.spellType.blight then
+        mwse.log("is blight")
+        resistDisease = tes3.mobilePlayer.resistBlightDisease 
+    end
+
     local survival = skillModule.getSkill("Ashfall:Survival").value
     local resistEffect = math.remap( math.min(resistDisease, 100), 0, 100, 1.0, 0.0 )
-    local survivalEffect =  math.remap( math.min(survival, 100), 0, 100, 1.0, 0.5 )
+    local survivalEffect =  math.remap( math.min(survival, 100), 0, 100, 1.0, maxSurvivalEffect )
 
-    local defaultChance = 0.3
+    
     local catchChance = defaultChance * resistEffect * survivalEffect
-    if math.random() < catchChance then
-        local spell = tes3.getObject(spellID)
-        tes3.messageBox(tes3.findGMST(tes3.gmst.sMagicContractDisease).value, spell.name)
-        mwscript.addSpell{ reference = tes3.player, spell = spell  }
+    local roll= math.random()
+    if roll < catchChance then
+        if tes3.player.object.spells:contains(spell) then
+        else
+            tes3.messageBox(tes3.findGMST(tes3.gmst.sMagicContractDisease).value, spell.name)
+            mwscript.addSpell{ reference = tes3.player, spell = spell  }
+        end
     end
 end
 
@@ -261,4 +322,124 @@ function this.getSeasonMultiplier()
     local seasonMultiplier = math.remap(dayAdjusted, 0, 196, 0, 1)
     return seasonMultiplier
 end
+
+
+
+--call a function on all currently loaded campfires
+function this.iterateCampfires(callback)
+   --local before = os.clock()
+
+    for campfire, _ in pairs(refController.controllers.campfire.references) do
+        if campfire.sceneNode then
+            callback(campfire)
+        end
+    end
+
+    -- for _, cell in pairs( tes3.getActiveCells() ) do
+    --     for campfire in cell:iterateReferences(tes3.objectType.light) do
+    --         if not campfire.disabled then
+    --             local id = string.lower(campfire.object.id)
+    --             if staticConfigs.activatorConfig.list.campfire:isActivator(id) then
+    --                 callback(campfire)
+    --             end
+    --         end
+    --     end
+    -- end
+   --mwse.log("iterateCampfires execution time: %s", os.clock() - before)
+end
+
+function this.traverseRoots(roots)
+    local function iter(nodes)
+        for _, node in ipairs(nodes or roots) do
+            if node then
+                coroutine.yield(node)
+                if node.children then
+                    iter(node.children)
+                end
+            end
+        end
+    end
+    return coroutine.wrap(iter)
+end
+
+function this.addDecal(reference, texturePath)
+    for node in this.traverseRoots{reference.sceneNode} do
+        mwse.log("traversing")
+        if node.RTTI.name == "NiTriShape" then
+            mwse.log("found tri shape")
+            local texturing_property = node:getProperty(0x4)
+            local base_map = texturing_property.maps[3]
+            base_map.texture = niSourceTexture.createFromPath(texturePath)
+        end
+    end
+end
+
+local ID33 = tes3matrix33.new(1,0,0,0,1,0,0,0,1)
+
+function this.rotationDifference(vec1, vec2)
+    vec1 = vec1:normalized()
+    vec2 = vec2:normalized()
+
+    local axis = vec1:cross(vec2)
+    local norm = axis:length()
+    if norm < 1e-5 then
+        return ID33:toEulerXYZ()
+    end
+
+    local angle = math.asin(norm)
+    if vec1:dot(vec2) < 0 then
+        angle = math.pi - angle
+    end
+
+    axis:normalize()
+
+    local m = ID33:copy()
+    m:toRotation(-angle, axis.x, axis.y, axis.z)
+    return m:toEulerXYZ()
+end
+
+function this.getGroundBelowRef(ref, ignoreList)
+    if not ref then return end
+    local height = 50
+    local result = tes3.rayTest{
+        position = {ref.position.x, ref.position.y, ref.position.z + height}, 
+        direction = {0, 0, -1},
+        ignore = ignoreList or {ref, tes3.player},
+        returnNormal = true,
+        useBackTriangles = true
+    }
+    return result
+end
+
+function this.orientRefToGround(params)
+    local ref = params.ref
+    local maxSteepness = params.maxSteepness
+    local ignoreList = params.ignoreList
+
+    local result = this.getGroundBelowRef(ref, ignoreList)
+    if not result then 
+        --This only happens when the ref is 
+        --beyond the edge of the active cells
+        return false 
+    end
+    --mwse.log("Setting Z pos to %s", result.intersection.z)
+    ref.position = { ref.position.x, ref.position.y, result.intersection.z }
+    local UP = tes3vector3.new(0,0,1)
+    
+    
+    local newOrientation = this.rotationDifference(UP, result.normal)
+    
+    if maxSteepness then
+        --mwse.log("Applying max steepness of %s", maxSteepness)
+        newOrientation.x = math.clamp(newOrientation.x, (0-maxSteepness), maxSteepness)
+        newOrientation.y = math.clamp(newOrientation.y, (0-maxSteepness), maxSteepness)
+        newOrientation.z = ref.orientation.z
+    end
+
+    --mwse.log("Setting orientation to %s", newOrientation)
+
+    ref.orientation = newOrientation
+    return true
+end
+
 return this
