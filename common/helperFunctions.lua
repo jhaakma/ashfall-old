@@ -36,6 +36,8 @@ function this.hourToClockTime ( time )
     return ( formattedTime )
 end
 
+
+
 --[[
     Transfers an amount from the field of one object to that of another
 ]]
@@ -115,6 +117,13 @@ function this.yeet(reference)
     end)
 end
 
+
+function this.isStack(reference)
+    return ( 
+        reference.attachments.variables and 
+        reference.attachments.variables.count > 1 
+    )
+end
 --[[
     Allows the creation of messageboxes using buttons that each have their own callback.
     {
@@ -258,6 +267,27 @@ function this.fadeTimeOut( hoursPassed, secondsTaken, callback )
             end
         )
     })
+end
+
+function this.iterateRefItems(ref)
+    local function iterator()
+        for _, stack in pairs(ref.object.inventory) do
+            local item = stack.object
+            local count = stack.count
+            -- first yield stacks with custom data
+            if stack.variables then
+                for _, data in pairs(stack.variables) do
+                    coroutine.yield(item, data.count, data)
+                    count = count - data.count
+                end
+            end
+            -- then yield all the remaining copies
+            if count > 0 then
+                coroutine.yield(item, count)
+            end
+        end
+    end
+    return coroutine.wrap(iterator)
 end
 
 --[[
@@ -440,6 +470,30 @@ function this.orientRefToGround(params)
 
     ref.orientation = newOrientation
     return true
+end
+
+
+--Cooking functions
+
+--How much water heat affects stew cook speed
+function this.calculateWaterHeatEffect(waterHeat)
+    return math.remap(waterHeat, staticConfigs.hotWaterHeatValue, 100, 1, 10)
+end
+
+function this.calculateStewWarmthBuff(waterHeat)
+    return math.remap(waterHeat, staticConfigs.hotWaterHeatValue, 100, 10, 15)
+end
+
+--Use cooking skill to determine how long a buff should last
+function this.calculateStewBuffDuration()
+    return math.remap(skillModule.getSkill("Ashfall:Cooking").value, 0, 100, 4, 16)
+end
+
+--Use cooking skill to determine how strong a buff should be
+function this.calculateStewBuffStrength(value, min, max)
+    local effectValue = math.remap(value, 0, 100, min, max)
+    local skillEffect = math.remap(skillModule.getSkill("Ashfall:Cooking").value, 0, 100, 0.25, 1.0)
+    return effectValue * skillEffect
 end
 
 return this

@@ -4,10 +4,6 @@ local hungerController = require("mer.ashfall.needs.hungerController")
 local skillCookingGrillingIncrement = 10
 local skillSurvivalGrillingIncrement = 4
 
--------------------------------------------------------
---COOKING----------------------------------------------
--------------------------------------------------------
-
 ----------------------------
 --Grilling
 -----------------------------
@@ -57,25 +53,25 @@ local function findCampfireForCooking(ingredient, cookingType)
     return campfire
 end
 
-local function isStack(ingredient)
-    return ( 
-        ingredient.attachments.variables and 
-        ingredient.attachments.variables.count > 1 
-    )
-end
+
 
 local function resetCookingTime(ingredient)
-    if not isStack(ingredient) and ingredient.data then 
+    if not common.helper.isStack(ingredient) and ingredient.data then 
         ingredient.data.lastCookUpdated = nil 
     end
 end
 
 local function startCookingIngredient(ingredient, timestamp)
     
-    if isStack(ingredient) then
+    if common.helper.isStack(ingredient) then
         local count = ingredient.attachments.variables.count
         mwscript.addItem{ reference = tes3.player, item = ingredient.object, count = (count - 1) }
         ingredient.attachments.variables.count = 1
+    else
+        if ingredient.data.grillState == "burnt" then
+            common.log:trace("Already burnt")
+            return
+        end
     end
     timestamp = timestamp or tes3.getSimulationTimestamp()
     ingredient.data.lastCookUpdated = timestamp
@@ -99,7 +95,7 @@ local function grillFoodItem(ingredient, timestamp)
             if campfire then
                 if campfire.data.hasGrill and campfire.data.isLit then
                     
-                    if isStack(ingredient) or ingredient.data.lastCookUpdated == nil then 
+                    if common.helper.isStack(ingredient) or ingredient.data.lastCookUpdated == nil then 
                         startCookingIngredient(ingredient, timestamp) 
                         return
                     end
@@ -124,20 +120,20 @@ local function grillFoodItem(ingredient, timestamp)
                             --Cooked your food
                             if before < 100 and after > 100 then
                                 tes3.messageBox("%s is fully cooked.", ingredient.object.name)
+                                ingredient.data.grillState = "cooked"
                                 tes3.playSound{ sound = "potion fail", pitch = 0.7, reference = ingredient }
                                 common.skills.cooking:progressSkill(skillCookingGrillingIncrement)
                                 common.skills.survival:progressSkill(skillSurvivalGrillingIncrement)
                             
-                                --common.helper.addDecal(ingredient, "Textures\\Ashfall\\cooked_decal.dds")
+                                event.trigger("Ashfall:ingredCooked", { reference = ingredient})
                             end
                             --burned your food
                             local burnLevel = hungerController.getBurnLimit()
                             if before < burnLevel and after > burnLevel then
                                 tes3.messageBox("%s has become burnt.", ingredient.object.name)
+                                ingredient.data.grillState = "burnt"
                                 tes3.playSound{ sound = "potion fail", pitch = 0.9, reference = ingredient }
-
-                               --common.helper.addDecal(ingredient, "Textures\\Ashfall\\burnt_decal.dds")
-                                
+                                event.trigger("Ashfall:ingredCooked", { reference = ingredient})
                             end
                         end
                         local helpMenu = tes3ui.findHelpLayerMenu(tes3ui.registerID("HelpMenu"))

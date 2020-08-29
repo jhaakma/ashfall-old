@@ -25,7 +25,8 @@ local function checkConditions()
             [tes3.weather.rain] = 1,
             [tes3.weather.thunder] = 2,
             [tes3.weather.snow] = 3,
-            [tes3.weather.blight] = 3,
+            [tes3.weather.ash] = 3,
+            [tes3.weather.blight] = 4,
             [tes3.weather.blizzard] = 4
         }
         local weather = tes3.getCurrentWeather().index

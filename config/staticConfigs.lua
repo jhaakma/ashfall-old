@@ -26,6 +26,12 @@ this.crateIds = {
     food = "ashfall_crate_food",
 }
 
+this.hotWaterHeatValue = 80
+this.stewWaterCooldownAmount = 50
+this.stewIngredientCooldownAmount = 20
+this.stewMealCapacity = 4
+this.firewoodFuelMulti = 2
+this.maxWoodInFire = 15
 
 --Tent mappings for activating a misc item into activator
 this.tentMiscToActiveMap = {

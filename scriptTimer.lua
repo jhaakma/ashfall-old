@@ -34,7 +34,7 @@ local function callUpdates()
     if not tes3.player then return end
     local hoursPassed = ( tes3.worldController.daysPassed.value * 24 ) + tes3.worldController.hour.value
     lastTime = lastTime or hoursPassed
-    local interval = hoursPassed - lastTime
+    local interval = math.abs(hoursPassed - lastTime)
     lastTime = hoursPassed
    
     

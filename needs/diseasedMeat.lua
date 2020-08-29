@@ -14,12 +14,17 @@ local function addDiseaseToMeat(reference, disease)
     for stack in tes3.iterate(obj.inventory.iterator) do
         if stack.object.id:lower():find("meat") then
             common.log:debug("Found %s", stack.object.id)
+            local count = stack.count
+            --First itemData items
             if stack.variables then
                 for _, variable in ipairs(stack.variables) do
                     variable.data.mer_disease = { id = disease.id, spellType = disease.castType }
+                    count = count - variable.count
                 end
-            else
-                for i= 1, stack.count do
+            end
+            --Then add to items without itemData
+            if count > 0 then
+                for i= 1, count do
                     local itemData = tes3.addItemData{
                         to = reference,
                         item = stack.object,
@@ -28,7 +33,6 @@ local function addDiseaseToMeat(reference, disease)
                     itemData.data.mer_disease = { id = disease.id, spellType = disease.castType }
                 end
             end
-
         end
     end
 end

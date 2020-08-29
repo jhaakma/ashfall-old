@@ -94,26 +94,26 @@ function this.calculateWetTemp(timeSinceLastRan)
     
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
-    local sheltered = common.data.isSheltered or cell.isInterior
+    local isSheltered = common.data.isSheltered or cell.isInterior
+    local isRaining = weather and weather.rainActive == true
 
-    --wet from rain
-    if (sheltered ~= true) and (weather and weather.rainActive == true) then
-        --Raining
-        if weather.index == tes3.weather.rain and common.data.isSheltered == false then
-            currentWetness = currentWetness + rainEffect * timeSinceLastRan * ( 1.0 - coverage )
-    
-        --Thunder
-        elseif weather.index == tes3.weather.thunder and common.data.isSheltered == false then
-            currentWetness = currentWetness + thunderEffect * timeSinceLastRan * ( 1.0 - coverage )
-        end
-    end
-    --Drying off (indoors or clear weather)
-    if (sheltered == true) or ( weather and weather.rainActive ~= true ) then
+    --Drying off
+    if isSheltered or not isRaining then
         local dryCoverageEffect = math.remap(common.data.coverageRating, 0, 1.0, 1.0, 0.5)
         local tempMultiplier = math.remap(math.max(playerTemp, 0), 0, 100, 1.0, 3.0)
         local dryChange = ( tempMultiplier * timeSinceLastRan * dryCoverageEffect * DRYING_MULTI )
         currentWetness = currentWetness - dryChange
+    else
+        --Raining
+        if weather.index == tes3.weather.rain then
+            currentWetness = currentWetness + rainEffect * timeSinceLastRan * ( 1.0 - coverage )
+    
+        --Thunder
+        elseif weather.index == tes3.weather.thunder then
+            currentWetness = currentWetness + thunderEffect * timeSinceLastRan * ( 1.0 - coverage )
+        end
     end
+    
     --assert min/max values
     currentWetness = currentWetness < 0 and 0 or currentWetness
     currentWetness = currentWetness > 100 and 100 or currentWetness

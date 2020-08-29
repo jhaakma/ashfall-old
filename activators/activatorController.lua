@@ -99,7 +99,7 @@ local function createActivatorIndicator()
                 element = labelBorder,
                 reference = this.currentRef
             } 
-            common.log:debug("Triggering activator tooltip event for %s", this.current)
+            common.log:trace("Triggering activator tooltip event for %s", this.current)
             event.trigger("Ashfall:Activator_tooltip", eventData, {filter = this.current })
 
 

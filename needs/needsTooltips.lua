@@ -85,7 +85,7 @@ local function updateFoodAndWaterTiles(e)
 
 
         local indicatorImage = "textures/menu_bar_red.dds"
-        if e.itemData.data.cookedAmount > hungerController.getBurnLimit() then
+        if e.itemData.data.grillState == "burnt" then
             indicatorImage = "textures/menu_bar_gray.dds"
         end
         local levelIndicator = indicatorBlock:createImage({ path = indicatorImage })
@@ -131,14 +131,14 @@ local function createNeedsTooltip(e)
                 local cookedLabel = ""
                 if foodConfig.grillValues[thisFoodType] then
                     local cookedAmount = e.itemData and e.itemData.data.cookedAmount
-                    if not cookedAmount  then
-                        cookedLabel = " (Raw)"
-                    elseif cookedAmount < 100 then
+                    if cookedAmount and e.itemData.data.grillState == nil then
                         cookedLabel = string.format(" (%d%% Cooked)", cookedAmount)
-                    elseif cookedAmount < hungerController.getBurnLimit() then
+                    elseif e.itemData and e.itemData.data.grillState == "cooked"  then
                         cookedLabel = " (Cooked)"
-                    else
+                    elseif  e.itemData and e.itemData.data.grillState == "burnt" then
                         cookedLabel = " (Burnt)"
+                    else
+                        cookedLabel = " (Raw)"
                     end
                 end
 
