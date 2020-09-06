@@ -3,6 +3,7 @@ local this = {}
 this.activatorConfig = require("mer.Ashfall.config.activatorConfig")
 this.conditionConfig = require("mer.Ashfall.config.conditionConfig")
 this.foodConfig = require("mer.Ashfall.config.foodConfig")
+this.teaConfig = require("mer.Ashfall.config.teaConfig")
 this.ratingsConfig = require("mer.Ashfall.config.ratingsConfig")
 
 this.objectIds = {
@@ -26,6 +27,7 @@ this.crateIds = {
     food = "ashfall_crate_food",
 }
 
+--Campfire values
 this.hotWaterHeatValue = 80
 this.stewWaterCooldownAmount = 50
 this.stewIngredientCooldownAmount = 20
@@ -152,8 +154,8 @@ this.placementConfig = {
 }
 
 this.capacities = {
-    cookingPot = 150,
-    kettle = 120,
+    cookingPot = 120,
+    kettle = 80,
     potion = 15,
     MAX = 240
 }
@@ -165,12 +167,16 @@ this.bottleConfig = {
     mug = { capacity = 30, weight = 2 },
     tankard = { capacity = 30, weight = 2 },
 
-
     --expensive, small, good weight efficiency
     flask = { 
         capacity = 90, 
         value = 9,
         weight = 3 ,
+    }, --waterPerDollar = 10, waterPerWeight = 30
+
+    limewareFlask = { 
+        capacity = 90,
+        weight = 4 ,
     }, --waterPerDollar = 10, waterPerWeight = 30
 
     --cheap, small, medium weight efficiency
@@ -182,11 +188,13 @@ this.bottleConfig = {
 
     --Pots: cheap, medium sized, low weight efficiency
     pot = {
+        holdsStew = true,
         capacity = 120,
         value = 4,
         weight = 6
     },--waterPerDollar = 30, waterPerWeight = 20
     redwarePot = {
+        holdsStew = true,
         capacity = 120,
         value = 7,
         weight = 5
@@ -284,8 +292,9 @@ this.bottleList = {
     misc_flask_02 = this.bottleConfig.flask,
     misc_flask_03 = this.bottleConfig.flask,
     misc_flask_04 = this.bottleConfig.flask,
+
     misc_com_redware_flask = this.bottleConfig.flask,
-    misc_lw_flask = this.bottleConfig.flask,
+    misc_lw_flask = this.bottleConfig.limewareFlask,
 
     --bottles
     misc_com_bottle_01 = this.bottleConfig.bottle,

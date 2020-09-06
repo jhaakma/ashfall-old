@@ -7,8 +7,8 @@ local this = {}
     this.getCurrentActivator()
 ]]-- 
 
-local common = require("mer.ashfall.common.common")
-local activatorConfig = common.staticConfigs.activatorConfig
+local activatorConfig = require("mer.ashfall.config.staticConfigs").activatorConfig
+local config = require("mer.ashfall.config.config")
 this.list = activatorConfig.list
 this.current = nil
 this.currentRef = nil
@@ -25,6 +25,13 @@ function this.getCurrentType()
     end
 end
 
+function this.getRefActivator(reference)
+    for activatorType, activator in pairs(this.list) do
+        if activator:isActivator(reference.object.id) then
+            return activator
+        end 
+    end
+end
 
 
 
@@ -52,7 +59,7 @@ local function doActivate()
     return (
         this.current and 
         not tes3.menuMode() and 
-        common.config.getConfig()[this.getCurrentActivator().mcmSetting] ~= false
+        config.getConfig()[this.getCurrentActivator().mcmSetting] ~= false
     )
 end
 
@@ -99,7 +106,6 @@ local function createActivatorIndicator()
                 element = labelBorder,
                 reference = this.currentRef
             } 
-            common.log:trace("Triggering activator tooltip event for %s", this.current)
             event.trigger("Ashfall:Activator_tooltip", eventData, {filter = this.current })
 
 

@@ -38,6 +38,7 @@ end
 
 
 
+
 --[[
     Transfers an amount from the field of one object to that of another
 ]]
@@ -53,6 +54,7 @@ end
 ]]
 
 function this.getInTent()
+    tes3.player.data.Ashfall.tentTemp = tes3.player.data.Ashfall.tentTemp or 0
     return tes3.player.data.Ashfall.tentTemp > 0
 end
 
@@ -69,9 +71,14 @@ function this.getTentMiscFromActive(activeRef)
 end
 
 function this.checkRefSheltered(reference)
+
     local sheltered = false
     local inTent
     reference = reference or tes3.player
+
+    if reference.cell and reference.cell.isInterior then
+        return true
+    end
 
     local oldCulledValue = reference.sceneNode.appCulled
     reference.sceneNode.appCulled = true
@@ -294,11 +301,12 @@ end
     Restore lost fatigue to prevent collapsing
 ]]
 function this.restoreFatigue()
+    
     local previousFatigue = tes3.mobilePlayer.fatigue.current
     timer.start{
         type = timer.real,
         iterations = 1,
-        duration = 0.01,
+        duration = 0.02,
         callback = function()
             local newFatigue = tes3.mobilePlayer.fatigue.current
             if previousFatigue >= 0 and newFatigue < 0 then
@@ -315,10 +323,8 @@ local defaultChance = 1.0
 local maxSurvivalEffect = 0.5
 function this.tryContractDisease(spellID)
     local spell = tes3.getObject(spellID)
-    mwse.log("tryContractDisease() Spell: %s", spellID)
     local resistDisease = tes3.mobilePlayer.resistCommonDisease 
     if spell.castType == tes3.spellType.blight then
-        mwse.log("is blight")
         resistDisease = tes3.mobilePlayer.resistBlightDisease 
     end
 
@@ -355,27 +361,18 @@ end
 
 
 
---call a function on all currently loaded campfires
-function this.iterateCampfires(callback)
-   --local before = os.clock()
-
-    for campfire, _ in pairs(refController.controllers.campfire.references) do
-        if campfire.sceneNode then
-            callback(campfire)
+function this.iterateRefType(refType, callback)
+    for ref, _ in pairs(refController.controllers[refType].references) do
+        --check requirements in case it's no longer valid
+        if refController.controllers[refType]:requirements(ref) then
+            if ref.sceneNode then
+                callback(ref)
+            end
+        else
+            --no longer valid, remove from ref list
+            refController.controllers[refType].references[ref] = nil
         end
     end
-
-    -- for _, cell in pairs( tes3.getActiveCells() ) do
-    --     for campfire in cell:iterateReferences(tes3.objectType.light) do
-    --         if not campfire.disabled then
-    --             local id = string.lower(campfire.object.id)
-    --             if staticConfigs.activatorConfig.list.campfire:isActivator(id) then
-    --                 callback(campfire)
-    --             end
-    --         end
-    --     end
-    -- end
-   --mwse.log("iterateCampfires execution time: %s", os.clock() - before)
 end
 
 function this.traverseRoots(roots)
@@ -484,16 +481,30 @@ function this.calculateStewWarmthBuff(waterHeat)
     return math.remap(waterHeat, staticConfigs.hotWaterHeatValue, 100, 10, 15)
 end
 
---Use cooking skill to determine how long a buff should last
+--Use survival skill to determine how long a buff should last
 function this.calculateStewBuffDuration()
-    return math.remap(skillModule.getSkill("Ashfall:Cooking").value, 0, 100, 4, 16)
+    return math.remap(skillModule.getSkill("Ashfall:Survival").value, 0, 100, 4, 16)
 end
 
---Use cooking skill to determine how strong a buff should be
+--Use survival skill to determine how strong a buff should be
 function this.calculateStewBuffStrength(value, min, max)
     local effectValue = math.remap(value, 0, 100, min, max)
-    local skillEffect = math.remap(skillModule.getSkill("Ashfall:Cooking").value, 0, 100, 0.25, 1.0)
+    local skillEffect = math.remap(skillModule.getSkill("Ashfall:Survival").value, 0, 100, 0.25, 1.0)
     return effectValue * skillEffect
+end
+
+--Use survival skill to determine how long a buff should last
+function this.calculateTeaBuffDuration(amount, maxDuration)
+    --Drinking more than limit doesn't increase duration
+    local minDuration = 0.5
+    local amountLimitLow = 0
+    local amountLimitHigh = 50
+    amount = math.clamp(amount, amountLimitLow, amountLimitHigh)
+    local duration = math.remap(amount, 0, amountLimitHigh, minDuration, maxDuration)
+    --Max survival skill doubles duration
+    local survivalSkill = skillModule.getSkill("Ashfall:Survival").value
+    local skillMulti =  math.remap(survivalSkill, 0, 100, 1.0, 2.0)
+    return duration * skillMulti
 end
 
 return this

@@ -1,8 +1,8 @@
 local common = require ("mer.ashfall.common.common")
 local foodConfig = common.staticConfigs.foodConfig
 local hungerController = require("mer.ashfall.needs.hungerController")
-local skillCookingGrillingIncrement = 10
-local skillSurvivalGrillingIncrement = 4
+local skillSurvivalGrillingIncrement = 5
+
 
 ----------------------------
 --Grilling
@@ -20,24 +20,13 @@ local function calculateCookWeightModifier(ingredObject)
 end
 
 --Checks if the ingredient has been placed on a campfire
-local function findCampfireForCooking(ingredient, cookingType)
-    local distance
-    local minHeight
-    local maxHeight
-    if cookingType == "grilling" then
-        minHeight = 21
-        maxHeight = 50
-        distance = 40
-    elseif cookingType == "boiling" then
-        minHeight = 50
-        maxHeight = 500
-        distance = 500
-    else
-        common.log:error("findCampfireForCooking: invalid cooking type")
-        return
-    end
+local function findGriller(ingredient)
+
     local campfire
     local function checkDistance(ref)
+        local minHeight = ref.data.grillMinHeight or 0
+        local maxHeight = ref.data.grillMaxHeight or 0
+        local distance = ref.data.grillDistance or 0
         --food sitting on grill
         local heightDistance = ingredient.position.z - ref.position.z
         if heightDistance < maxHeight and heightDistance > minHeight then
@@ -49,7 +38,7 @@ local function findCampfireForCooking(ingredient, cookingType)
             end
         end
     end
-    common.helper.iterateCampfires(checkDistance)
+    common.helper.iterateRefType("griller", checkDistance)
     return campfire
 end
 
@@ -86,12 +75,13 @@ end
 
 
 
+
 local function grillFoodItem(ingredient, timestamp)
     if ingredient.object.objectType == tes3.objectType.ingredient then
         local foodType = foodConfig.ingredTypes[ingredient.object.id]
         --Can only grill certain types of food
         if foodConfig.grillValues[foodType] then
-            local campfire = findCampfireForCooking(ingredient, "grilling")
+            local campfire = findGriller(ingredient)
             if campfire then
                 if campfire.data.hasGrill and campfire.data.isLit then
                     
@@ -122,7 +112,6 @@ local function grillFoodItem(ingredient, timestamp)
                                 tes3.messageBox("%s is fully cooked.", ingredient.object.name)
                                 ingredient.data.grillState = "cooked"
                                 tes3.playSound{ sound = "potion fail", pitch = 0.7, reference = ingredient }
-                                common.skills.cooking:progressSkill(skillCookingGrillingIncrement)
                                 common.skills.survival:progressSkill(skillSurvivalGrillingIncrement)
                             
                                 event.trigger("Ashfall:ingredCooked", { reference = ingredient})
@@ -181,26 +170,23 @@ end
 event.register("referenceSceneNodeCreated" , ingredientPlaced)
 
 
---Update Stew buffs
---local  i = 0
-local function updateBuffs(e)
-    if common.data.stewBuffTimeLeft and common.data.stewBuffTimeLeft > 0 then
 
-        common.data.lastStewBuffUpdated = common.data.lastStewBuffUpdated or e.timestamp
 
-        local interval = e.timestamp - common.data.lastStewBuffUpdated
-        common.data.stewBuffTimeLeft = math.max((common.data.stewBuffTimeLeft - interval), 0)
-        --time's up, remove spells and heat
-        if common.data.stewBuffTimeLeft == 0 then
 
-            common.data.stewWarmEffect = 0 
-
-            for _, stewBuff in pairs(foodConfig.stewBuffs) do
-                mwscript.removeSpell({ reference = tes3.player, spell = stewBuff.id})
-            end
-            common.helper.restoreFatigue()
-        end
-    end
-    common.data.lastStewBuffUpdated = e.timestamp
+--Empty a cooking pot or kettle, reseting all data
+local function clearUtensilData(e)
+    common.log:debug("Clearing Utensil Data")
+    local campfire = e.campfire
+    campfire.data.stewProgress = nil
+    campfire.data.stewLevels = nil
+    campfire.data.waterAmount = 0
+    campfire.data.waterHeat = 0
+    campfire.data.waterDirty = nil
+    campfire.data.teaType = nil
+    tes3.removeSound{
+        reference = campfire, 
+        sound = "ashfall_boil"
+    }
+    --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
 end
-event.register("simulate", updateBuffs)
+event.register("Ashfall:Campfire_clear_utensils", clearUtensilData)

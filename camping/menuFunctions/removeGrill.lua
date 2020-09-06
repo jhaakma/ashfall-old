@@ -13,7 +13,7 @@ return {
         }
         campfire.data.hasGrill = false
         tes3.playSound{ reference = tes3.player, sound = "Item Misc Up"  }
-        event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+        --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
     end
     ,
 }

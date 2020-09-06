@@ -145,7 +145,7 @@ end
 
 function Condition:getValue()
     if not tes3.player or not tes3.player.data.Ashfall then
-        --mwse.log("ERROR: trying to get condition value %s before player was loaded", self.id)
+        mwse.log("ERROR: trying to get condition value %s before player was loaded", self.id)
         return 0
     end
     return tes3.player.data.Ashfall[self.id] or 0

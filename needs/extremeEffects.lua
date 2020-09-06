@@ -12,7 +12,7 @@ local function passOut()
     local hours = 2.5 + math.random(0.5)
     local secondsTaken = 5
     local function wakeUp(e)
-        tiredness:setValue(5)
+        tiredness:setValue(65)
         tes3.setStatistic{
             reference = tes3.mobilePlayer,
             current = 50,
@@ -20,7 +20,7 @@ local function passOut()
         }
         --common.data.blockNeeds = false
         passedOut = false
-        tes3.messageBox("You passed out from exhaustion")
+        tes3.messageBox("You passed out from exhaustion", {"Okay"})
     end
     common.helper.fadeTimeOut(hours, secondsTaken, wakeUp)
 end

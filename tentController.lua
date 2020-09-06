@@ -57,20 +57,21 @@ end
 
 local function packTent(activeRef)
     timer.delayOneFrame(function()
-        tes3.createReference {
-            object = common.helper.getTentMiscFromActive(activeRef),
-            position = activeRef.position:copy(),
-            orientation = activeRef.orientation:copy(),
-            cell = activeRef.cell
+        -- tes3.createReference {
+        --     object = common.helper.getTentMiscFromActive(activeRef),
+        --     position = activeRef.position:copy(),
+        --     orientation = activeRef.orientation:copy(),
+        --     cell = activeRef.cell
+        -- }
+        -- tes3.runLegacyScript{ command = 'Player->Drop "ashfall_resetlight" 1'}
+        tes3.addItem{
+            reference = tes3.player,
+            item = common.helper.getTentMiscFromActive(activeRef),
+            updateGUI = true,
+            count =  1
         }
-        tes3.runLegacyScript{ command = 'Player->Drop "ashfall_resetlight" 1'}
         common.helper.yeet(activeRef)
     end)
-end
-
-local function callRestMenu()
-    tes3.runLegacyScript{ command = "ShowRestMenu"}
-    triggerInTent()
 end
 
 

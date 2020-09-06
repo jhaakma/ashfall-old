@@ -119,7 +119,8 @@ conditions.tiredness = Condition:new{
             min = 80, max = 100, 
             spell = "fw_s_exhausted",
             effects = { 
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.6 }
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.6 },
+                { id = tes3.effect.weaknesstoCommonDisease, amount = 0.5}
             }
         },
         veryTired = { 
@@ -127,7 +128,8 @@ conditions.tiredness = Condition:new{
             min = 60, max = 80, 
             spell = "fw_s_veryTired",
             effects = { 
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.4 }
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.4 },
+                { id = tes3.effect.weaknesstoCommonDisease, amount = 0.3}
             }
         },
         tired = { 
@@ -295,37 +297,6 @@ conditions.dysentery = Condition:new{
     end
 }
 
-conditions.envDisease = Condition:new{
-    id = "envDisease",
-    default = "healthy",
-    showMessageOption = "showSickness",
-    enableOption = "enableEnvironmentSickness",
-    min = -100,
-    max = 100,
-    states = {
-        flu = {
-            text = "You have come down with a flu.",
-            min = -100,
-            max = -80,
-            spell = "ashfall_d_flu",
-            effects = {
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.endurance, amount = 0.2 },
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.1 },
-            }
-        },
-        healthy = { min = -80, max = 80, spell = nil },
-        heatstroke = {
-            text = "You have come down with a heatstroke.",
-            min = 80,
-            max = 100,
-            spell = "ashfall_d_heat",
-            effects = {
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.agility, amount = 0.2 },
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.strength, amount = 0.1 },
-            }
-        }
-    }
-}
 
 conditions.blightness = Condition:new{
     id = "blightness",
@@ -388,6 +359,31 @@ conditions.blightness = Condition:new{
         end
         return blights
     end
+}
+
+conditions.flu = Condition:new{
+    id = "flu",
+    default = "noFlu",
+    showMessageOption = "showSickness",
+    enableOption = "enableEnvironmentSickness",
+    min = 0,
+    max = 100,
+    states = {
+        hasFlu = {
+            text = "You have come down with the flu.",
+            min = 80,
+            max = 100,
+            spell = "ashfall_d_flu",
+            effects = {
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.endurance, amount = 0.2 },
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.1 },
+            }
+        },
+        noFlu = { text = "You no longer have the flu.", min = 0, max = 80, spell = nil },
+    },
+    getCurrentStateMessage = function(self)
+        return self:getCurrentStateData().text
+    end,
 }
 
 

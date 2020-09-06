@@ -7,7 +7,12 @@ return {
             not campfire.data.waterAmount or
             campfire.data.waterAmount < common.staticConfigs.capacities.cookingPot
         )
-        return needsWater and (campfire.data.hasKettle or campfire.data.hasCookingPot)
+        local hasUtensil = (
+            campfire.data.utensil == "kettle" or 
+            campfire.data.utensil == "cookingPot"
+        )
+        local isTea = campfire.data.teaType
+        return needsWater and hasUtensil and not isTea
     end,
     callback = function(campfire)
         timer.delayOneFrame(function()
@@ -18,7 +23,8 @@ return {
                     return (
                         e.itemData and 
                         e.itemData.data.waterAmount and 
-                        e.itemData.data.waterAmount > 0
+                        e.itemData.data.waterAmount > 0 and
+                        not e.itemData.data.teaType
                     ) == true
                 end,
                 callback = function(e)
@@ -27,7 +33,7 @@ return {
                             ( e.itemData.data.waterAmount or 0 ),
                             ( common.staticConfigs.capacities.cookingPot - ( campfire.data.waterAmount or 0 ))
                         )
-                        local t = { amount = maxAmount}
+                        local t = { amount = math.min(maxAmount, 50)}
                         local function transferWater()
                             --transfer water
                             campfire.data.waterAmount = campfire.data.waterAmount or 0
@@ -68,7 +74,8 @@ return {
                             end
 
                             tes3.playSound{ reference = tes3.player, sound = "Swim Right" }
-                            event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+                            event.trigger("Ashfall:registerReference", { reference = campfire})
+                            --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
                         end
                         common.helper.createSliderPopup{
                             label = "Add water",

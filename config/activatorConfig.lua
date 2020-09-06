@@ -208,7 +208,14 @@ this.list = {
         mcmSetting = nil,
         ids = {
            ["ashfall_campfire"] = true,
-        }
+        },
+        hasMenu = true,
+        isStewer = true,
+        isGriller = true,
+        isFuelConsumer = true,
+        grillMinHeight = 21,
+        grillMaxHeight = 50,
+        grillDistance = 40
     },
 
     cookingPot = Activator:new{ 
@@ -217,7 +224,7 @@ this.list = {
         mcmSetting = "enableCooking",
         ids = {
             ["furn_com_cauldron_01"] = true,
-        }
+        },
     },
 
     cauldron = Activator:new{
@@ -226,7 +233,8 @@ this.list = {
         mcmSetting = "enableThirst",
         ids = {
             ["furn_com_cauldron_02"] = true
-        }
+        },
+        isStewer = true
     }
 
     -- branch = Activator:new{

@@ -1,6 +1,7 @@
 
 local this = {}
 local common = require("mer.ashfall.common.common")
+local teaConfig = common.staticConfigs.teaConfig
 local conditionsCommon = require("mer.ashfall.conditionController")
 local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
@@ -80,7 +81,7 @@ local function addDysentry()
     dysentery:setValue(dysentery:getValue() + dysentryAmount)
 end
 
-function this.drinkAmount( amount, drinkingDirtyWater )
+function this.drinkAmount( amount, isDirty )
     if not conditionConfig.thirst:isActive() then return end
     local currentThirst = thirst:getValue()
     
@@ -109,13 +110,17 @@ function this.drinkAmount( amount, drinkingDirtyWater )
 
     tes3.playSound({reference = tes3.player, sound = "Drink"})
 
-    if drinkingDirtyWater == true then
+    if isDirty == true then
         addDysentry()
     end
     return amountDrank
 end
 
 
+local function onDrink(e)
+    this.drinkAmount( e.amount, e.dirty )
+end
+event.register("Ashfall:Drink", onDrink, {reference = tes3.player})
 
 function this.callWaterMenuAction(callback)
     common.log:debug("if common.data.drinkingRain then")
@@ -134,11 +139,22 @@ function this.fillContainer(params)
     local cost = params.cost
     local source = params.source
     local callback = params.callback
+    local teaType = params.teaType
     timer.delayOneFrame(function()
+        local noResultsText = "You have no containers to fill."
+        if teaType then
+            noResultsText = "You have no empty containers to fill."
+        end
         tes3ui.showInventorySelectMenu{
             title = "Select Water Container",
-            noResultsText = "You have no containers to fill.",
+            noResultsText = noResultsText,
             filter = function(e)
+
+                --Can only fill empty bottles with tea
+                if teaType and e.itemData and e.itemData.data.waterAmount and e.itemData.data.waterAmount > 0 then 
+                    return false 
+                end
+
                 local bottleData = this.getBottleData(e.item.id)
                 if bottleData then
                     local capacity = bottleData.capacity
@@ -171,6 +187,9 @@ function this.fillContainer(params)
                         local bottleData = this.getBottleData(e.item.id)
 
                         itemData.data.waterAmount = itemData.data.waterAmount or 0
+                        if teaType then
+                            itemData.data.teaType = teaType
+                        end
                         if source then
 
                             fillAmount = math.min(
@@ -191,10 +210,17 @@ function this.fillContainer(params)
 
                         tes3ui.updateInventoryTiles()
                         tes3.playSound({reference = tes3.player, sound = "Swim Left"})
+                        local contents = "water"
+                        if itemData.data.waterDirty then
+                            contents = "dirty water"
+                        end
+                        if itemData.data.teaType then
+                            contents = teaConfig.teaTypes[itemData.data.teaType].teaName
+                        end
                         tes3.messageBox(
-                            "%s filled with %swater.",
+                            "%s filled with %s.",
                             e.item.name,
-                            (itemData.data.waterDirty and "dirty " or "")
+                            contents
                         )
 
                         if callback then callback() end

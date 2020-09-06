@@ -2,14 +2,14 @@ return {
     text = "Empty Pot",
     requirements = function(campfire)
         return (
-            campfire.data.hasCookingPot and
+            campfire.data.utensil == "cookingPot" and
             ( campfire.data.waterAmount and
             campfire.data.waterAmount > 0 )
         )
     end,
     callback = function(campfire)
-        event.trigger("Ashfall:Campfire_clear_pot", { campfire = campfire})
+        event.trigger("Ashfall:Campfire_clear_utensils", { campfire = campfire})
         tes3.playSound{ reference = tes3.player, pitch = 0.8, sound = "Swim Left" }
-        event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+        --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
     end
 }

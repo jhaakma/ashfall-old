@@ -20,14 +20,13 @@ function this.updateCondition(id)
     local currentState = thisCondition:getCurrentState()
 
     local conditionChanging = ( currentState ~= previousState )
-    if conditionChanging then
-        common.data.currentStates[id] = currentState
-        thisCondition:conditionChanged(currentState)
-    end
     --Restore fatigue if it drops below 0
     if conditionChanging then
         common.helper.restoreFatigue()
+        common.data.currentStates[id] = currentState
+        thisCondition:conditionChanged(currentState)
     end
+
 
 end
 

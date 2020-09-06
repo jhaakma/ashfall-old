@@ -436,7 +436,6 @@ this.ingredTypes = {
 
     
     --Danae's Cliff Racers
-    ["NOM_food_racer_morsel"] = this.TYPE.protein,
     ["mc_racer_raw"] = this.TYPE.protein,
     
     --My custom
@@ -467,7 +466,53 @@ this.ingredTypes = {
 	["T_IngFlor_CairnBolete_01"] = this.TYPE.mushroom,
 	["T_IngFlor_Cabbage_02"] = this.TYPE.vegetable,
 	["T_IngFlor_Cabbage_01"] = this.TYPE.vegetable,
-	["T_IngFlor_AspyrTea_01"] = this.TYPE.herb,
+    ["T_IngFlor_AspyrTea_01"] = this.TYPE.herb,
+    
+
+    --NOM (UL)
+  ["NOM_food_a_apple"] = this.TYPE.food,
+  ["NOM_food_a_lemon"] = this.TYPE.food,
+  ["NOM_food_ash_yam"] = this.TYPE.food,
+  ["NOM_food_bittergreen"] = this.TYPE.food,
+  ["NOM_food_boiled_rice"] = this.TYPE.food,
+  ["NOM_food_boiled_rice2"] = this.TYPE.food,
+  ["NOM_food_cabbage"] = this.TYPE.food,
+  ["NOM_food_corkbulb_roast"] = this.TYPE.food,
+  ["NOM_food_crab_slice"] = this.TYPE.food,
+  ["NOM_food_egg2"] = this.TYPE.food,
+  ["NOM_food_fruit_salad"] = this.TYPE.food,
+  ["NOM_food_grilled_fish"] = this.TYPE.food,
+  ["NOM_food_hackle-lo"] = this.TYPE.food,
+  ["NOM_food_lemon_fish"] = this.TYPE.food,
+  ["NOM_food_marshmerrow"] = this.TYPE.food,
+  ["NOM_food_meat_grilled2"] = this.TYPE.food,
+  ["NOM_food_moon_pudding"] = this.TYPE.food,
+  ["NOM_food_omelette"] = this.TYPE.food,
+  ["NOM_food_omelette_crab"] = this.TYPE.food,
+  ["NOM_food_pie_appl"] = this.TYPE.food,
+  ["NOM_food_pie_comb"] = this.TYPE.food,
+  ["NOM_food_rat_pie"] = this.TYPE.food,
+  ["NOM_food_salted_fish"] = this.TYPE.food,
+  ["NOM_food_soup_onion"] = this.TYPE.food,
+  ["NOM_food_soup_rat"] = this.TYPE.food,
+  ["NOM_sltw_food_a_onion"] = this.TYPE.food,
+  ["NOM_sltw_food_bread_corn"] = this.TYPE.food,
+  ["NOM_sltw_food_cookiebig"] = this.TYPE.food,
+  ["NOM_sltw_food_cookiesmall"] = this.TYPE.food,
+  ["NOM_food_bread_ash"] = this.TYPE.food,
+  ["NOM_food_guar_rib_grill"] = this.TYPE.food,
+  ["NOM_food_jerky_guar"] = this.TYPE.food,
+  ["NOM_food_torall"] = this.TYPE.food,
+  ["NOM_food_rice_delight"] = this.TYPE.food,
+  ["NOM_food_lard"] = this.TYPE.food,
+  ["NOM_food_racer_morsel"] = this.TYPE.food,
+  ["NOM_food_skewer_kag"] = this.TYPE.food,
+  ["NOM_food_sausage_guar"] = this.TYPE.food,
+  ["NOM_food_soup_seaweed"] = this.TYPE.food,
+  ["NOM_food_sweetroll"] = this.TYPE.food,
+  ["NOM_salt"] = this.TYPE.seasoning,
+  ["NOM_sugar"] = this.TYPE.seasoning,
+  ["NOM_yeast"] = this.TYPE.mushroom,
 }
 
 return this

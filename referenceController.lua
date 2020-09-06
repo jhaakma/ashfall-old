@@ -2,10 +2,10 @@
 local activatorConfig = require("mer.ashfall.config.activatorConfig")
 local this = {}
 
-this.controllers = {}
 local ReferenceController = {
     new = function(self, o)
         o = o or {}   -- create object if user does not provide one
+        o.references = {}
         setmetatable(o, self)
         self.__index = self
         return o
@@ -23,13 +23,55 @@ local ReferenceController = {
     requirements = nil
 }
 
-this.controllers.campfire = ReferenceController:new{
-    references = {},
-    requirements = function(self, ref)
-        return activatorConfig.list.campfire:isActivator(ref.object.id)
-    end
-}
+this.controllers = {
+    campfire = ReferenceController:new{
+        requirements = function(self, ref)
+            return activatorConfig.list.campfire:isActivator(ref.object.id)
+        end
+    },
 
+    fuelConsumer = ReferenceController:new{
+        requirements = function(self, ref)
+            return ref.data and ref.data.fuelLevel
+        end
+    },
+
+    griller = ReferenceController:new{
+        requirements = function(self, ref)
+            return  ref.data and ref.data.hasGrill
+        end
+    },
+
+    boiler = ReferenceController:new{
+        requirements = function(self, ref)
+            return ref.data and ref.data.waterAmount
+        end
+    },
+
+    stewer = ReferenceController:new{
+        requirements = function(self, ref)
+            return ref.data and ref.data.utensil == "cookingPot"
+        end
+    },
+
+    brewer = ReferenceController:new{
+        requirements = function(self, ref)
+           return ref.data and ref.data.utensil == "kettle"
+        end
+    },
+
+    stewBuffedActor = ReferenceController:new{
+        requirements = function(self, ref)
+            return ref.data and ref.data.stewBuffTimeLeft
+        end
+    },
+
+    teaBuffedActor = ReferenceController:new{
+        requirements = function(self, ref)
+            return ref.data and ref.data.teaBuffTimeLeft
+        end
+    },
+}
 
 local function onRefPlaced(e)
     for controllerName, controller in pairs(this.controllers) do
@@ -39,11 +81,13 @@ local function onRefPlaced(e)
     end
 end
 event.register("referenceSceneNodeCreated", onRefPlaced)
+event.register("Ashfall:registerReference", onRefPlaced)
 
 
 local function onObjectInvalidated(e)
+    
     local ref = e.object
-    for _, controller in pairs(this.controllers) do
+    for controllerName, controller in pairs(this.controllers) do
         if controller.references[ref] == true then
             controller:removeReference(ref)
         end

@@ -1,4 +1,5 @@
 local common = require ("mer.ashfall.common.common")
+local teaConfig = common.staticConfigs.teaConfig
 ------------------
 --Tooltips
 -----------------
@@ -29,8 +30,8 @@ local function updateTooltip(e)
 
     --Add special fields
     if label.text == "Campfire" then
-        local fuelLevel = ( campfire.data.fuelLevel or 0 )
-        if fuelLevel and fuelLevel > 0 then
+        local fuelLevel = campfire.data.fuelLevel or 0
+        if fuelLevel > 0 then
             local fuelLabel = labelBorder:createLabel{
                 text = string.format("Fuel: %.1f hours", fuelLevel )
             }
@@ -50,6 +51,35 @@ local function updateTooltip(e)
                     waterHeat)
             }
             centerText(waterLabel)
+
+            if campfire.data.teaType then
+                local progress = campfire.data.teaProgress or 0
+                local tea = teaConfig.teaTypes[campfire.data.teaType]
+                labelBorder:createDivider()
+                local teaLabelText = tea.teaName
+                if campfire.data.waterHeat < common.staticConfigs.hotWaterHeatValue then
+                    teaLabelText = teaLabelText .. " (Cold)"
+                elseif progress < 100 then
+                    teaLabelText = string.format("%s (%d%% Brewed)", teaLabelText, progress)
+                end
+
+                local teaLabel = labelBorder:createLabel({ text = teaLabelText })
+                teaLabel.color = tes3ui.getPalette("header_color")
+                centerText(teaLabel)
+                if progress >= 100 then
+                    local effectLabelText = tea.effectDescription
+                    -- if tea.duration then
+                    --     effectLabelText = string.format("%s for %d hour%s",
+                    --         tea.effectDescription,
+                    --         tea.duration,
+                    --         tea.duration > 1 and "s" or ""
+                    --     )
+                    -- end
+
+                    local effectLabel = labelBorder:createLabel{ text = effectLabelText }
+                    centerText(effectLabel)
+                end
+            end
 
             if campfire.data.stewLevels then
 

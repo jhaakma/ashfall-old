@@ -114,18 +114,7 @@ local function handleEmpties(e)
         e.itemData.data.waterDirty = nil
         e.itemData.data.waterAmount = nil
         --restack
-        timer.frame.delayOneFrame(function()
-            mwscript.removeItem{ 
-                reference = tes3.player, 
-                item = e.item
-            }
-            timer.frame.delayOneFrame(function()
-                mwscript.addItem{ 
-                    reference = tes3.player, 
-                    item = e.item
-                }
-            end)
-        end)
+        tes3ui.updateInventoryTiles()
     end
 end
 
@@ -142,7 +131,10 @@ local function doDrinkWater(e)
     --Reduce liquid in bottle
     e.itemData.data.waterAmount = e.itemData.data.waterAmount - thisSipSize
     handleEmpties(e)
-    thirstController.drinkAmount(thisSipSize, e.itemData.data.waterDirty)
+    local amountDrank = thirstController.drinkAmount(thisSipSize, e.itemData.data.waterDirty)
+    if e.itemData.data.teaType and hydrationNeeded > 0.1 then
+        event.trigger("Ashfall:DrinkTea", { teaType = e.itemData.data.teaType, amountDrank = amountDrank})
+    end
 end
 
 

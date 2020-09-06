@@ -1,4 +1,5 @@
 local common = require("mer.ashfall.common.common")
+local teaConfig = common.staticConfigs.teaConfig
 local hungerController = require('mer.ashfall.needs.hungerController')
 local thirstController = require('mer.ashfall.needs.thirstController')
 local foodConfig = common.staticConfigs.foodConfig
@@ -30,9 +31,10 @@ local function createTooltip(tooltip, labelText, color)
     mainBlock:updateLayout()
 end
 
+
 --Adds fillbar showing how much water is left in a bottle. 
 --Height of fillbar border based on capacity of bottle.
-local function updateFoodAndWaterTiles(e)
+local function updateFoodAndWaterTile(e)
     if not common.data then return end
     if not common.config.getConfig().enableThirst then return end
 
@@ -52,9 +54,13 @@ local function updateFoodAndWaterTiles(e)
         indicatorBlock.paddingAllSides = 2
 
         local levelIndicator = indicatorBlock:createImage({ path = "textures/menu_bar_blue.dds" })
-        --Add a greenish tinge to dirty water
+        --Add brown tinge to dirty water
         if e.itemData.data.waterDirty then
             levelIndicator.color = { 0.8, 0.6, 0.5 }
+        end
+        --Add green tinge to Tea
+        if e.itemData.data.teaType then
+            levelIndicator.color = { 0.4, 0.8, 0.4 }
         end
         levelIndicator.consumeMouseEvents = false
         levelIndicator.width = 6
@@ -63,16 +69,11 @@ local function updateFoodAndWaterTiles(e)
         levelIndicator.absolutePosAlignY = 1.0
     end
 
-    --Food shows cooked amount
-    local hasCookedValue = (
-        e.itemData and 
-        e.itemData.data and 
-        e.itemData.data.cookedAmount and 
-        e.itemData.data.cookedAmount > 0
+
+    local isCookable = (
+        foodConfig.grillValues[foodConfig.ingredTypes[e.item.id]]
     )
-    if hasCookedValue then
-        local cookedAmount =  e.itemData.data.cookedAmount
-        local capacity = 100
+    if isCookable then
         local maxHeight = 32
 
         local indicatorBlock = e.element:createThinBorder()
@@ -83,28 +84,74 @@ local function updateFoodAndWaterTiles(e)
         indicatorBlock.height = maxHeight
         indicatorBlock.paddingAllSides = 2
 
+        --Food shows cooked amount
+        local hasCookedValue = (
+            e.itemData and 
+            e.itemData.data and 
+            e.itemData.data.cookedAmount and 
+            e.itemData.data.cookedAmount > 0
+        )
+        if hasCookedValue then
+            local cookedAmount =  e.itemData.data.cookedAmount
+            local capacity = 100
 
-        local indicatorImage = "textures/menu_bar_red.dds"
-        if e.itemData.data.grillState == "burnt" then
-            indicatorImage = "textures/menu_bar_gray.dds"
+
+
+
+            local indicatorImage = "textures/menu_bar_red.dds"
+            if e.itemData.data.grillState == "burnt" then
+                indicatorImage = "textures/menu_bar_gray.dds"
+            end
+            local levelIndicator = indicatorBlock:createImage({ path = indicatorImage })
+
+            levelIndicator.consumeMouseEvents = false
+            levelIndicator.width = 6
+            levelIndicator.height = maxHeight * ( cookedAmount / capacity )
+            levelIndicator.scaleMode = true
+            levelIndicator.absolutePosAlignY = 1.0
         end
-        local levelIndicator = indicatorBlock:createImage({ path = indicatorImage })
-
-        levelIndicator.consumeMouseEvents = false
-        levelIndicator.width = 6
-        levelIndicator.height = maxHeight * ( cookedAmount / capacity )
-        levelIndicator.scaleMode = true
-        levelIndicator.absolutePosAlignY = 1.0
-
 
     end
 end
 
-event.register( "itemTileUpdated", updateFoodAndWaterTiles )
+event.register( "itemTileUpdated", updateFoodAndWaterTile )
+
+local function onMenuInventorySelectMenu(e)
+    local scrollpane = e.menu:findChild(tes3ui.registerID("MenuInventorySelect_scrollpane"))
+    local itemList = e.menu:findChild(tes3ui.registerID("PartScrollPane_pane"))
+    
+    --Disable UI EXP filtering for tea brewing and grilling
+    if common.data.inventorySelectTeaBrew or common.data.inventorySelectStew then
+        local uiEXPFilterID = tes3ui.registerID("UIEXP:FiltersearchBlock")
+        local filterBlock = e.menu:findChild(uiEXPFilterID)
+        if filterBlock then filterBlock.parent.parent.visible = false end
+    end
+
+    for _, block in pairs(itemList.children) do
+
+        local obj = block:getPropertyObject("MenuInventorySelect_object")
+        local itemData = block:getPropertyObject("MenuInventorySelect_extra", "tes3itemData")
+
+        local tileID = tes3ui.registerID("MenuInventorySelect_icon_brick")
+        local iconBlock = block:findChild(tileID)
+        local textID = tes3ui.registerID("MenuInventorySelect_item_brick")
+        local textBlock = block:findChild(textID)
 
 
+        updateFoodAndWaterTile{ item = obj, itemData = itemData, element = iconBlock}
 
+        -- if common.data.inventorySelectTeaBrew then
+        --     local teaData = teaConfig.teaTypes[obj.id:lower()]
+        --     local itemText = block:findChild(tes3ui.registerID("MenuInventorySelect_item_brick"))
+        --     itemText.text = teaData.teaName
+        -- end
 
+    end
+    timer.frame.delayOneFrame(function()
+        e.menu:updateLayout()
+    end)
+end
+event.register("menuEnter", onMenuInventorySelectMenu, { filter = "MenuInventorySelect"})
 
 local function createNeedsTooltip(e)
     local tooltip = e.tooltip
@@ -115,6 +162,7 @@ local function createNeedsTooltip(e)
         return
     end
 
+    --Food tooltips
     local labelText
     if e.object.objectType == tes3.objectType.ingredient then
         if common.config.getConfig().enableHunger  then
@@ -126,7 +174,7 @@ local function createNeedsTooltip(e)
             end
 
             --cook state
-            local thisFoodType = foodConfig.ingredTypes[e.object.id] or foodConfig.TYPE.misc
+            local thisFoodType = foodConfig.ingredTypes[e.object.id]
             if thisFoodType then
                 local cookedLabel = ""
                 if foodConfig.grillValues[thisFoodType] then
@@ -165,30 +213,84 @@ local function createNeedsTooltip(e)
         end
     end
 
+    --Water tooltips
     if common.config.getConfig().enableThirst then
         local bottleData = thirstController.getBottleData(e.object.id)
         if bottleData then
             local liquidLevel = e.itemData and e.itemData.data.waterAmount or 0
-            labelText = string.format('Water: %d/%d', math.ceil(liquidLevel), bottleData.capacity)
-            if e.itemData and e.itemData.data.waterDirty then
-                labelText = labelText .. " (Dirty)"
+
+            --Tea
+            if e.itemData and e.itemData.data.teaType then
+                local teaName = teaConfig.teaTypes[e.itemData.data.teaType].teaName
+                labelText = string.format('%s: %d/%d', teaName, math.ceil(liquidLevel), bottleData.capacity)
+            --Dirty Water
+            elseif e.itemData and e.itemData.data.waterDirty then
+                labelText = string.format('Water: %d/%d (Dirty)', math.ceil(liquidLevel), bottleData.capacity)
+            --Regular Water
+            else
+                labelText = string.format('Water: %d/%d', math.ceil(liquidLevel), bottleData.capacity)
             end
+
+            if e.itemData and e.itemData.data.teaType then
+                local effectText = teaConfig.teaTypes[e.itemData.data.teaType].effectDescription
+                createTooltip(tooltip, effectText , tes3ui.getPalette("positive_color"))
+            end
+
             createTooltip(tooltip, labelText)
+
 
             local icon = e.tooltip:findChild(tes3ui.registerID("HelpMenu_icon"))
             if icon then
-                updateFoodAndWaterTiles{
+                updateFoodAndWaterTile{
                     itemData = e.itemData,
                     element = icon, 
                     item = e.object
                 }
             end
-            
         end
-        
     end
+
+
 
 end
 
 event.register('uiObjectTooltip', createNeedsTooltip)
 
+
+local function teaBrewingTooltip(e)
+    local tooltip = e.tooltip:getContentElement()
+
+    --Tea brewing tooltips
+    if common.data.inventorySelectTeaBrew then
+        local teaData = teaConfig.teaTypes[e.object.id:lower()]
+        if teaData then
+            for i = 2, #tooltip.children do
+                tooltip.children[i].visible = false
+            end
+            tooltip.children[1].text = teaData.teaName or tooltip.children[1].text
+
+            local textBlock = tooltip:createBlock{ id = tes3ui.registerID("Ashfall:TeaDescription")}
+            textBlock.flowDirection = "top_to_bottom"
+            textBlock.maxWidth = 310
+            textBlock.paddingAllSides = 6
+            textBlock.autoHeight = true
+            textBlock.autoWidth = true
+            local teaDescription = textBlock:createLabel{ text = teaData.teaDescription }
+            teaDescription.wrapText = true
+            local effectLabelText = teaData.effectDescription
+            -- if teaData.duration then 
+            --     effectLabelText = string.format("%s for %d hour%s",
+            --         teaData.effectDescription,
+            --         teaData.duration,
+            --         teaData.duration > 1 and "s" or ""
+            --     )
+            -- end
+
+            local teaEffects = textBlock:createLabel{ text = effectLabelText }
+            teaEffects.borderTop = 5
+            teaEffects.color = tes3ui.getPalette("positive_color")
+        end
+    end
+end
+
+event.register("uiObjectTooltip", teaBrewingTooltip, { priority = -101})

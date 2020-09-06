@@ -12,8 +12,8 @@ end
 local function addDiseaseToMeat(reference, disease)
     local obj = reference.object
     for stack in tes3.iterate(obj.inventory.iterator) do
-        if stack.object.id:lower():find("meat") then
-            common.log:debug("Found %s", stack.object.id)
+        if common.staticConfigs.foodConfig.ingredTypes[stack.object.id] == common.staticConfigs.foodConfig.TYPE.protein then
+            common.log:trace("Found %s, adding disease", stack.object.id)
             local count = stack.count
             --First itemData items
             if stack.variables then
@@ -40,12 +40,12 @@ end
 
 local function addDiseaseOnDeath(e)
     if common.config.getConfig().enableDiseasedMeat then
-        common.log:debug("Dead")
         local baseObj = e.reference.baseObject or e.reference.object
         if baseObj.objectType == tes3.objectType.creature then
-            common.log:debug("Creature: %s", baseObj.name)
+            
             local disease = getDisease(e.reference.object)
             if disease then
+                common.log:debug("Creature %s has %s", baseObj.name, disease.name)
                 addDiseaseToMeat(e.reference, disease)
             end
         end

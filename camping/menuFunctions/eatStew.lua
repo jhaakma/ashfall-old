@@ -31,7 +31,8 @@ return {
                 effect.min = effectStrength
                 effect.max = effectStrength
                 mwscript.addSpell{ reference = tes3.player, spell = spell }
-                common.data.stewBuffTimeLeft = common.helper.calculateStewBuffDuration()
+                tes3.player.data.stewBuffTimeLeft = common.helper.calculateStewBuffDuration()
+                event.trigger("Ashfall:registerReference", { reference = tes3.player})
             end)
         end
 
@@ -45,7 +46,7 @@ return {
         local foodRatio = nutritionLevel / maxNutritionLevel
         
         local highestNeed = math.max(common.staticConfigs.conditionConfig.hunger:getValue() / foodRatio, common.staticConfigs.conditionConfig.thirst:getValue())
-        local maxDrinkAmount = math.min(campfire.data.waterAmount, (common.staticConfigs.capacities.cookingPot / common.staticConfigs.stewMealCapacity), highestNeed )
+        local maxDrinkAmount = math.min(campfire.data.waterAmount, 50, highestNeed )
 
         local amountAte = hungerController.eatAmount(maxDrinkAmount * foodRatio)
         local amountDrank = thirstController.drinkAmount(maxDrinkAmount, campfire.data.waterDirty)
@@ -60,9 +61,9 @@ return {
             end
 
             if campfire.data.waterAmount == 0 then
-                event.trigger("Ashfall:Campfire_clear_pot", { campfire = campfire})
+                event.trigger("Ashfall:Campfire_clear_utensils", { campfire = campfire})
             end
-            event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+            --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
         else
             tes3.messageBox("You are full.")
         end

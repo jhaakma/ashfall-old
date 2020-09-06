@@ -5,7 +5,7 @@ return {
     requirements = function(campfire)
         return (
             not campfire.data.hasGrill and 
-            not campfire.data.hasCookingPot and
+            not campfire.data.utensil and
             not campfire.data.isLit
         )
     end,
@@ -25,8 +25,8 @@ return {
             tes3.messageBox(tes3.findGMST(tes3.gmst.sNotifyMessage61).value, recoveredFuel, tes3.getObject(common.staticConfigs.objectIds.firewood).name)
         end
 
-        event.trigger("Ashfall:Campfire_Extinguish", {campfire = campfire})
-        event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+        event.trigger("Ashfall:fuelConsumer_Extinguish", {fuelConsumer = campfire})
+        --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
         common.helper.yeet(campfire)
     end
 }

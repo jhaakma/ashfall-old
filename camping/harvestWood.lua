@@ -8,6 +8,7 @@ local lastRef
 local swingsNeeded
 local swings = 0
 
+
 local function onAttack(e)
     -- for i=1, 100 do
     --     logger:info("INFO %s", i)
@@ -40,19 +41,21 @@ local function onAttack(e)
                 ( weapon.object.type == axe1h or weapon.object.type == axe2h ) 
             )
             if choppingWithAxe then 
-
+                
+                
                 --More chop damage == more wood collected. Maxes out at chopCeiling. Range 0.0-1.0
                 local chopCeiling = 50
-                local axeDamageMultiplier = ( 
-                        ( ( weapon.object.chopMax < chopCeiling ) 
-                        and weapon.object.chopMax 
-                        or chopCeiling ) 
-                        / ( chopCeiling ) )
+                local axeDamageMultiplier = math.min(weapon.object.chopMax, chopCeiling) / chopCeiling
+
+                local woodAxeMulti = 0.0
+                if weapon.object.id == common.staticConfigs.objectIds.woodaxe then
+                    woodAxeMulti = 0.5
+                end
 
                 --If attacking the same target, accumulate swings
                 local targetRef = activatorController.currentRef
                 if lastRef == targetRef then
-                    swings = swings + swingStrength * ( 1 + axeDamageMultiplier )
+                    swings = swings + swingStrength * ( 1 + axeDamageMultiplier + woodAxeMulti )
                 else
                     lastRef = targetRef
                     swings = 0

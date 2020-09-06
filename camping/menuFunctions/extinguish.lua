@@ -4,7 +4,7 @@ return {
         return campfire.data.isLit
     end,
     callback = function(campfire)
-        event.trigger("Ashfall:Campfire_Extinguish", {campfire = campfire})
-        event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+        event.trigger("Ashfall:fuelConsumer_Extinguish", {fuelConsumer = campfire})
+        --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
     end,
 }

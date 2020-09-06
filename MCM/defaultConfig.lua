@@ -68,6 +68,6 @@ return {
     thirstRate = 30,
     loseSleepRate = 50,
     loseSleepWaiting = 30,
-    gainSleepRate = 40,
-    gainSleepBed = 90,
+    gainSleepRate = 30,
+    gainSleepBed = 60,
 }

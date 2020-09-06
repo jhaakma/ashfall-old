@@ -3,14 +3,14 @@ return {
     requirements = function(campfire)
         return (
             campfire.data.hasSupports and 
-            not (campfire.data.hasKettle or campfire.data.hasCookingPot) and
+            not campfire.data.utensil and
             mwscript.getItemCount{ reference = tes3.player, item = "ashfall_kettle"} > 0
         )
     end,
     callback = function(campfire)
         mwscript.removeItem{ reference = tes3.player, item = "ashfall_kettle" }
-        campfire.data.hasKettle = true
+        campfire.data.utensil = "kettle"
         tes3.playSound{ reference = tes3.player, sound = "Item Misc Down"  }
-        event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+        --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
     end
 }

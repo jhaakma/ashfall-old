@@ -26,14 +26,13 @@ end
 
 function this.doOverrides()
     for id, override in pairs(overrides) do
-        common.log:debug("ID: %s", id)
         local item = tes3.getObject(id)
         if item then
-            common.log:debug("Overriding values for %s", item.id)
+            common.log:trace("Overriding values for %s", item.id)
             item.value = override.value or item.value
             item.weight = override.weight or item.weight
         else
-            common.log:debug("%s not found", id)
+            common.log:trace("%s not found", id)
         end
     end
 end

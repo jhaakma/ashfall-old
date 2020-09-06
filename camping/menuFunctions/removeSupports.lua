@@ -2,8 +2,7 @@ local common = require ("mer.ashfall.common.common")
 return {
     text = "Remove Supports",
     requirements = function(campfire)
-        return campfire.data.hasSupports and 
-        not (campfire.data.hasKettle or campfire.data.hasCookingPot)
+        return campfire.data.hasSupports and campfire.data.utensil == nil
     end,
     callback = function(campfire)
         mwscript.addItem{
@@ -13,6 +12,6 @@ return {
         }
         campfire.data.hasSupports = false
         tes3.playSound{ reference = tes3.player, sound = "Item Misc Up"  }
-        event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
+        --event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
     end
 }

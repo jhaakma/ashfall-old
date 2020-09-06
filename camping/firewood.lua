@@ -13,6 +13,17 @@ local function pickupFirewood(ref)
     end)
 end
 
+local function registerCampfire(reference)
+    reference.data.fuelLevel = reference.stackSize
+    reference.data.isStewer = true
+    reference.data.isFuelConsumer = true
+    reference.data.isGriller = true
+    reference.data.grillMinHeight = 21
+    reference.data.grillMaxHeight = 50
+    reference.data.grillDistance = 40
+    event.trigger("Ashfall:registerReference", { reference = reference})
+end
+
 local function placeCampfire(e)
     --Check how steep the land is
     local maxSteepness = 0.3
@@ -36,7 +47,8 @@ local function placeCampfire(e)
         orientation = e.target.orientation,
         cell = e.target.cell
     }
-    newRef.data.fuelLevel = e.target.stackSize
+    registerCampfire(newRef)
+    newRef.light:setAttenuationForRadius(0)
     event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = newRef, all = true})
 end
 

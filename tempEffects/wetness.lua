@@ -90,7 +90,7 @@ function this.calculateWetTemp(timeSinceLastRan)
     --increase wetness if it's raining, otherwise reduce wetness over time
     -- wetness decreased by coverage
     local weather = tes3.getCurrentWeather()
-    local playerTemp = common.data.temp or 0
+    local playerTemp = common.staticConfigs.conditionConfig.temp:getValue()
     
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 

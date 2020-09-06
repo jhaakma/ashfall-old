@@ -13,7 +13,7 @@ temperatureController.registerBaseTempMultiplier({ id = "hungerEffect", coldOnly
 local coldMulti = 4.0
 local foodPoisonMulti = 5.0
 local HUNGER_EFFECT_LOW = 1.3
-local HUNGER_EFFECT_HIGH = 1.0
+local HUNGER_EFFECT_HIGH = 1.0 
 local restMultiplier = 1.0
 
 
@@ -23,14 +23,14 @@ local foodConfig = common.staticConfigs.foodConfig
 
 
 function this.getBurnLimit()
-    --TODO: Use cooking skill to determine
-    local cooking = common.skills.cooking.value
-    if not cooking then
-        common.log:error("No cooking skill found")
+    --TODO: Use survival skill to determine
+    local survival = common.skills.survival.value
+    if not survival then
+        common.log:error("No survival skill found")
         return 150
     end
     
-    local burnLimit = math.remap(cooking, common.skillStartValue, 100, 120, 160)
+    local burnLimit = math.remap(survival, common.skillStartValue, 100, 120, 160)
     return burnLimit
 end
 
@@ -42,15 +42,15 @@ function this.getFoodValue(object, itemData)
 
     local cookedAmount = itemData and itemData.data.cookedAmount
     if cookedAmount then
-        local cooking = common.skills.cooking.value
-        local cookingEffect = math.remap(
-            cooking, 
+        local survival = common.skills.survival.value
+        local survivalEffect = math.remap(
+            survival, 
             common.skillStartValue, 100, 
             foodConfig.grillValues[ingredType].min, foodConfig.grillValues[ingredType].max
         )
 
         local min = value
-        local max = math.ceil(value * cookingEffect)
+        local max = math.ceil(value * survivalEffect)
 
         if cookedAmount < this.getBurnLimit() then
             --value based on how cooked it is
@@ -69,7 +69,6 @@ function this.eatAmount( amount )
     if not common.config.getConfig().enableHunger then
         return
     end
-
 
     local currentHunger = hunger:getValue()
     local amountAte = math.min(amount, currentHunger)
@@ -195,13 +194,11 @@ local function addDisease(e)
     end
 end
 
-local function onEat(e)
-    common.log:debug("onEat()")
+local function onEquipFood(e)
     if common.getIsBlocked(e.item) then 
         common.log:debug("Is Blocked")
         return 
     end
-    common.log:debug("Item data: %s", e.itemData)
     if e.item.objectType == tes3.objectType.ingredient then
         common.log:debug("Is ingredient")
         this.eatAmount(this.getFoodValue(e.item, e.itemData))
@@ -211,6 +208,15 @@ local function onEat(e)
     end
 end
 
-event.register("equip", onEat, { filter = tes3.player, priority = -100 } )
+event.register("equip", onEquipFood, { filter = tes3.player, priority = -100 } )
+
+
+--Interop eat event
+local function onEat(e)
+    if e.reference == tes3.player then
+        this.eatAmount(e.amount)
+    end
+end
+event.register("Ashfall:Eat", onEat)
 
 return this

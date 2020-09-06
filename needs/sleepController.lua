@@ -50,6 +50,11 @@ local function hideSleepItems(restMenu)
     end
 end
 
+local function forceWait(restMenu)
+    restMenu:findChild( tes3ui.registerID("MenuRestWait_wait_button") ).visible = true
+    restMenu:findChild( tes3ui.registerID("MenuRestWait_untilhealed_button") ).visible = false
+    restMenu:findChild( tes3ui.registerID("MenuRestWait_rest_button") ).visible = false
+end
 
 --Prevent tiredness if ENVIRONMENT is too cold/hot
 --We do this by tapping into the Rest Menu,
@@ -59,10 +64,9 @@ local function activateRestMenu (e)
 
     if isUsingBed then
         --manually update tempLimit so you can see what it will be with the bedTemp added
-        if common.data.temp < 0 then
-            common.data.bedTemp = bedWarmth
-            common.data.tempLimit = common.data.tempLimit + bedWarmth
-        end
+
+        common.data.bedTemp = bedWarmth
+        common.data.tempLimit = common.data.tempLimit + bedWarmth
         event.trigger("Ashfall:updateTemperature", { source = "activateRestMenu"})
         common.log:debug("Is Scripted: adding warmth")
     end
@@ -70,6 +74,12 @@ local function activateRestMenu (e)
     local tempLimit = common.data.tempLimit + common.data.bedTemp
     local restMenu = e.element
     local labelText = restMenu:findChild( tes3ui.registerID("MenuRestWait_label_text") )
+
+    --Prevent rest if not using a bed
+    if not isUsingBed and not tes3.player.cell.isInterior then 
+        forceWait(restMenu)
+        labelText.text = "You must find a bed or go indoors to rest."
+    end
 
     if tempLimit < ( coldRestLimit ) or tempLimit > ( hotRestLimit + common.data.bedTemp ) then
         labelText.text = interruptText
@@ -84,6 +94,7 @@ local function activateRestMenu (e)
         labelText.text = "You are too tired to wait."
         hideSleepItems(restMenu)
     end
+
     --Hide "Rest until healed" button if health is not lower than max
     local maxHealth = statsEffect.getMaxStat("health")
     if tes3.mobilePlayer.health.current >= maxHealth then
@@ -91,12 +102,7 @@ local function activateRestMenu (e)
     end
 
 
-    local isResting = ( 
-        e.element:findChild( tes3ui.registerID("MenuRestWait_rest_button") ).visible 
-    )
-    if isResting then
-        needsUI.addNeedsBlockToMenu(e, "tiredness")
-    end
+    needsUI.addNeedsBlockToMenu(e, "tiredness")
     restMenu:updateLayout()
 
 end
@@ -187,14 +193,18 @@ function this.calculate(scriptInterval, forceUpdate)
     local gainSleepRate = common.config.getConfig().gainSleepRate / 10  
     local gainSleepBed = common.config.getConfig().gainSleepBed / 10
     
+    --slows tiredness drain
+    local hackloEffect = common.data.hackloTeaEffect or 1
+    --speeds up tiredness recovery while sleeping
+    local tramaRootTeaEffect = common.data.tramaRootTeaEffect or 1
 
     if tes3.mobilePlayer.sleeping then
         local usingBed = common.data.usingBed or false
         if usingBed then
-            currentTiredness = currentTiredness - ( scriptInterval * gainSleepBed )
+            currentTiredness = currentTiredness - ( scriptInterval * gainSleepBed * tramaRootTeaEffect )
         else
             --Not using bed, gain tiredness slower and can't get below "Rested"
-            local newTiredness = currentTiredness - ( scriptInterval * gainSleepRate )
+            local newTiredness = currentTiredness - ( scriptInterval * gainSleepRate * tramaRootTeaEffect )
             if newTiredness > tiredness.states.rested.min then
                 currentTiredness = newTiredness
             end
@@ -207,9 +217,9 @@ function this.calculate(scriptInterval, forceUpdate)
         end
     --Waiting
     elseif tes3.menuMode() then
-        currentTiredness = currentTiredness + ( scriptInterval * loseSleepWaiting )
+        currentTiredness = currentTiredness + ( scriptInterval * loseSleepWaiting * hackloEffect )
     else
-        currentTiredness = currentTiredness + ( scriptInterval * loseSleepRate )
+        currentTiredness = currentTiredness + ( scriptInterval * loseSleepRate * hackloEffect )
     end
     currentTiredness = math.clamp(currentTiredness, 0, 100)
     tiredness:setValue(currentTiredness)

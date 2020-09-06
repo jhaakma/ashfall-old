@@ -26,16 +26,16 @@ local switchNodeValues = {
     end,
     SWITCH_COOKING_POT = function(campfire)
         local state = { OFF = 0, ON = 1 }
-        return campfire.data.hasCookingPot and state.ON or state.OFF
+        return campfire.data.utensil == "cookingPot" and state.ON or state.OFF
     end,
     SWITCH_KETTLE = function(campfire)
         local state = { OFF = 0, ON = 1 }  
-        return campfire.data.hasKettle and state.ON or state.OFF
+        return campfire.data.utensil == "kettle" and state.ON or state.OFF
     end,
     SWITCH_POT_STEAM = function(campfire)
         local state = { OFF = 0, ON = 1 } 
         local showSteam = ( 
-            campfire.data.hasCookingPot and 
+            campfire.data.utensil == "cookingPot" and 
             campfire.data.waterHeat and
             campfire.data.waterHeat >= common.staticConfigs.hotWaterHeatValue
         )
@@ -44,17 +44,15 @@ local switchNodeValues = {
     SWITCH_KETTLE_STEAM = function(campfire)
         local state = { OFF = 0, ON = 1 } 
         local showSteam = ( 
-            campfire.data.hasKettle and 
+            campfire.data.utensil == "kettle" and 
             campfire.data.waterHeat and
             campfire.data.waterHeat >= common.staticConfigs.hotWaterHeatValue
         )
-        --if showSteam then mwse.log("Showing steam") end
         return showSteam and state.ON or state.OFF
     end,
     SWITCH_STEW = function(campfire)
         local state = { OFF = 0, WATER = 1, STEW = 2}
-        if not campfire.data.hasCookingPot then return state.OFF end
-
+        if campfire.data.utensil ~= "cookingPot" then return state.OFF end
         return campfire.data.stewLevels and state.STEW or state.WATER
     end
 }
@@ -108,7 +106,7 @@ end
 local function updateWaterHeight(campfire)
     local scaleMax = 1.3
     local heightMax = 28
-    if campfire.data.hasCookingPot and campfire.data.waterAmount then
+    if campfire.data.utensil == "cookingPot" and campfire.data.waterAmount then
         local waterLevel = campfire.data.waterAmount or 0
         local scale = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 1, scaleMax), scaleMax )
         local height = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 0, heightMax), heightMax)
@@ -126,7 +124,7 @@ end
 --Update the size of the steam coming off a cooking pot
 local function updateSteamScale(campfire)
     local hasSteam = ( 
-        campfire.data.hasCookingPot and 
+        campfire.data.utensil == "cookingPot" and 
         campfire.data.waterHeat and
         campfire.data.waterHeat >= common.staticConfigs.hotWaterHeatValue
     
@@ -159,26 +157,28 @@ end
 
 
 local function updateVisuals(e)
-    local campfire = e.campfire
-    if e.all or e.nodes then
-        updateSwitchNodes(campfire)
-    end
-    if e.all or e.lighting then
-        updateLightingRadius(campfire)
-    end
-    if e.all or e.fire then
-        updateFireScale(campfire)
-    end
-    if e.all or e.water then
-        updateWaterHeight(campfire)
-    end
-    if e.all or e.steam then
-        updateSteamScale(campfire)
-    end
-    if e.all or e.collision then
-        updateCollision(campfire)
-    end
-    campfire:updateSceneGraph()
+    common.helper.iterateRefType("campfire", function(campfire)
+        e.all = e.all ~= nil and e.all or true
+        if e.all or e.nodes then
+            updateSwitchNodes(campfire)
+        end
+        if e.all or e.lighting then
+            updateLightingRadius(campfire)
+        end
+        if e.all or e.fire then
+            updateFireScale(campfire)
+        end
+        if e.all or e.water then
+            updateWaterHeight(campfire)
+        end
+        if e.all or e.steam then
+            updateSteamScale(campfire)
+        end
+        if e.all or e.collision then
+            updateCollision(campfire)
+        end
+        campfire:updateSceneGraph()
+    end)
 end
 
-event.register("Ashfall:Campfire_Update_Visuals", updateVisuals)
+event.register("simulate", updateVisuals)

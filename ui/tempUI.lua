@@ -76,7 +76,7 @@ function this.updateHUD()
             
             
             --Update Temp Player bars
-            local tempPlayer = math.clamp((common.data.temp or 0), -100, 100) or 0
+            local tempPlayer = common.staticConfigs.conditionConfig.temp:getValue()
             local leftTempPlayerBar = findHUDElement(IDs.leftTempPlayerBar)
             local rightTempPlayerBar = findHUDElement(IDs.rightTempPlayerBar)
             --Cold

@@ -3,12 +3,16 @@ local common = require("mer.ashfall.common.common")
 local foodPoison = common.staticConfigs.conditionConfig.foodPoison
 local dysentery = common.staticConfigs.conditionConfig.dysentery
 local blightness = common.staticConfigs.conditionConfig.blightness
+local flu = common.staticConfigs.conditionConfig.flu
 
 local drainRateHealthy = 200
 local drainRateSick = 3
 
 local blightGainRate = 300
 local blightDrainRate = 400
+
+local fluIncreaseRate = 400
+local fluDecreaseRate = 50
 
 local diceRollChance = 0.02
 
@@ -46,7 +50,7 @@ end
 
 local weatherController
 local function calculateBlightness(scriptInterval)
-
+    if not common.data then return end
     --already has blight, set to 0
     local hasBlight = blightness:hasBlight()
     if hasBlight then
@@ -55,31 +59,31 @@ local function calculateBlightness(scriptInterval)
         return
     end
 
-    weatherController = weatherController or tes3.worldController.weatherController
-    local weather = weatherController.currentWeather
-    local isBlightWeather = weather and weather.index == tes3.weather.blight 
-    local isOutside = not tes3.player.cell.isInterior
-    local isInTent = common.helper.getInTent()
-    --caught in a blight storm, check coverage and face covered and add to blightness
-    if isBlightWeather and isOutside and not isInTent then
+    local rand = math.random()
+    if rand < diceRollChance then
+        weatherController = weatherController or tes3.worldController.weatherController
+        local weather = weatherController.currentWeather
+        local isBlightWeather = weather and weather.index == tes3.weather.blight 
+        local isOutside = not tes3.player.cell.isInterior
+        local isInTent = common.helper.getInTent()
+        --caught in a blight storm, check coverage and face covered and add to blightness
+        if isBlightWeather and isOutside and not isInTent then
 
-        common.log:trace("In a blight storm")
-        local coverage = common.data.coverageRating
-        --half from coverage
-        local coverageMulti = math.remap(coverage, 0.0, 1.0, 0.5, 0.0)
-        common.log:trace("coverageMulti : %s", coverageMulti)
-        --half from face covered
-        local faceMulti = common.data.faceCovered == true and 0.0 or 0.5
-        common.log:trace("faceMulti : %s", faceMulti)
-        --add them up to 0-1.0
-        local coveragePlusFaceMulti = coverageMulti + faceMulti
+            common.log:trace("In a blight storm")
+            local coverage = common.data.coverageRating
+            --half from coverage
+            local coverageMulti = math.remap(coverage, 0.0, 1.0, 0.5, 0.0)
+            common.log:trace("coverageMulti : %s", coverageMulti)
+            --half from face covered
+            local faceMulti = common.data.faceCovered == true and 0.0 or 0.5
+            common.log:trace("faceMulti : %s", faceMulti)
+            --add them up to 0-1.0
+            local coveragePlusFaceMulti = coverageMulti + faceMulti
 
-        common.log:trace("----------------Blight coverage: %s", coveragePlusFaceMulti)
+            common.log:trace("----------------Blight coverage: %s", coveragePlusFaceMulti)
 
-        common.log:trace("----------------blight per hour: %s", blightGainRate * coveragePlusFaceMulti)
+            common.log:trace("----------------blight per hour: %s", blightGainRate * coveragePlusFaceMulti)
 
-        local rand = math.random()
-        if rand < diceRollChance then
             local newVal = blightness:getValue() + ( scriptInterval * blightGainRate * coveragePlusFaceMulti / diceRollChance )
             blightness:setValue(newVal)
         end
@@ -95,7 +99,56 @@ end
 
 
 local function calculateFlu(scriptInterval)
+    -- -100: 1.0x drain
+    -- -30: break even (right in the middle of chilly, perfect)
+    -- 40: 1.0x recovery
+    local rand = math.random()
+    if rand < diceRollChance then
+        local playerTemp = math.min(common.staticConfigs.conditionConfig.temp:getValue(), 40)
+        local tempEffect = math.remap(playerTemp, -100, 0, 1.0, -1.0)
+        common.log:trace("tempEffect: %s", tempEffect)
 
+        local wetness = common.data.wetness
+        local wetEffect = math.remap(wetness, 0, 100, 0, 0.5)
+        common.log:trace("wetEffect: %s", wetEffect)
+
+        local adjustedEffect = tempEffect + wetEffect
+        common.log:trace("adjustedEffect: %s", adjustedEffect)
+
+        common.log:trace("scriptInterval: %s", scriptInterval)
+        local change = scriptInterval * adjustedEffect / diceRollChance
+        common.log:trace("change: %s", change)
+        if change > 0 then
+            change = change * fluIncreaseRate
+        else
+            change = change * fluDecreaseRate
+        end
+        common.log:trace("rate adjusted change: %s", change)
+        local currentValue = flu:getValue()
+        local newValue = currentValue + change
+        common.log:trace("Flu: Change: %s ; new Value: %s", change, newValue)
+        flu:setValue(newValue)
+    end
+end
+
+local sneezeMinInterval = 20
+local sneezeMaxInterval = 120
+local function sneezeTimer()
+    timer.start{
+        type = timer.simulate,
+        iterations = 1,
+        duration = math.random(sneezeMinInterval, sneezeMaxInterval),
+        callback = function()
+            if flu:getCurrentState() == "hasFlu" then
+                tes3.playSound{
+                    reference = tes3.player,
+                    sound = tes3.player.object.female and 'ashfall_sneeze_f' or 'ashfall_sneeze_m'
+                }
+                tes3.messageBox("*Achoo!*")  
+            end
+            sneezeTimer()
+        end
+    }
 end
 
 
@@ -110,6 +163,9 @@ function this.calculate(scriptInterval, forceUpdate)
     if not blightness:isActive() then
         blightness:setValue(0)
     end
+    if not flu:isActive() then
+        flu:setValue(0)
+    end
     if common.data.blockNeeds == true then
         return
     end
@@ -121,6 +177,9 @@ function this.calculate(scriptInterval, forceUpdate)
     end
     if blightness:isActive() then
         calculateBlightness(scriptInterval)
+    end
+    if flu:isActive() then
+        calculateFlu(scriptInterval)
     end
 end
 
@@ -172,13 +231,14 @@ event.register("bodyPartAssigned", checkFaceCovered)
 
 event.register("loaded", function() 
     if not tes3.player.data.equipmentUpdated then
-        mwse.log("Player equipment updated")
         tes3.player:updateEquipment() 
         tes3.player.data.equipmentUpdated = true
         timer.delayOneFrame(function()
             tes3.player.data.equipmentUpdated = nil
         end)
     end
+
+    sneezeTimer()
 end )
 
 return this
