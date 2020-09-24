@@ -6,10 +6,12 @@ local statsEffect = require("mer.ashfall.needs.statsEffect")
 local interruptText = ""
 local isUsingBed
 local isWaiting
-local bedWarmth = 20
+local werewolfSleepMulti = 0.6
+local bedTempMulti = 0.8
 
 local temperatureController = require("mer.ashfall.temperatureController")
-temperatureController.registerInternalHeatSource({ id = "bedTemp", coldOnly = true })
+--temperatureController.registerInternalHeatSource({ id = "bedTemp", coldOnly = true })
+temperatureController.registerBaseTempMultiplier{ id = "bedTempMulti"}
 
 local conditionConfig = common.staticConfigs.conditionConfig
 local coldRestLimit = conditionConfig.temp.states.veryCold.min
@@ -18,6 +20,10 @@ local hunger = conditionConfig.hunger
 local thirst = conditionConfig.thirst
 local tiredness = conditionConfig.tiredness
 
+local function setInBed(inBed)
+    common.data.usingBed = inBed
+    common.data.bedTempMulti = inBed and 0.8 or 1.0
+end
 
 
 local function setRestValues(e)
@@ -65,23 +71,24 @@ local function activateRestMenu (e)
     if isUsingBed then
         --manually update tempLimit so you can see what it will be with the bedTemp added
 
-        common.data.bedTemp = bedWarmth
-        common.data.tempLimit = common.data.tempLimit + bedWarmth
+        --common.data.bedTemp = bedWarmth
+        common.data.bedTempMulti = bedTempMulti
+        --common.data.tempLimit = common.data.tempLimit + bedWarmth
         event.trigger("Ashfall:updateTemperature", { source = "activateRestMenu"})
         common.log:debug("Is Scripted: adding warmth")
     end
 
-    local tempLimit = common.data.tempLimit + common.data.bedTemp
+    local tempLimit = common.data.tempLimit
     local restMenu = e.element
     local labelText = restMenu:findChild( tes3ui.registerID("MenuRestWait_label_text") )
 
     --Prevent rest if not using a bed
-    if not isUsingBed and not tes3.player.cell.isInterior then 
+    if not isUsingBed and not common.helper.getInside(tes3.player) then 
         forceWait(restMenu)
         labelText.text = "You must find a bed or go indoors to rest."
     end
 
-    if tempLimit < ( coldRestLimit ) or tempLimit > ( hotRestLimit + common.data.bedTemp ) then
+    if ( tempLimit < coldRestLimit ) or ( tempLimit > hotRestLimit ) then
         labelText.text = interruptText
         hideSleepItems(restMenu)
     elseif hunger:getValue() > hunger.states.starving.min then
@@ -164,11 +171,11 @@ local function checkSleeping(interval)
     end
     
     if tes3.mobilePlayer.sleeping and isUsingBed then
-        --if common.data.tempLimit < 0 then
-            common.data.usingBed = true
-            common.data.bedTemp = bedWarmth
-        --end
+        setInBed(true)
     end 
+
+    --Reset the bedTemp when player wakes up
+    event.register("simulate", function()setInBed(false) end, {doOnce=true})
 end
 
 
@@ -218,20 +225,13 @@ function this.calculate(scriptInterval, forceUpdate)
     --Waiting
     elseif tes3.menuMode() then
         currentTiredness = currentTiredness + ( scriptInterval * loseSleepWaiting * hackloEffect )
+    --Normal time
     else
-        currentTiredness = currentTiredness + ( scriptInterval * loseSleepRate * hackloEffect )
+        currentTiredness = currentTiredness + ( scriptInterval * loseSleepRate * hackloEffect * werewolfSleepMulti )
     end
     currentTiredness = math.clamp(currentTiredness, 0, 100)
     tiredness:setValue(currentTiredness)
 end
 
-
---Reset the bedTemp when player wakes up
-event.register("simulate", function()
-    if not tes3.mobilePlayer.sleeping and common.data.bedTemp ~= 0 then
-        common.data.usingBed = false
-        common.data.bedTemp = 0
-    end    
-end)
 
 return this

@@ -1,4 +1,5 @@
 local common = require ("mer.ashfall.common.common")
+local foodConfig = common.staticConfigs.foodConfig
 local hungerController = require("mer.ashfall.needs.hungerController")
 local thirstController = require("mer.ashfall.needs.thirstController")
 return {
@@ -12,18 +13,18 @@ return {
         )
     end,
     callback = function(campfire)
-
+        local stewBuffs = foodConfig.getStewBuffList()
         --remove old sbuffs
-        for name, buff in pairs(common.staticConfigs.foodConfig.stewBuffs) do
-            if campfire.data.stewLevels[name] == nil then
+        for foodType, buff in pairs(stewBuffs) do
+            if campfire.data.stewLevels[foodType] == nil then
                 mwscript.removeSpell{ reference = tes3.player, spell = buff.id }
             end
         end
 
         --Add buffs and set duration
-        for name, ingredLevel in pairs(campfire.data.stewLevels) do
+        for foodType, ingredLevel in pairs(campfire.data.stewLevels) do
             --add spell
-            local stewBuff = common.staticConfigs.foodConfig.stewBuffs[name]
+            local stewBuff = stewBuffs[foodType]
             local effectStrength = common.helper.calculateStewBuffStrength(math.min(ingredLevel, 100), stewBuff.min, stewBuff.max)
             timer.delayOneFrame(function()
                 local spell = tes3.getObject(stewBuff.id)
@@ -39,9 +40,10 @@ return {
         --add up ingredients, mulitplying nutrition by % in the pot
         local nutritionLevel = 0
         local maxNutritionLevel = 0
-        for type, _ in pairs(common.staticConfigs.foodConfig.stewBuffs) do
-            nutritionLevel = nutritionLevel + ( common.staticConfigs.foodConfig.nutrition[type] * ( campfire.data.stewLevels[type] or 0 ) / 100 )
-            maxNutritionLevel = nutritionLevel + common.staticConfigs.foodConfig.nutrition[type]
+        for foodType, _ in pairs(stewBuffs) do
+            local nutrition = foodConfig.getNutritionForFoodType(foodType)
+            nutritionLevel = nutritionLevel + ( nutrition * ( campfire.data.stewLevels[foodType] or 0 ) / 100 )
+            maxNutritionLevel = nutritionLevel + nutrition
         end
         local foodRatio = nutritionLevel / maxNutritionLevel
         
@@ -49,7 +51,7 @@ return {
         local maxDrinkAmount = math.min(campfire.data.waterAmount, 50, highestNeed )
 
         local amountAte = hungerController.eatAmount(maxDrinkAmount * foodRatio)
-        local amountDrank = thirstController.drinkAmount(maxDrinkAmount, campfire.data.waterDirty)
+        local amountDrank = thirstController.drinkAmount(maxDrinkAmount, campfire.data.waterType)
         
 
         if amountAte >= 1 or amountDrank >= 1 then

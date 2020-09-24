@@ -51,11 +51,9 @@ local function attachItem(item, parent)
     local mesh = tes3.loadMesh(tes3.getObject(item).mesh):clone()
     mesh:clearTransforms()
     mesh.name = "AttachedMesh"
+    mesh.appCulled = false
     parent:attachChild(mesh)
-
 end
-
-
 
 local function setSwitchNodes(e)
     local ref = e.reference

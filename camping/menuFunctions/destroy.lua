@@ -6,7 +6,9 @@ return {
         return (
             not campfire.data.hasGrill and 
             not campfire.data.utensil and
-            not campfire.data.isLit
+            not campfire.data.isLit and
+            campfire.data.dynamicConfig and 
+            campfire.data.dynamicConfig.campfire == "dynamic"
         )
     end,
     callback = function(campfire)

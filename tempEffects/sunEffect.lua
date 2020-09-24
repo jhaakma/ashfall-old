@@ -27,7 +27,7 @@ local sunWeatherMapping = {
 function this.calculate(interval)
     local shadeMultiplier
     local hour = tes3.worldController.hour.value
-    if tes3.player.cell.isInterior then
+    if common.helper.getInside(tes3.player) then
         shadeMultiplier = 0.0
     else
         if hour < 4 or hour > 20 then

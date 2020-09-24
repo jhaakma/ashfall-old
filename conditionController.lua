@@ -27,7 +27,6 @@ function this.updateCondition(id)
         thisCondition:conditionChanged(currentState)
     end
 
-
 end
 
 --Update all conditions - called by the script timer

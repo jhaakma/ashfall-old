@@ -1,4 +1,6 @@
 local thirstController = require("mer.ashfall.needs.thirstController")
+local common = require("mer.ashfall.common.common")
+local teaConfig = common.staticConfigs.teaConfig
 
 return  {
     text = "Fill Container",
@@ -8,7 +10,7 @@ return  {
             campfire.data.waterAmount > 0 and
             not campfire.data.stewLevels and
             ( 
-                (not campfire.data.teaType) or
+                (not teaConfig.teaTypes[campfire.data.waterType]) or
                 campfire.data.teaProgress >= 100
             )
         )
@@ -16,11 +18,16 @@ return  {
     callback = function(campfire)
         --fill bottle
         local teaType
-        if campfire.data.teaProgress and campfire.data.teaProgress >= 100 then
-            teaType = campfire.data.teaType
+        local hasBrewedTea = (
+            campfire.data.teaProgress and
+            campfire.data.teaProgress >= 100 and
+            teaConfig.teaTypes[campfire.data.waterType]
+        )
+        if hasBrewedTea  then
+            teaType = campfire.data.waterType
         end
         thirstController.fillContainer{
-            source = campfire.data,
+            source = campfire,
             teaType = teaType,
             callback = function()
                 if campfire.data.waterAmount <= 0 then

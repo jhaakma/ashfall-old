@@ -1,7 +1,64 @@
 local this = {}
 
+function this.getFoodType(id)
+    return this.ingredTypes[id] or this.TYPE.misc
+end
+
+--Handles special case for TR cooked meat
+function this.getFoodTypeResolveMeat(id)
+    local foodType = this.getFoodType(id)
+    if foodType == this.TYPE.cookedMeat then
+        foodType = this.TYPE.meat
+    end
+    return foodType
+end
+
+
+function this.getNutrition(id)
+    return this.nutrition[this.getFoodType(id)]
+end
+
+function this.getNutritionForFoodType(foodType)
+    return this.nutrition[foodType]
+end
+
+function this.getGrillValues(id)
+    return this.grillValues[this.getFoodType(id)]
+end
+
+function this.getGrillValuesForFoodType(foodType)
+    return this.grillValues[foodType]
+end
+
+function this.getStewBuffForId(id)
+    return this.stewBuffs[this.getFoodType(id)]
+end
+
+function this.getStewBuffForFoodType(foodType)
+    if foodType == this.TYPE.cookedMeat then
+        foodType = this.TYPE.meat
+    end
+    return this.stewBuffs[foodType]
+end
+
+function this.getStewBuffList()
+    return this.stewBuffs
+end
+
+function this.getFoodData(id, resolveMeat)
+    local foodType = resolveMeat and this.getFoodTypeResolveMeat(id) or this.getFoodType(id)
+    return {
+        foodType = foodType,
+        nutrition = this.getNutritionForFoodType(foodType),
+        grillValues = this.getGrillValuesForFoodType(foodType),
+        stewBuff = this.getStewBuffForFoodType(foodType)
+    }
+end
+
 this.TYPE = {
-    protein = "Protein",
+    meat = "Meat",
+    cookedMeat = "Meat (Cooked)",
+    egg = "Egg",
     vegetable = "Vegetable",
     mushroom = "Mushroom",
     seasoning = "Seasoning",
@@ -11,7 +68,7 @@ this.TYPE = {
 }
 
 this.stewBuffs = {
-    [this.TYPE.protein] = { min = 15, max = 50, id = "ashfall_stew_hearty"}, -- fortify health
+    [this.TYPE.meat] = { min = 15, max = 50, id = "ashfall_stew_hearty"}, -- fortify health
     [this.TYPE.vegetable] = { min = 15, max = 50, id = "ashfall_stew_nutritious"}, --fortify fatigue
     [this.TYPE.mushroom] = { min = 10, max = 40, id = "ashfall_stew_chunky"}, --fortify magicka
     [this.TYPE.seasoning] = { min = 5, max = 20, id = "ashfall_stew_tasty"}, --fortify agility
@@ -21,24 +78,27 @@ this.stewBuffs = {
 --min: fully cooked multi at lowest cooking skill
 --max fully cooked multi at highest cooking skill
 this.grillValues = {
-    [this.TYPE.protein] = { min = 2.5, max = 3.0 }, 
+    [this.TYPE.meat] = { min = 2.5, max = 3.0 },
+    [this.TYPE.egg] = { min = 2.5, max = 3.0 },
     [this.TYPE.vegetable] = { min = 2.2, max = 2.7 },
     [this.TYPE.mushroom] = { min = 2.0, max = 2.5 },
 }
 
 --Nutrition at weight==1.0
 this.nutrition = {
-    [this.TYPE.protein] = 12,
+    [this.TYPE.meat] = 12,
+    [this.TYPE.cookedMeat] = (12 * this.grillValues[this.TYPE.meat].min), 
+    [this.TYPE.egg] = 10,
     [this.TYPE.vegetable] = 14,
     [this.TYPE.mushroom] = 13,
     [this.TYPE.seasoning] = 8,
     [this.TYPE.herb] = 10,
     [this.TYPE.food] = 30,
-    [this.TYPE.misc] = 5,
+    [this.TYPE.misc] = 0,
 }
 
 this.ingredTypes = {
-    ["ingred_human_meat_01"] = this.TYPE.protein,
+    ["ingred_human_meat_01"] = this.TYPE.meat,
     ["ingred_adamantium_ore_01"] = this.TYPE.misc,
     ["ingred_alit_hide_01"] = this.TYPE.misc,
     ["ingred_bc_ampoule_pod"] = this.TYPE.misc,
@@ -60,14 +120,14 @@ this.ingredTypes = {
     ["ingred_comberry_01"] = this.TYPE.herb,
     ["ingred_corkbulb_root_01"] = this.TYPE.vegetable,
     ["ingred_corprus_weepings_01"] = this.TYPE.misc,
-    ["ingred_crab_meat_01"] = this.TYPE.protein,
+    ["ingred_crab_meat_01"] = this.TYPE.meat,
     ["ingred_daedra_skin_01"] = this.TYPE.misc,
     ["ingred_cursed_daedras_heart_01"] = this.TYPE.misc,
     ["ingred_daedras_heart_01"] = this.TYPE.misc,
     ["ingred_Dae_cursed_diamond_01"] = this.TYPE.misc,
     ["ingred_diamond_01"] = this.TYPE.misc,
     ["ingred_dreugh_wax_01"] = this.TYPE.misc,
-    ["ingred_durzog_meat_01"] = this.TYPE.protein,
+    ["ingred_durzog_meat_01"] = this.TYPE.meat,
     ["ingred_ectoplasm_01"] = this.TYPE.misc,
     ["ingred_Dae_cursed_emerald_01"] = this.TYPE.misc,
     ["ingred_emerald_01"] = this.TYPE.misc,
@@ -87,28 +147,28 @@ this.ingredTypes = {
     ["ingred_hackle-lo_leaf_01"] = this.TYPE.herb,
     ["ingred_innocent_heart"] = this.TYPE.misc,
     ["ingred_udyrfrykte_heart"] = this.TYPE.misc,
-    ["ingred_wolf_heart"] = this.TYPE.protein,
+    ["ingred_wolf_heart"] = this.TYPE.meat,
     ["ingred_heartwood_01"] = this.TYPE.misc,
     ["ingred_heather_01"] = this.TYPE.herb,
     ["ingred_holly_01"] = this.TYPE.herb,
     ["ingred_horker_tusk_01"] = this.TYPE.misc,
     ["Ingred_horn_lily_bulb_01"] = this.TYPE.vegetable,
-    ["ingred_hound_meat_01"] = this.TYPE.protein,
+    ["ingred_hound_meat_01"] = this.TYPE.meat,
     ["ingred_bc_hypha_facia"] = this.TYPE.mushroom,
     ["ingred_kagouti_hide_01"] = this.TYPE.misc,
     ["ingred_kresh_fiber_01"] = this.TYPE.herb,
-    ["ingred_kwama_cuttle_01"] = this.TYPE.protein,
-    ["ingred_6th_corprusmeat_05"] = this.TYPE.protein,
-    ["food_kwama_egg_02"] = this.TYPE.protein,
-    ["ingred_6th_corprusmeat_01"] = this.TYPE.protein,
+    ["ingred_kwama_cuttle_01"] = this.TYPE.meat,
+    ["ingred_6th_corprusmeat_05"] = this.TYPE.meat,
+    ["food_kwama_egg_02"] = this.TYPE.egg,
+    ["ingred_6th_corprusmeat_01"] = this.TYPE.meat,
     ["Ingred_lloramor_spines_01"] = this.TYPE.herb,
     ["ingred_russula_01"] = this.TYPE.mushroom,
     ["ingred_marshmerrow_01"] = this.TYPE.vegetable,
     ["ingred_guar_hide_marsus"] = this.TYPE.misc,
     ["Ingred_meadow_rye_01"] = this.TYPE.herb,
-    ["ingred_6th_corprusmeat_06"] = this.TYPE.protein,
-    ["ingred_6th_corprusmeat_03"] = this.TYPE.protein,
-    ["ingred_scrib_jelly_02"] = this.TYPE.protein,
+    ["ingred_6th_corprusmeat_06"] = this.TYPE.meat,
+    ["ingred_6th_corprusmeat_03"] = this.TYPE.meat,
+    ["ingred_scrib_jelly_02"] = this.TYPE.meat,
     ["ingred_moon_sugar_01"] = this.TYPE.misc,
     ["ingred_muck_01"] = this.TYPE.misc,
     ["ingred_bread_01_UNI3"] = this.TYPE.food,
@@ -120,7 +180,7 @@ this.ingredTypes = {
     ["ingred_emerald_pinetear"] = this.TYPE.misc,
     ["poison_goop00"] = this.TYPE.misc,
     ["ingred_racer_plumes_01"] = this.TYPE.misc,
-    ["ingred_rat_meat_01"] = this.TYPE.protein,
+    ["ingred_rat_meat_01"] = this.TYPE.meat,
     ["ingred_Dae_cursed_raw_ebony_01"] = this.TYPE.misc,
     ["ingred_raw_ebony_01"] = this.TYPE.misc,
     ["ingred_raw_glass_01"] = this.TYPE.misc,
@@ -138,15 +198,15 @@ this.ingredTypes = {
     ["ingred_scamp_skin_01"] = this.TYPE.misc,
     ["ingred_scathecraw_01"] = this.TYPE.herb,
     ["ingred_scrap_metal_01"] = this.TYPE.misc,
-    ["Ingred_scrib_cabbage_01"] = this.TYPE.protein,
-    ["ingred_scrib_jelly_01"] = this.TYPE.protein,
+    ["Ingred_scrib_cabbage_01"] = this.TYPE.meat,
+    ["ingred_scrib_jelly_01"] = this.TYPE.meat,
     ["ingred_scrib_jerky_01"] = this.TYPE.food,
     ["ingred_scuttle_01"] = this.TYPE.food,
     ["ingred_shalk_resin_01"] = this.TYPE.misc,
     ["ingred_sload_soap_01"] = this.TYPE.misc,
-    ["ingred_6th_corprusmeat_07"] = this.TYPE.protein,
-    ["food_kwama_egg_01"] = this.TYPE.protein,
-    ["ingred_6th_corprusmeat_02"] = this.TYPE.protein,
+    ["ingred_6th_corprusmeat_07"] = this.TYPE.meat,
+    ["food_kwama_egg_01"] = this.TYPE.egg,
+    ["ingred_6th_corprusmeat_02"] = this.TYPE.meat,
     ["ingred_snowbear_pelt_unique"] = this.TYPE.misc,
     ["ingred_snowwolf_pelt_unique"] = this.TYPE.misc,
     ["ingred_bc_spore_pod"] = this.TYPE.herb,
@@ -163,7 +223,7 @@ this.ingredTypes = {
     ["ingred_willow_anther_01"] = this.TYPE.herb,
     ["ingred_wolf_pelt"] = this.TYPE.misc,
     ["ingred_wolfsbane_01"] = this.TYPE.misc,
-    ["ingred_6th_corprusmeat_04"] = this.TYPE.protein,
+    ["ingred_6th_corprusmeat_04"] = this.TYPE.meat,
 
     --TR meats
 
@@ -190,25 +250,25 @@ this.ingredTypes = {
     ["T_IngFood_CloudyCorn_01"] = this.TYPE.food,
     ["T_IngFood_Cookie_01"] = this.TYPE.food,
     ["T_IngFood_Cookie_02"] = this.TYPE.food,
-    ["T_IngFood_EggChicken_01"] = this.TYPE.protein,
-    ["T_IngFood_EggMolecrab_01"] = this.TYPE.protein,
-    ["T_IngFood_EggOrnada_01"] = this.TYPE.protein,
+    ["T_IngFood_EggChicken_01"] = this.TYPE.egg,
+    ["T_IngFood_EggMolecrab_01"] = this.TYPE.egg,
+    ["T_IngFood_EggOrnada_01"] = this.TYPE.egg,
     ["T_IngFood_Fig_01"] = this.TYPE.food,
     ["T_IngFood_Fig_Dried_01"] = this.TYPE.food,
-    ["T_IngFood_FishBrowntrout_01"] = this.TYPE.protein,
-    ["T_IngFood_FishChrysophant_01"] = this.TYPE.protein,
-    ["T_IngFood_FishCod_01"] = this.TYPE.protein,
-    ["T_IngFood_FishCodDried_01"] = this.TYPE.protein,
-    ["T_IngFood_FishLeaperTail_01"] = this.TYPE.protein,
-    ["T_IngFood_FishLongfinFilet_01"] = this.TYPE.protein,
-    ["T_IngFood_FishPike_01"] = this.TYPE.protein,
-    ["T_IngFood_FishPikeperch_01"] = this.TYPE.protein,
-    ["T_IngFood_FishSalmon_01"] = this.TYPE.protein,
-    ["T_IngFood_FishSlaughterDried_01"] = this.TYPE.protein,
-    ["T_IngFood_FishSlaughterDried_02"] = this.TYPE.protein,
-    ["T_IngFood_FishSlaughterDried_03"] = this.TYPE.protein,
-    ["T_IngFood_FishSpr_01"] = this.TYPE.protein,
-    ["T_IngFood_FishStrid_01"] = this.TYPE.protein,
+    ["T_IngFood_FishBrowntrout_01"] = this.TYPE.meat,
+    ["T_IngFood_FishChrysophant_01"] = this.TYPE.meat,
+    ["T_IngFood_FishCod_01"] = this.TYPE.meat,
+    ["T_IngFood_FishCodDried_01"] = this.TYPE.food,
+    ["T_IngFood_FishLeaperTail_01"] = this.TYPE.meat,
+    ["T_IngFood_FishLongfinFilet_01"] = this.TYPE.cookedMeat,
+    ["T_IngFood_FishPike_01"] = this.TYPE.meat,
+    ["T_IngFood_FishPikeperch_01"] = this.TYPE.meat,
+    ["T_IngFood_FishSalmon_01"] = this.TYPE.meat,
+    ["T_IngFood_FishSlaughterDried_01"] = this.TYPE.food,
+    ["T_IngFood_FishSlaughterDried_02"] = this.TYPE.food,
+    ["T_IngFood_FishSlaughterDried_03"] = this.TYPE.food,
+    ["T_IngFood_FishSpr_01"] = this.TYPE.meat,
+    ["T_IngFood_FishStrid_01"] = this.TYPE.meat,
     ["T_IngFood_Flour_01"] = this.TYPE.food,
     ["T_IngFood_Garlic_01"] = this.TYPE.food,
     ["T_IngFood_Grape_01"] = this.TYPE.food,
@@ -219,28 +279,28 @@ this.ingredTypes = {
     ["T_IngFood_Ironrye_01"] = this.TYPE.food,
     ["T_IngFood_Leek_01"] = this.TYPE.herb,
     ["T_IngFood_Lyco_01"] = this.TYPE.food,
-    ["T_IngFood_MeatAlit_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatBeef_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatBoar_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatBoar_02"] = this.TYPE.protein,
-    ["T_IngFood_MeatBoarRoast_02"] = this.TYPE.protein,
-    ["T_IngFood_MeatChicken_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatChickenRoast_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatCliffracer_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatDurzog_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatGuar_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatHam_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatHorker_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatKagouti_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatKwama_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatMutton_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatNixhoundRoast_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatOrnada_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatParastylus_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatRat_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatRatRoast_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatVenison_01"] = this.TYPE.protein,
-    ["T_IngFood_MeatVenisonRoast_01"] = this.TYPE.protein,
+    ["T_IngFood_MeatAlit_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatBeef_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatBoar_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatBoar_02"] = this.TYPE.meat,
+    ["T_IngFood_MeatBoarRoast_02"] = this.TYPE.cookedMeat,
+    ["T_IngFood_MeatChicken_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatChickenRoast_01"] = this.TYPE.cookedMeat,
+    ["T_IngFood_MeatCliffracer_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatDurzog_01"] = this.TYPE.cookedMeat,
+    ["T_IngFood_MeatGuar_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatHam_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatHorker_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatKagouti_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatKwama_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatMutton_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatNixhoundRoast_01"] = this.TYPE.cookedMeat,
+    ["T_IngFood_MeatOrnada_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatParastylus_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatRat_01"] = this.TYPE.cookedMeat,
+    ["T_IngFood_MeatRatRoast_01"] = this.TYPE.cookedMeat,
+    ["T_IngFood_MeatVenison_01"] = this.TYPE.meat,
+    ["T_IngFood_MeatVenisonRoast_01"] = this.TYPE.cookedMeat,
     ["T_IngFood_Olives_01"] = this.TYPE.food,
     ["T_IngFood_Onion_01"] = this.TYPE.food,
     ["T_IngFood_PoppadGourd_01"] = this.TYPE.food,
@@ -260,67 +320,67 @@ this.ingredTypes = {
 
     --Cannibals
     
-    ["MOR_redguard_heart"] = this.TYPE.protein,
-    ["MOR_redguard_flesh"] = this.TYPE.protein,
-    ["MOR_redguard_eye"] = this.TYPE.protein,
-    ["MOR_redguard_brain"] = this.TYPE.protein,
-    ["MOR_orc_heart"] = this.TYPE.protein,
-    ["MOR_orc_flesh"] = this.TYPE.protein,
-    ["MOR_orc_eye"] = this.TYPE.protein,
-    ["MOR_orc_brain"] = this.TYPE.protein,
-    ["MOR_nord_heart"] = this.TYPE.protein,
-    ["MOR_nord_flesh"] = this.TYPE.protein,
-    ["MOR_nord_brain"] = this.TYPE.protein,
+    ["MOR_redguard_heart"] = this.TYPE.meat,
+    ["MOR_redguard_flesh"] = this.TYPE.meat,
+    ["MOR_redguard_eye"] = this.TYPE.meat,
+    ["MOR_redguard_brain"] = this.TYPE.meat,
+    ["MOR_orc_heart"] = this.TYPE.meat,
+    ["MOR_orc_flesh"] = this.TYPE.meat,
+    ["MOR_orc_eye"] = this.TYPE.meat,
+    ["MOR_orc_brain"] = this.TYPE.meat,
+    ["MOR_nord_heart"] = this.TYPE.meat,
+    ["MOR_nord_flesh"] = this.TYPE.meat,
+    ["MOR_nord_brain"] = this.TYPE.meat,
     ["MOR_nord_bones"] = this.TYPE.misc,
-    ["MOR_khajiit_heart"] = this.TYPE.protein,
-    ["MOR_khajiit_flesh"] = this.TYPE.protein,
-    ["MOR_khajiit_eye"] = this.TYPE.protein,
-    ["MOR_khajiit_ear"] = this.TYPE.protein,
-    ["MOR_khajiit_brain"] = this.TYPE.protein,
-    ["MOR_intestine"] = this.TYPE.protein,
-    ["MOR_imperial_tongue"] = this.TYPE.protein,
-    ["MOR_imperial_heart"] = this.TYPE.protein,
-    ["MOR_Imperial_flesh"] = this.TYPE.protein,
-    ["MOR_imperial_eye"] = this.TYPE.protein,
-    ["MOR_imperial_brain"] = this.TYPE.protein,
-    ["MOR_dunmer_heart"] = this.TYPE.protein,
-    ["MOR_dunmer_flesh"] = this.TYPE.protein,
-    ["MOR_dunmer_eye"] = this.TYPE.protein,
-    ["MOR_dunmer_brain"] = this.TYPE.protein,
-    ["MOR_breton_heart"] = this.TYPE.protein,
-    ["MOR_breton_flesh"] = this.TYPE.protein,
-    ["MOR_breton_eye"] = this.TYPE.protein,
-    ["MOR_breton_brain"] = this.TYPE.protein,
+    ["MOR_khajiit_heart"] = this.TYPE.meat,
+    ["MOR_khajiit_flesh"] = this.TYPE.meat,
+    ["MOR_khajiit_eye"] = this.TYPE.meat,
+    ["MOR_khajiit_ear"] = this.TYPE.meat,
+    ["MOR_khajiit_brain"] = this.TYPE.meat,
+    ["MOR_intestine"] = this.TYPE.meat,
+    ["MOR_imperial_tongue"] = this.TYPE.meat,
+    ["MOR_imperial_heart"] = this.TYPE.meat,
+    ["MOR_Imperial_flesh"] = this.TYPE.meat,
+    ["MOR_imperial_eye"] = this.TYPE.meat,
+    ["MOR_imperial_brain"] = this.TYPE.meat,
+    ["MOR_dunmer_heart"] = this.TYPE.meat,
+    ["MOR_dunmer_flesh"] = this.TYPE.meat,
+    ["MOR_dunmer_eye"] = this.TYPE.meat,
+    ["MOR_dunmer_brain"] = this.TYPE.meat,
+    ["MOR_breton_heart"] = this.TYPE.meat,
+    ["MOR_breton_flesh"] = this.TYPE.meat,
+    ["MOR_breton_eye"] = this.TYPE.meat,
+    ["MOR_breton_brain"] = this.TYPE.meat,
     ["MOR_bosmer_heart"] = this.TYPE.misc,
-    ["MOR_bosmer_flesh"] = this.TYPE.protein,
-    ["MOR_bosmer_eye"] = this.TYPE.protein,
-    ["MOR_bosmer_brain"] = this.TYPE.protein,
-    ["MOR_argo_tail"] = this.TYPE.protein,
-    ["MOR_argo_heart"] = this.TYPE.protein,
-    ["MOR_argo_flesh"] = this.TYPE.protein,
-    ["MOR_argo_eye"] = this.TYPE.protein,
-    ["MOR_arg_brain"] = this.TYPE.protein,
-    ["MOR_altmer_heart"] = this.TYPE.protein,
-    ["MOR_altmer_flesh"] = this.TYPE.protein,
-    ["MOR_altmer_brain"] = this.TYPE.protein,
-    ["MOR_altmer_eye"] = this.TYPE.protein,	
+    ["MOR_bosmer_flesh"] = this.TYPE.meat,
+    ["MOR_bosmer_eye"] = this.TYPE.meat,
+    ["MOR_bosmer_brain"] = this.TYPE.meat,
+    ["MOR_argo_tail"] = this.TYPE.meat,
+    ["MOR_argo_heart"] = this.TYPE.meat,
+    ["MOR_argo_flesh"] = this.TYPE.meat,
+    ["MOR_argo_eye"] = this.TYPE.meat,
+    ["MOR_arg_brain"] = this.TYPE.meat,
+    ["MOR_altmer_heart"] = this.TYPE.meat,
+    ["MOR_altmer_flesh"] = this.TYPE.meat,
+    ["MOR_altmer_brain"] = this.TYPE.meat,
+    ["MOR_altmer_eye"] = this.TYPE.meat,	
     
     --PL Creatures
     
     ["plx_wasp_sting"] = this.TYPE.misc,
-    ["plx_vissed_meat"] = this.TYPE.protein,
+    ["plx_vissed_meat"] = this.TYPE.meat,
     ["plx_squirrel_tail"] = this.TYPE.misc,
-    ["plx_slarsa_meat"] = this.TYPE.protein,
+    ["plx_slarsa_meat"] = this.TYPE.meat,
     ["plx_scorp_sting"] = this.TYPE.misc,
-    ["plx_Rhurlymn_meat"] = this.TYPE.protein,
+    ["plx_Rhurlymn_meat"] = this.TYPE.meat,
     ["plx_rat_meat_D"] = this.TYPE.misc,
     ["plx_rat_meat_B"] = this.TYPE.misc,
-    ["plx_raptor_meat"] = this.TYPE.protein,
+    ["plx_raptor_meat"] = this.TYPE.meat,
     ["plx_rabbit_foot"] = this.TYPE.misc,
     ["plx_netch_jelly"] = this.TYPE.misc,
     ["plx_moose_antlers"] = this.TYPE.misc,
     ["plx_kagouti_meat_B"] = this.TYPE.misc,
-    ["plx_kagouti_meat"] = this.TYPE.protein,
+    ["plx_kagouti_meat"] = this.TYPE.meat,
     ["plx_ingred_spidersilk"] = this.TYPE.misc,
     ["plx_ingred_shell_shalk"] = this.TYPE.misc,
     ["plx_ingred_shell_scrib"] = this.TYPE.misc,
@@ -330,15 +390,15 @@ this.ingredTypes = {
     ["plx_ingred_shell_beetle3"] = this.TYPE.misc,
     ["plx_ingred_shell_beetle2"] = this.TYPE.misc,
     ["plx_ingred_shell_beetle1"] = this.TYPE.misc,
-    ["plx_ingred_paraflesh"] = this.TYPE.protein,
+    ["plx_ingred_paraflesh"] = this.TYPE.meat,
     ["plx_ingred_kriin_hide"] = this.TYPE.misc,
-    ["plx_ingred_kriin_flesh"] = this.TYPE.protein,
-    ["plx_ingred_HellHound"] = this.TYPE.protein,
+    ["plx_ingred_kriin_flesh"] = this.TYPE.meat,
+    ["plx_ingred_HellHound"] = this.TYPE.meat,
     ["plx_ingred_daedricbat"] = this.TYPE.misc,
     ["plx_imp_glands"] = this.TYPE.misc,
     ["plx_hound_meat_D"] = this.TYPE.misc,
     ["plx_hound_meat_B"] = this.TYPE.misc,
-    ["plx_guar_meat"] = this.TYPE.protein,
+    ["plx_guar_meat"] = this.TYPE.meat,
     ["plx_grom"] = this.TYPE.misc,
     ["plx_gargoyle_grains"] = this.TYPE.misc,
     ["plx_crab_meat_D"] = this.TYPE.misc,
@@ -346,13 +406,13 @@ this.ingredTypes = {
     ["plx_butterfly2_wing"] = this.TYPE.misc,
     ["plx_alit_meat_D"] = this.TYPE.misc,
     ["plx_alit_meat_B"] = this.TYPE.misc,
-    ["plx_alit_meat"] = this.TYPE.protein,
+    ["plx_alit_meat"] = this.TYPE.meat,
 
     
     --Abot's Water Life and Birds
     
     ["ab01ingred_bee"] = this.TYPE.misc,
-    ["ab01ingred_bird_meat"] = this.TYPE.protein,
+    ["ab01ingred_bird_meat"] = this.TYPE.meat,
     ["ab01ingred_bird_plumes"] = this.TYPE.misc,
     ["ab01ingred_butt01wing"] = this.TYPE.misc,
     ["ab01ingred_butt02wing"] = this.TYPE.misc,
@@ -377,8 +437,8 @@ this.ingredTypes = {
     ["ab01ingred_coral07"] = this.TYPE.misc,
     ["ab01ingred_coral08"] = this.TYPE.misc,
     ["ab01ingred_coral09"] = this.TYPE.misc,
-    ["ab01ingred_egg02"] = this.TYPE.protein,
-    ["ab01ingred_eggGold"] = this.TYPE.protein,
+    ["ab01ingred_egg02"] = this.TYPE.egg,
+    ["ab01ingred_eggGold"] = this.TYPE.egg,
     ["ab01ingred_firefly"] = this.TYPE.misc,
     ["ab01ingred_greyMatter"] = this.TYPE.misc,
     ["ab01ingred_grom"] = this.TYPE.misc,
@@ -396,12 +456,12 @@ this.ingredTypes = {
     ["ab01ingred_sandCoin08"] = this.TYPE.misc,
     ["ab01ingred_seaHorse"] = this.TYPE.misc,
     ["ab01ingred_sealBlubber"] = this.TYPE.misc,
-    ["ab01ingred_seaStar01"] = this.TYPE.protein,
-    ["ab01ingred_seaStar02"] = this.TYPE.protein,
-    ["ab01ingred_seaStar03"] = this.TYPE.protein,
-    ["ab01ingred_seaStar05"] = this.TYPE.protein,
-    ["ab01ingred_seaStar06"] = this.TYPE.protein,
-    ["ab01ingred_seaStar07"] = this.TYPE.protein,
+    ["ab01ingred_seaStar01"] = this.TYPE.meat,
+    ["ab01ingred_seaStar02"] = this.TYPE.meat,
+    ["ab01ingred_seaStar03"] = this.TYPE.meat,
+    ["ab01ingred_seaStar05"] = this.TYPE.meat,
+    ["ab01ingred_seaStar06"] = this.TYPE.meat,
+    ["ab01ingred_seaStar07"] = this.TYPE.meat,
     ["ab01ingred_sharkJaws"] = this.TYPE.misc,
     ["ab01ingred_sharkTooth"] = this.TYPE.misc,
     ["ab01ingred_shell01"] = this.TYPE.misc,
@@ -414,7 +474,7 @@ this.ingredTypes = {
     ["ab01ingred_snailGoo"] = this.TYPE.misc,
     ["ab01ingred_snailGoop"] = this.TYPE.misc,
     ["ab01ingred_spermwhaleTooth"] = this.TYPE.misc,
-    ["ab01ingred_turtleMeat"] = this.TYPE.protein,
+    ["ab01ingred_turtleMeat"] = this.TYPE.meat,
     ["db_vegi_batfur"] = this.TYPE.misc,
     ["db_vegi_batwing"] = this.TYPE.misc,
     ["FKA_feathers"] = this.TYPE.misc,
@@ -422,10 +482,10 @@ this.ingredTypes = {
     ["LL_Ingr_Sponge2"] = this.TYPE.misc,
     ["LL_Ingr_Sponge3"] = this.TYPE.misc,
     ["ndib_ingred_pearl_black"] = this.TYPE.misc,
-    ["NOM_food_fish"] = this.TYPE.protein,
-    ["NOM_food_fish_fat_01"] = this.TYPE.protein,
-    ["NOM_food_fish_fat_02"] = this.TYPE.protein,
-    ["NOM_food_meat"] = this.TYPE.protein,
+    ["NOM_food_fish"] = this.TYPE.meat,
+    ["NOM_food_fish_fat_01"] = this.TYPE.meat,
+    ["NOM_food_fish_fat_02"] = this.TYPE.meat,
+    ["NOM_food_meat"] = this.TYPE.meat,
     ["ab01ingred_barnacles01"] = this.TYPE.misc,
     ["ab01ingred_alga05"] = this.TYPE.herb,
     ["ab01ingred_alga04"] = this.TYPE.herb,
@@ -436,12 +496,12 @@ this.ingredTypes = {
 
     
     --Danae's Cliff Racers
-    ["mc_racer_raw"] = this.TYPE.protein,
+    ["mc_racer_raw"] = this.TYPE.meat,
     
     --My custom
 
-    ["mer_ingfood_fish"] = this.TYPE.protein,
-
+    ["mer_ingfood_fish"] = this.TYPE.meat,
+    
     --TR
     ["T_IngSpice_Saffron_01"] = this.TYPE.seasoning,
 	["T_IngSpice_Pepper_01"] = this.TYPE.seasoning,
@@ -451,10 +511,10 @@ this.ingredTypes = {
 	["T_IngSpice_Curcuma_01"] = this.TYPE.seasoning,
 	["T_IngSpice_Cardamon_01"] = this.TYPE.seasoning,
 	["T_IngSpice_Anise_01"] = this.TYPE.seasoning,
-	["T_IngFood_MeatHorse_01"] = this.TYPE.protein,
+	["T_IngFood_MeatHorse_01"] = this.TYPE.meat,
 	["T_IngFood_MeatArenthJerky_01"]= this.TYPE.food,
 	["T_IngFood_Gooseb01"] = this.TYPE.food,
-	["T_IngFood_EggSeagull_01"] = this.TYPE.protein,
+	["T_IngFood_EggSeagull_01"] = this.TYPE.egg,
 	["T_IngFood_BridethornBerry_01"] = this.TYPE.food,
 	["T_IngFlor_SummerBolete_01"] = this.TYPE.mushroom,
 	["T_IngFlor_RustRussula_01"] = this.TYPE.mushroom,
@@ -479,7 +539,7 @@ this.ingredTypes = {
   ["NOM_food_cabbage"] = this.TYPE.food,
   ["NOM_food_corkbulb_roast"] = this.TYPE.food,
   ["NOM_food_crab_slice"] = this.TYPE.food,
-  ["NOM_food_egg2"] = this.TYPE.food,
+  ["NOM_food_egg2"] = this.TYPE.egg,
   ["NOM_food_fruit_salad"] = this.TYPE.food,
   ["NOM_food_grilled_fish"] = this.TYPE.food,
   ["NOM_food_hackle-lo"] = this.TYPE.food,
@@ -514,5 +574,7 @@ this.ingredTypes = {
   ["NOM_sugar"] = this.TYPE.seasoning,
   ["NOM_yeast"] = this.TYPE.mushroom,
 }
+
+
 
 return this

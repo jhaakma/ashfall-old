@@ -10,7 +10,11 @@ return {
     requirements = function(campfire)
         return (
             mwscript.getItemCount{ reference = tes3.player, item = common.staticConfigs.objectIds.firewood } > 0 and
-            ( campfire.data.fuelLevel < common.staticConfigs.maxWoodInFire or campfire.data.burned == true )
+            ( 
+                campfire.data.fuelLevel < common.staticConfigs.maxWoodInFire or 
+                campfire.data.burned == true 
+            ) and
+            campfire.data.dynamicConfig
         )
     end,
     callback = function(campfire)

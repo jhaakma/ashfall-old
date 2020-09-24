@@ -18,7 +18,7 @@ local ReferenceController = {
     removeReference = function(self, ref)
             self.references[ref] = nil
     end,
-
+ 
     references = nil,
     requirements = nil
 }
@@ -26,7 +26,9 @@ local ReferenceController = {
 this.controllers = {
     campfire = ReferenceController:new{
         requirements = function(self, ref)
-            return activatorConfig.list.campfire:isActivator(ref.object.id)
+            return (
+                activatorConfig.list.campfire:isActivator(ref.object.id)
+            )
         end
     },
 
@@ -44,7 +46,11 @@ this.controllers = {
 
     boiler = ReferenceController:new{
         requirements = function(self, ref)
-            return ref.data and ref.data.waterAmount
+            return (
+                ref.data and 
+                ref.data.waterAmount and
+                ref.data.utensil
+        )
         end
     },
 

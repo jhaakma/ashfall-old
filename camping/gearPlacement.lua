@@ -3,6 +3,9 @@ local common = require("mer.ashfall.common.common")
 --[[
     Orients a placed object and lowers it into the ground so it lays flat against the terrain,
 ]]
+ 
+
+
 
 
 local function onDropGear(e)
@@ -34,10 +37,44 @@ local function onDropGear(e)
                     e.reference.position.y, 
                     e.reference.position.z - gearValues.drop, 
                 }
-                
             end
         end)
     end
 end
 
 event.register("itemDropped", onDropGear)
+
+
+--[[
+    For any mesh with the "verticalise" flag, find nodes to set to vertical
+]]
+local function verticaliseNodes(e)
+    -- local ref = e.reference
+    -- local refTable = {
+    --     [ref] = ref
+    -- }
+    local function f() 
+        if e.reference.disabled then return end
+        local reference = e.reference
+        if reference.sceneNode and reference.sceneNode:hasStringDataWith("verticalise") then
+            mwse.log("Verticalising %s", e.reference.object.id)
+            local vertNode = reference.sceneNode:getObjectByName("ALIGN_VERTICAL")
+            local function verticalise(node)
+                local z = node.worldTransform.rotation:copy()
+                z:toRotationZ(z:toEulerXYZ().z)
+                node.rotation = node.worldTransform.rotation:invert() * z
+                node:update()
+            end
+            if vertNode then
+                verticalise(vertNode)
+            end
+            local collisionNode = reference.sceneNode:getObjectByName("COLLISION_VERTICAL")
+            if collisionNode then
+                verticalise(collisionNode)
+            end
+        end
+    end
+    event.register("enterFrame", f, {doOnce=true})
+end
+event.register("Ashfall:VerticaliseNodes", verticaliseNodes)
+event.register("referenceSceneNodeCreated", verticaliseNodes)

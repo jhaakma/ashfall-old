@@ -4,9 +4,9 @@ local common = require ("mer.ashfall.common.common")
     Mapping of campfire states to switch node states.
 ]]
 local switchNodeValues = {
-    SWITCH_BASE = function()
-        local state = { OFF = 0, ON = 1, }
-        return state.ON
+    SWITCH_BASE = function(campfire)
+        local state = { OFF = 0, LIT = 1, UNLIT = 2 }
+        return campfire.data.isLit and state.LIT or state.UNLIT
     end,
     SWITCH_FIRE = function(campfire)
         local state = { OFF = 0, LIT = 1, UNLIT = 2 }
@@ -87,7 +87,7 @@ local function updateLightingRadius(campfire)
         if not campfire.data.isLit then
             campfire.light:setAttenuationForRadius(0)
         else
-            local newRadius = math.clamp( ( campfire.data.fuelLevel / 10 ), 0, 1) * radius
+            local newRadius = math.clamp( ( campfire.data.fuelLevel / 10 ), 0.1, 1) * radius
             campfire.light:setAttenuationForRadius(newRadius)
         end
     end
@@ -106,7 +106,7 @@ end
 local function updateWaterHeight(campfire)
     local scaleMax = 1.3
     local heightMax = 28
-    if campfire.data.utensil == "cookingPot" and campfire.data.waterAmount then
+    if campfire.data.waterAmount then
         local waterLevel = campfire.data.waterAmount or 0
         local scale = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 1, scaleMax), scaleMax )
         local height = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 0, heightMax), heightMax)
@@ -117,7 +117,6 @@ local function updateWaterHeight(campfire)
         local stewnode = campfire.sceneNode:getObjectByName("POT_STEW")
         stewnode.translation.z = height
         stewnode.scale = scale
-        
     end
 end
 
@@ -132,28 +131,31 @@ local function updateSteamScale(campfire)
     if hasSteam then
         local steamScale = math.min(math.remap(campfire.data.waterHeat, common.staticConfigs.hotWaterHeatValue
     , 100, 0.5, 1.0), 1.0)
-        local steamNode = campfire.sceneNode:getObjectByName("POT_STEAM").children[1]
+        local steamNode = campfire.sceneNode:getObjectByName("POT_STEAM")
+        if steamNode then steamNode = steamNode.children[1] end
         steamNode.scale = steamScale
     end
 end
 
 --Update the collision box of the campfire
 local function updateCollision(campfire)
-    local collisionSwitch = campfire.sceneNode:getObjectByName("COLLISION_SUPPORTS")
-    if campfire.data.hasSupports then
-        collisionSwitch.flags = 32
-    else
-        collisionSwitch.flags = 0
+    local collisionNode = campfire.sceneNode:getObjectByName("COLLISION_SUPPORTS")
+    if collisionNode then
+        if campfire.data.hasSupports then
+            collisionNode.scale = 1.0
+        else
+            collisionNode.scale = 0.0
+        end
     end
 
     if campfire.data.destroyed then     
         --Remove collision node
-        local collisionNode = campfire.sceneNode:getObjectByName("COLLISION_BASE")
-        collisionNode.scale = 0
+        local collisionNode = campfire.sceneNode:getObjectByName("COLLISION")
+        if collisionNode then
+            collisionNode.scale = 0
+        end
     end
 end
-
-
 
 
 local function updateVisuals(e)

@@ -5,6 +5,8 @@ return {
     requirements = function(campfire)
         return ( 
             not campfire.data.hasGrill and
+            campfire.data.dynamicConfig and
+            campfire.data.dynamicConfig.grill == "dynamic" and
             mwscript.getItemCount{ reference = tes3.player, item = common.staticConfigs.objectIds.grill } > 0
         )
     end,

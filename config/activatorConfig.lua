@@ -1,6 +1,9 @@
 local Activator = require("mer.ashfall.objects.Activator")
 local this = {}
 
+
+
+
 this.types = {
     waterSource = "waterSource",
     dirtyWaterSource = "dirtyWaterSource",
@@ -34,11 +37,20 @@ this.list = {
             ["terrwater_circle"] = true,
         }
     },
+    basin = Activator:new{
+        name = "Basin",
+        type = this.types.waterSource,
+        mcmSetting = "enableThirst",
+        ids = {
+            ["act_basin_telv_wood"] = true --UL
+        }
+    },
     well = Activator:new{ 
         name = "Well", 
         type = this.types.waterSource,
         mcmSetting = "enableThirst",
         ids = {
+            ["mr_hlaalu_well_01"] = true,
             ["ex_nord_well_01"] = true,
             ["ex_nord_well_01a"] = true,
             ["furn_well00"] = true,
@@ -122,7 +134,15 @@ this.list = {
             ["t_de_sethla_x_well_01"] = true,
             ["t_de_setind_x_well_01"] = true,
             ["t_de_setind_x_waterspray_01"] = true,
-        }
+
+            --well diversified
+            ["_ex_hlaalu_well"] = true,
+            ["izi_hlaalu_well"] = true,
+            ["ex_imp_well_01"] = true,
+            ["ex_s_well_01"] = true,
+            ["bw_ex_hlaalu_well"] = true,
+            ["rp_wooden_well"] = true,
+        } 
     },
     keg = Activator:new{ 
         name = "Keg", 
@@ -159,7 +179,8 @@ this.list = {
             ["vurt_palm"] = true,
             ["vurt_unicy"] = true,
             ["floraat_tree_"] = true,
-            ["pine_tree"] = true,--vsw 
+            ["pine_tree"] = true,--vsw
+            ["mr_flora_graze_tree "] = true --Rebirth
         },
     },
     wood = Activator:new{ 
@@ -186,7 +207,7 @@ this.list = {
             ["vurt_neentree"] = true,
             ["vurt_palm"] = true,
             ["vurt_unicy"] = true,
-            ["furn_log"] = true
+            --["furn_log"] = true
         }
     },
     fire = Activator:new{ 
@@ -197,7 +218,7 @@ this.list = {
             ["firepit_f"] = true,
             ["firepit_lit"] = true,
             ["firepit_roaring"] = true,
-            ["light_pitfire"] = true,
+            --["light_pitfire"] = true,
             ["light_logpile"] = true
         }
     },
@@ -208,24 +229,24 @@ this.list = {
         mcmSetting = nil,
         ids = {
            ["ashfall_campfire"] = true,
+           ["ashfall_campfire_static"] = true,
+           ["ashfall_campfire_sup"] = true,
+           ["ashfall_campfire_grill"] = true,
         },
         hasMenu = true,
-        isStewer = true,
-        isGriller = true,
-        isFuelConsumer = true,
         grillMinHeight = 21,
         grillMaxHeight = 50,
         grillDistance = 40
     },
 
-    cookingPot = Activator:new{ 
-        name = "Cooking Pot", 
-        type = this.types.cookingUtensil,
-        mcmSetting = "enableCooking",
-        ids = {
-            ["furn_com_cauldron_01"] = true,
-        },
-    },
+    -- cookingPot = Activator:new{ 
+    --     name = "Cooking Pot", 
+    --     type = this.types.cookingUtensil,
+    --     mcmSetting = "enableCooking",
+    --     ids = {
+    --         ["furn_com_cauldron_01"] = true,
+    --     },
+    -- },
 
     cauldron = Activator:new{
         name = "Cauldron",

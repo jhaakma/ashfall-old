@@ -11,10 +11,10 @@ local activatorConfig = common.staticConfigs.activatorConfig
 --max distance where fire has an effect
 local heatValues = {
     lantern = 3,
-    lamp = 2,
-    candle = 3, 
-    chandelier = 2,
-    sconce = 10,
+    lamp = 1,
+    candle = 1, 
+    chandelier = 1,
+    sconce = 5,
     torch = 12,
     fire = 18,
     flame = 20,
@@ -69,7 +69,7 @@ function this.calculateFireEffect()
                     local maxHeat = heatDefault
                     --Firepits have special logic for hand warming
                     
-                    if ref.object.id == common.staticConfigs.objectIds.campfire then
+                    if activatorConfig.list.campfire.ids[ref.object.id:lower()] then
                         if ref.data.isLit then
                             local fuel = ref.data.fuelLevel
                             if fuel then

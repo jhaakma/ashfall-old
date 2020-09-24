@@ -10,7 +10,7 @@ local function setupOuterBlock(e)
     e.paddingBottom = 2
     e.paddingLeft = 6
     e.paddingRight = 6
-    e.autoWidth = 1.0
+    e.autoWidth = true
     e.autoHeight = true
     e.childAlignX = 0.5
 end
@@ -23,12 +23,18 @@ local function createTooltip(tooltip, labelText, color)
     local outerBlock = mainBlock:createBlock()
     setupOuterBlock(outerBlock)
 
-    local label = outerBlock:createLabel({text = labelText})
-    label.autoHeight = true
-    label.autoWidth = true
-    if color then label.color = color end
     mainBlock:reorderChildren(1, -1, 1)
     mainBlock:updateLayout()
+    if labelText then
+        local label = outerBlock:createLabel({text = labelText})
+        label.autoHeight = true
+        label.autoWidth = true
+        if color then label.color = color end
+        return label
+    end
+
+    return outerBlock
+
 end
 
 
@@ -40,8 +46,8 @@ local function updateFoodAndWaterTile(e)
 
     --bottles show water amount
     local bottleData = thirstController.getBottleData(e.item.id) 
-    if e.itemData and bottleData then
-        local liquidLevel = e.itemData.data.waterAmount or 0
+    if bottleData then
+        local liquidLevel = e.itemData and e.itemData.data.waterAmount or 0
         local capacity = bottleData.capacity
         local maxHeight = 32 * ( capacity / common.staticConfigs.capacities.MAX)
 
@@ -54,14 +60,14 @@ local function updateFoodAndWaterTile(e)
         indicatorBlock.paddingAllSides = 2
 
         local levelIndicator = indicatorBlock:createImage({ path = "textures/menu_bar_blue.dds" })
+
         --Add brown tinge to dirty water
-        if e.itemData.data.waterDirty then
+        if e.itemData and e.itemData.data.waterType == "dirty" then
             levelIndicator.color = { 0.8, 0.6, 0.5 }
+        elseif e.itemData and teaConfig.teaTypes[e.itemData.data.waterType] then
+            levelIndicator.color = teaConfig.tooltipColor
         end
-        --Add green tinge to Tea
-        if e.itemData.data.teaType then
-            levelIndicator.color = { 0.4, 0.8, 0.4 }
-        end
+
         levelIndicator.consumeMouseEvents = false
         levelIndicator.width = 6
         levelIndicator.height = maxHeight * ( liquidLevel / capacity )
@@ -69,11 +75,7 @@ local function updateFoodAndWaterTile(e)
         levelIndicator.absolutePosAlignY = 1.0
     end
 
-
-    local isCookable = (
-        foodConfig.grillValues[foodConfig.ingredTypes[e.item.id]]
-    )
-    if isCookable then
+    if foodConfig.getGrillValues(e.item.id) then
         local maxHeight = 32
 
         local indicatorBlock = e.element:createThinBorder()
@@ -94,10 +96,7 @@ local function updateFoodAndWaterTile(e)
         if hasCookedValue then
             local cookedAmount =  e.itemData.data.cookedAmount
             local capacity = 100
-
-
-
-
+            
             local indicatorImage = "textures/menu_bar_red.dds"
             if e.itemData.data.grillState == "burnt" then
                 indicatorImage = "textures/menu_bar_gray.dds"
@@ -167,33 +166,47 @@ local function createNeedsTooltip(e)
     if e.object.objectType == tes3.objectType.ingredient then
         if common.config.getConfig().enableHunger  then
             --hunger value
-            local foodValue = hungerController.getFoodValue(e.object, e.itemData)
-            if foodValue and foodValue ~= 0 then
-                labelText = string.format('Food Value: %d', foodValue)
+            local nutrition = hungerController.getNutrition(e.object, e.itemData)
+            if nutrition and nutrition ~= 0 then
+                labelText = string.format("Nutrition: %d", nutrition)
                 createTooltip(tooltip, labelText)
             end
 
             --cook state
-            local thisFoodType = foodConfig.ingredTypes[e.object.id]
-            if thisFoodType then
-                local cookedLabel = ""
-                if foodConfig.grillValues[thisFoodType] then
-                    local cookedAmount = e.itemData and e.itemData.data.cookedAmount
-                    if cookedAmount and e.itemData.data.grillState == nil then
-                        cookedLabel = string.format(" (%d%% Cooked)", cookedAmount)
-                    elseif e.itemData and e.itemData.data.grillState == "cooked"  then
-                        cookedLabel = " (Cooked)"
-                    elseif  e.itemData and e.itemData.data.grillState == "burnt" then
-                        cookedLabel = " (Burnt)"
-                    else
-                        cookedLabel = " (Raw)"
-                    end
-                end
+            local thisFoodType = foodConfig.getFoodType(e.object.id)
 
-                local foodTypeLabel = string.format("%s%s", thisFoodType, cookedLabel)
-                createTooltip(tooltip, foodTypeLabel)
-                
+            --Remove cook state from the ingredient name for TR foods
+            local cookStrings = {
+                "raw ",
+                "cooked ",
+                "grilled ",
+                "roasted "
+            }
+            local nameLabel = e.tooltip:findChild(tes3ui.registerID("HelpMenu_name"))
+            for _, pattern in ipairs(cookStrings) do
+                if string.startswith(nameLabel.text:lower(), pattern) then
+                    nameLabel.text = nameLabel.text:sub(string.len(pattern) + 1, -1)
+                end
             end
+
+            --Add Food type and Cook state label to Tooltip
+            local cookedLabel = ""
+            if foodConfig.getGrillValues(e.object.id) then
+                local cookedAmount = e.itemData and e.itemData.data.cookedAmount
+                if cookedAmount and e.itemData.data.grillState == nil then
+                    cookedLabel = string.format(" (%d%% Cooked)", cookedAmount)
+                elseif e.itemData and e.itemData.data.grillState == "cooked"  then
+                    cookedLabel = " (Cooked)"
+                elseif  e.itemData and e.itemData.data.grillState == "burnt" then
+                    cookedLabel = " (Burnt)"
+                else
+                    cookedLabel = " (Raw)"
+                end
+            end
+
+            local foodTypeLabel = string.format("%s%s", thisFoodType, cookedLabel)
+            createTooltip(tooltip, foodTypeLabel)
+
         end
 
         --Meat disease/blight
@@ -219,21 +232,34 @@ local function createNeedsTooltip(e)
         if bottleData then
             local liquidLevel = e.itemData and e.itemData.data.waterAmount or 0
 
-            --Tea
-            if e.itemData and e.itemData.data.teaType then
-                local teaName = teaConfig.teaTypes[e.itemData.data.teaType].teaName
-                labelText = string.format('%s: %d/%d', teaName, math.ceil(liquidLevel), bottleData.capacity)
+
             --Dirty Water
-            elseif e.itemData and e.itemData.data.waterDirty then
+            if e.itemData and e.itemData.data.waterType == "dirty" then
                 labelText = string.format('Water: %d/%d (Dirty)', math.ceil(liquidLevel), bottleData.capacity)
+            --Tea
+            elseif e.itemData and teaConfig.teaTypes[e.itemData.data.waterType] then
+                local teaName = teaConfig.teaTypes[e.itemData.data.waterType].teaName
+                labelText = string.format('%s: %d/%d', teaName, math.ceil(liquidLevel), bottleData.capacity)
+
+                --Tea description
+                local effectBlock = createTooltip(tooltip)
+                effectBlock.borderAllSides = 6
+                effectBlock.childAlignX = 0.5
+                effectBlock.autoHeight = true
+                effectBlock.widthProportional = 1.0
+                effectBlock.flowDirection = "left_to_right"
+
+                local icon = effectBlock:createImage{ path = "Icons/ashfall/spell/teaBuff.dds" }
+                icon.height = 16
+                icon.width = 16
+                icon.scaleMode = true
+
+                local effectText = teaConfig.teaTypes[e.itemData.data.waterType].effectDescription
+                local effectLabel = effectBlock:createLabel{ text = effectText }
+                effectLabel.borderLeft = 5
             --Regular Water
             else
                 labelText = string.format('Water: %d/%d', math.ceil(liquidLevel), bottleData.capacity)
-            end
-
-            if e.itemData and e.itemData.data.teaType then
-                local effectText = teaConfig.teaTypes[e.itemData.data.teaType].effectDescription
-                createTooltip(tooltip, effectText , tes3ui.getPalette("positive_color"))
             end
 
             createTooltip(tooltip, labelText)
@@ -249,9 +275,6 @@ local function createNeedsTooltip(e)
             end
         end
     end
-
-
-
 end
 
 event.register('uiObjectTooltip', createNeedsTooltip)
@@ -264,6 +287,8 @@ local function teaBrewingTooltip(e)
     if common.data.inventorySelectTeaBrew then
         local teaData = teaConfig.teaTypes[e.object.id:lower()]
         if teaData then
+
+            --Remove everything already there
             for i = 2, #tooltip.children do
                 tooltip.children[i].visible = false
             end
@@ -271,24 +296,32 @@ local function teaBrewingTooltip(e)
 
             local textBlock = tooltip:createBlock{ id = tes3ui.registerID("Ashfall:TeaDescription")}
             textBlock.flowDirection = "top_to_bottom"
-            textBlock.maxWidth = 310
+            --textBlock.maxWidth = 310
             textBlock.paddingAllSides = 6
             textBlock.autoHeight = true
             textBlock.autoWidth = true
+
+
             local teaDescription = textBlock:createLabel{ text = teaData.teaDescription }
             teaDescription.wrapText = true
-            local effectLabelText = teaData.effectDescription
-            -- if teaData.duration then 
-            --     effectLabelText = string.format("%s for %d hour%s",
-            --         teaData.effectDescription,
-            --         teaData.duration,
-            --         teaData.duration > 1 and "s" or ""
-            --     )
-            -- end
+            teaDescription.maxWidth = 300
 
-            local teaEffects = textBlock:createLabel{ text = effectLabelText }
-            teaEffects.borderTop = 5
-            teaEffects.color = tes3ui.getPalette("positive_color")
+            --Tea description
+            local effectBlock = textBlock:createBlock()
+            effectBlock.borderAllSides = 6
+            effectBlock.childAlignX = 0.5
+            effectBlock.autoHeight = true
+            effectBlock.widthProportional = 1.0
+            effectBlock.flowDirection = "left_to_right"
+
+            local icon = effectBlock:createImage{ path = "Icons/ashfall/spell/teaBuff.dds" }
+            icon.height = 16
+            icon.width = 16
+            icon.scaleMode = true
+
+            local effectText = teaData.effectDescription
+            local effectLabel = effectBlock:createLabel{ text = effectText }
+            effectLabel.borderLeft = 5
         end
     end
 end

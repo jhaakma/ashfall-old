@@ -1,14 +1,26 @@
+
+--[[
+    Initialises static campfires as Ashfall campfires, 
+    with a random chance of having utensils attached, that
+    may have water, tea or stew in them. 
+
+]]
 local common = require ("mer.ashfall.common.common")
+
 
 local function initialiseCampfireSoundAndFlame()
     local function doUpdate(campfire)
+        if tes3.player.cell ~= campfire.cell then return end
+
+        if campfire.data.isLit ~= true then
+            campfire:deleteDynamicLightAttachment()
+        end
+
         if campfire.data.isLit then
             tes3.removeSound{
                 sound = "Fire",
                 reference = campfire,
             }
-            local lightNode = campfire.sceneNode:getObjectByName("AttachLight")
-            lightNode.translation.z = 25
         end
         if campfire.data.waterHeat and campfire.data.waterHeat >= common.staticConfigs.hotWaterHeatValue then
             tes3.removeSound{
@@ -20,6 +32,7 @@ local function initialiseCampfireSoundAndFlame()
         --Add spells a frame after they have been removed
         timer.delayOneFrame(function()
             if campfire.data.isLit then
+                common.log:debug("initilaliseCampfire: playing sound on %s", campfire.object.id)
                 tes3.playSound{
                     sound = "Fire",
                     reference = campfire,
@@ -62,21 +75,20 @@ local function loaded()
     }
     initialiseCampfireSoundAndFlame()
 end
-
 event.register("loaded", loaded)
 
 
 
 -- Extinguish the campfire
 local function extinguish(e)
+    mwse.log("extinguish")
     local campfire = e.fuelConsumer
     local playSound = e.playSound ~= nil and e.playSound or true
 
     tes3.removeSound{ reference = campfire, sound = "Fire" }
 
-    --Move the light node so it doesn't cause the unlit campfire to glow
-    local lightNode = campfire.sceneNode:getObjectByName("AttachLight")
-    lightNode.translation.z = 0
+    --Remove light
+    campfire:deleteDynamicLightAttachment()
 
     --Start and stop the torchout sound if necessary
     if playSound and campfire.data.isLit then
@@ -91,7 +103,6 @@ local function extinguish(e)
                 end
             }
         end)
-
     end
     campfire.data.isLit = false
     campfire.data.burned = true
@@ -99,96 +110,36 @@ local function extinguish(e)
 end
 event.register("Ashfall:fuelConsumer_Extinguish", extinguish)
 
---[[
-    Mapping of which buttons can appear for each part of the campfire selected
-]]
-local buttonMapping = {
-    ["Grill"] = {
-        "removeGrill",
-        "cancel"
-    },
-    ["Cooking Pot"] = {
-        "drink",
-        "fillContainer",
-        "eatStew",
-        "companionEatStew",
-        "addIngredient",
-        "addWater",
-        "emptyPot",
-        "removePot",
-        "cancel",
-    },
-    ["Kettle"] = {
-        "drink",
-        "brewTea",
-        "addWater",
-        "fillContainer",
-        "emptyKettle",
-        "removeKettle",
-        "cancel",
-    },
-    ["Supports"] = {
-        "addKettle",
-        "addPot",
-        "removeKettle",
-        "removePot",
-        "removeSupports",
-        "cancel",
-    },
-    ["Campfire"] = {
-        "addFirewood",
-        "lightFire",
-        "addSupports",
-        "removeSupports",
-        "addGrill",
-        "removeGrill",
-        "addKettle",
-        "addPot",
-        "removeKettle",
-        "removePot",
-        "wait",
-        "extinguish",
-        "destroy",
-        "cancel"
-    }
-}
 
-local function onActivateCampfire(e)
-
-    local campfire = e.ref
-    local node = e.node
-
-    local addButton = function(tbl, button)
-        if button.requirements(campfire) then
-            table.insert(tbl, {
-                text = button.text, 
-                callback = function()
-                    button.callback(campfire)
-                    event.trigger("Ashfall:registerReference", { reference = campfire})
-                end
-            })
-        end
+local function createLightFromRef(ref)
+    local lightNode = niPointLight.new()
+    lightNode.name = "LIGHTNODE"
+    if ref.object.color then
+        lightNode.ambient = tes3vector3.new(0,0,0)
+        lightNode.diffuse = tes3vector3.new(
+            ref.object.color[1] / 255,
+            ref.object.color[2] / 255,
+            ref.object.color[3] / 255
+        )
+    else
+        lightNode.ambient = tes3vector3.new(0,0,0)
+        lightNode.diffuse = tes3vector3.new(255, 255, 255)
     end
+    lightNode:setAttenuationForRadius(ref.object.radius)
 
-    local buttons = {}
-    --Add contextual buttons
-    local buttonList = buttonMapping.Campfire
-    local text = "Campfire"
-    --If looking at an attachment, show buttons for it instead
-    if buttonMapping[node.name] then
-        buttonList = buttonMapping[node.name]
-        text = node.name
-    end
-
-    for _, buttonType in ipairs(buttonList) do
-        local button = require(string.format("mer.ashfall.camping.menuFunctions.%s", buttonType))
-        addButton(buttons, button)
-    end
-    common.helper.messageBox({ message = text, buttons = buttons })
+    return lightNode
 end
 
-event.register(
-    "Ashfall:ActivatorActivated", 
-    onActivateCampfire, 
-    { filter = common.staticConfigs.activatorConfig.types.campfire } 
-)
+local function addLighting(e)
+    local campfire = e.campfire
+    local lightNode = createLightFromRef(campfire)
+    local attachLight = campfire.sceneNode:getObjectByName("attachLight")
+    attachLight:attachChild(lightNode)
+    campfire.sceneNode:update()
+    campfire.sceneNode:updateNodeEffects()
+    campfire:deleteDynamicLightAttachment()
+    campfire:getOrCreateAttachedDynamicLight(lightNode, 1.0)
+    mwse.log("Added dynamic lighting")
+end
+event.register("Ashfall:Campfire_Enablelight", addLighting)
+

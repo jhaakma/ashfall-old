@@ -1,7 +1,7 @@
 return {
     text = "Extinguish",
     requirements = function(campfire)
-        return campfire.data.isLit
+        return campfire.data.isLit and not campfire.data.isStatic
     end,
     callback = function(campfire)
         event.trigger("Ashfall:fuelConsumer_Extinguish", {fuelConsumer = campfire})

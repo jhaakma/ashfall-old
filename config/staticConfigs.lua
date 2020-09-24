@@ -5,6 +5,7 @@ this.conditionConfig = require("mer.Ashfall.config.conditionConfig")
 this.foodConfig = require("mer.Ashfall.config.foodConfig")
 this.teaConfig = require("mer.Ashfall.config.teaConfig")
 this.ratingsConfig = require("mer.Ashfall.config.ratingsConfig")
+this.campfireConfig = require("mer.Ashfall.config.campfireConfig")
 
 this.objectIds = {
     firewood = "ashfall_firewood",
@@ -26,6 +27,7 @@ this.crateIds = {
     camping = "ashfall_crate_camping",
     food = "ashfall_crate_food",
 }
+
 
 --Campfire values
 this.hotWaterHeatValue = 80
@@ -140,22 +142,24 @@ this.placementConfig = {
     ashfall_bedroll = { blockIllegal = true, maxSteepness = 0.4 },
     ashfall_cbroll_misc = { blockIllegal = true, maxSteepness = 0.4, drop = -15 },
     
-    ashfall_tent_misc = { maxSteepness = 0.3, drop = -8},
-    ashfall_tent_ashl_misc = { maxSteepness = 0.3, drop = -8},
-    ashfall_tent_canv_b_misc = { maxSteepness = 0.3, drop = -8},
-    ashfall_tent_test_misc = { maxSteepness = 0.3, drop = -8},
+    ashfall_tent_misc = { maxSteepness = 0.4, drop = -8},
+    ashfall_tent_ashl_misc = { maxSteepness = 0.4, drop = -8},
+    ashfall_tent_canv_b_misc = { maxSteepness = 0.4, drop = -8},
+    ashfall_tent_test_misc = { maxSteepness = 0.4, drop = -8},
 
-    ashfall_tent_active = { maxSteepness = 0.3, drop = 50},
-    ashfall_tent_ashl_active = { maxSteepness = 0.3, drop = 50},
-    ashfall_tent_canv_b_active = { maxSteepness = 0.3, drop = 50},
-    ashfall_tent_test_active = { maxSteepness = 0.3, drop = 50},
+    ashfall_tent_active = { maxSteepness = 0.4, drop = 50},
+    ashfall_tent_ashl_active = { maxSteepness = 0.4, drop = 50},
+    ashfall_tent_canv_b_active = { maxSteepness = 0.4, drop = 50},
+    ashfall_tent_test_active = { maxSteepness = 0.4, drop = 50},
 
     a_bed_roll = { blockIllegal = true, maxSteepness = 0.4 },
+
+    ashfall_firewood = { maxSteepness = 0.5, hasVertAlign  = true }
 }
 
 this.capacities = {
     cookingPot = 120,
-    kettle = 80,
+    kettle = 100,
     potion = 15,
     MAX = 240
 }

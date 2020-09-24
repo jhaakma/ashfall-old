@@ -31,7 +31,6 @@ local function initialized()
         require("mer.ashfall.backpackController")
         require("mer.ashfall.merchants.merchantController")
         require("mer.ashfall.merchants.priceController")
-        require("mer.ashfall.merchants.foodDrinkController")
         require("mer.ashfall.merchants.waterMerchant")
         
         require("mer.ashfall.referenceController")

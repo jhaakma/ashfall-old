@@ -105,7 +105,7 @@ local function createActivatorIndicator()
                 parentNode = this.parentNode,
                 element = labelBorder,
                 reference = this.currentRef
-            } 
+            }
             event.trigger("Ashfall:Activator_tooltip", eventData, {filter = this.current })
 
 
@@ -135,23 +135,20 @@ function this.callRayTest()
     if result then
         
         if (result and result.reference ) then 
-            
             local distance = tes3.player.position:distance(result.intersection)
 
             --Look for activators from list
             if distance < 200 then
                 local targetRef = result.reference
-                if targetRef then
-                    for activatorId, activator in pairs(this.list) do
-                        if activator:isActivator(targetRef.id) then
-                            this.current = activatorId
-                            this.currentRef = targetRef
-                            this.parentNode = result.object.parent
-                        end
+                for activatorId, activator in pairs(this.list) do
+                    if activator:isActivator(targetRef.object.id) then
+                        this.current = activatorId
+                        this.currentRef = targetRef
+                        this.parentNode = result.object.parent
                     end
-                    createActivatorIndicator()
-                    return
                 end
+                createActivatorIndicator()
+                return
             end
         end
 

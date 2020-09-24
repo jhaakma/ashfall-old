@@ -6,6 +6,8 @@ return  {
         return (
             campfire.data.hasSupports and 
             campfire.data.utensil == nil and
+            campfire.data.dynamicConfig and
+            campfire.data.dynamicConfig.cookingPot == "dynamic" and
             mwscript.getItemCount{ reference = tes3.player, item = common.staticConfigs.objectIds.cookingPot} > 0
         )
     end,

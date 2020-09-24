@@ -3,7 +3,6 @@ local this = {}
 local common = require("mer.ashfall.common.common")
 local teaConfig = common.staticConfigs.teaConfig
 local conditionsCommon = require("mer.ashfall.conditionController")
-local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
 local statsEffect = require("mer.ashfall.needs.statsEffect")
 local temperatureController = require("mer.ashfall.temperatureController")
@@ -81,7 +80,7 @@ local function addDysentry()
     dysentery:setValue(dysentery:getValue() + dysentryAmount)
 end
 
-function this.drinkAmount( amount, isDirty )
+function this.drinkAmount( amount, waterType )
     if not conditionConfig.thirst:isActive() then return end
     local currentThirst = thirst:getValue()
     
@@ -105,12 +104,12 @@ function this.drinkAmount( amount, isDirty )
     conditionsCommon.updateCondition("thirst")
     this.update()
     event.trigger("Ashfall:updateTemperature", { source = "drinkAmount" } )
-    needsUI.updateNeedsUI()
+    event.trigger("Ashfall:updateNeedsUI")
     hud.updateHUD()
 
     tes3.playSound({reference = tes3.player, sound = "Drink"})
 
-    if isDirty == true then
+    if waterType == "dirty" then
         addDysentry()
     end
     return amountDrank
@@ -118,7 +117,7 @@ end
 
 
 local function onDrink(e)
-    this.drinkAmount( e.amount, e.dirty )
+    this.drinkAmount( e.amount, e.waterType )
 end
 event.register("Ashfall:Drink", onDrink, {reference = tes3.player})
 
@@ -155,6 +154,11 @@ function this.fillContainer(params)
                     return false 
                 end
 
+                --Can't fill bottles that already have tea
+                if e.itemData and teaConfig.teaTypes[e.itemData.data.waterType] then
+                    return false
+                end
+
                 local bottleData = this.getBottleData(e.item.id)
                 if bottleData then
                     local capacity = bottleData.capacity
@@ -180,29 +184,28 @@ function this.fillContainer(params)
                         --dirty container if drinking from raw water
                         if common.data.drinkingDirtyWater == true then
                             common.log:debug("Fill water DIRTY")
-                            itemData.data.waterDirty = true
+                            itemData.data.waterType = "dirty"
                             common.data.drinkingDirtyWater = nil
                         end
                         local fillAmount
                         local bottleData = this.getBottleData(e.item.id)
 
                         itemData.data.waterAmount = itemData.data.waterAmount or 0
-                        if teaType then
-                            itemData.data.teaType = teaType
-                        end
+                        
                         if source then
+                            if source.data.waterType then
+                                itemData.data.waterType = source.data.waterType
+                            end
 
                             fillAmount = math.min(
                                 bottleData.capacity - itemData.data.waterAmount,
-                                source.waterAmount
+                                source.data.waterAmount
                             )
-                            common.helper.transferQuantity(source, itemData.data, "waterAmount", "waterAmount", fillAmount)
+                            common.helper.transferQuantity(source.data, itemData.data, "waterAmount", "waterAmount", fillAmount)
+
                             --clean source if empty
-                            if source.waterDirty then
-                                itemData.data.waterDirty = true
-                            end
-                            if source.waterAmount == 0 then
-                                source.waterDirty = nil
+                            if source.data.waterAmount == 0 then
+                                source.data.waterType = nil
                             end
                         else
                             itemData.data.waterAmount = bottleData.capacity
@@ -211,11 +214,11 @@ function this.fillContainer(params)
                         tes3ui.updateInventoryTiles()
                         tes3.playSound({reference = tes3.player, sound = "Swim Left"})
                         local contents = "water"
-                        if itemData.data.waterDirty then
+                        if itemData.data.waterType == "dirty" then
                             contents = "dirty water"
                         end
-                        if itemData.data.teaType then
-                            contents = teaConfig.teaTypes[itemData.data.teaType].teaName
+                        if teaConfig.teaTypes[itemData.data.waterType] then
+                            contents = teaConfig.teaTypes[itemData.data.waterType].teaName
                         end
                         tes3.messageBox(
                             "%s filled with %s.",

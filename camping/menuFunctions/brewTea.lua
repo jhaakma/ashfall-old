@@ -8,7 +8,7 @@ return {
             campfire.data.utensil == "kettle" and
             campfire.data.waterAmount and
             campfire.data.waterAmount > 0 and
-            not campfire.data.teaType
+            teaConfig.teaTypes[campfire.data.waterType] == nil
         )
     end,
     callback = function(campfire)
@@ -23,7 +23,7 @@ return {
                 callback = function(e)
                     common.data.inventorySelectTeaBrew = nil
                     if e.item then
-                        campfire.data.teaType = e.item.id:lower()
+                        campfire.data.waterType = e.item.id:lower()
                         campfire.data.teaProgress = 0
                         campfire.data.waterHeat = campfire.data.waterHeat or 0
                         campfire.data.waterHeat = math.max(0, (campfire.data.waterHeat - 10))

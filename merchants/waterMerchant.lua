@@ -97,7 +97,10 @@ local function makeTooltip(e)
     tooltipText.wrapText = true
 end
 
-local function updateWaterServiceButton()
+local function updateWaterServiceButton(e)
+    if e and e.source then
+        e.source:forwardEvent()
+    end
     if skipUpdate then
         skipUpdate = false
         return
@@ -107,6 +110,9 @@ local function updateWaterServiceButton()
     if not menuDialog then return end
     local topicsScrollPane = menuDialog:findChild(GUID_MenuDialog_TopicList)
     local waterServiceButton = menuDialog:findChild(GUID_MenuDialog_WaterService)
+    if not ( topicsScrollPane and waterServiceButton ) then
+        return 
+    end
     local merchant = menuDialog:getPropertyObject("PartHyperText_actor")
 
     local cost = getWaterCost(merchant.object)
@@ -122,6 +128,7 @@ local function updateWaterServiceButton()
     waterServiceButton.visible = true
     topicsScrollPane.widget:contentsChanged()
     menuDialog:updateLayout()
+
 end
 
 
@@ -156,4 +163,4 @@ local function onMenuDialogActivated(e)
         updateWaterServiceButton()
     end
 end
-event.register("uiActivated", onMenuDialogActivated, { filter = "MenuDialog" } )
+event.register("uiActivated", onMenuDialogActivated, { filter = "MenuDialog", priority = -100 } )

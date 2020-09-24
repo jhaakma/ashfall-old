@@ -1,17 +1,17 @@
 local common = require ("mer.ashfall.common.common")
-
+local teaConfig = common.staticConfigs.teaConfig
 return {
     text = "Add water",
     requirements = function(campfire)
         local needsWater = (
             not campfire.data.waterAmount or
-            campfire.data.waterAmount < common.staticConfigs.capacities.cookingPot
+            campfire.data.waterAmount < common.staticConfigs.capacities[campfire.data.utensil]
         )
         local hasUtensil = (
             campfire.data.utensil == "kettle" or 
             campfire.data.utensil == "cookingPot"
         )
-        local isTea = campfire.data.teaType
+        local isTea = teaConfig.teaTypes[campfire.data.waterType] ~= nil
         return needsWater and hasUtensil and not isTea
     end,
     callback = function(campfire)
@@ -24,14 +24,17 @@ return {
                         e.itemData and 
                         e.itemData.data.waterAmount and 
                         e.itemData.data.waterAmount > 0 and
-                        not e.itemData.data.teaType
+                        ( 
+                            not e.itemData.data.waterType or 
+                            e.itemData.data.waterType == "dirty"
+                        )
                     ) == true
                 end,
                 callback = function(e)
                     if e.item then
                         local maxAmount = math.min(
                             ( e.itemData.data.waterAmount or 0 ),
-                            ( common.staticConfigs.capacities.cookingPot - ( campfire.data.waterAmount or 0 ))
+                            ( common.staticConfigs.capacities[campfire.data.utensil] - ( campfire.data.waterAmount or 0 ))
                         )
                         local t = { amount = math.min(maxAmount, 50)}
                         local function transferWater()
@@ -46,11 +49,12 @@ return {
                             tes3ui.updateInventoryTiles()
 
                             --If dirty
-                            if e.itemData.data.waterDirty then
-                                campfire.data.waterDirty = true
+                            if e.itemData.data.waterType == "dirty" then
+                                campfire.data.waterType = "dirty"
                             end
+                            --clear contents if empty
                             if e.itemData.data.waterAmount == 0 then
-                                e.itemData.data.waterDirty = nil
+                                e.itemData.data.waterType = nil
                             end
 
                             local ratio = waterBefore / waterAfter

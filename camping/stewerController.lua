@@ -31,11 +31,12 @@ local function updateBuffs(e)
             if reference.data.stewBuffTimeLeft == 0 then
                 common.data.stewWarmEffect = 0 
 
-                for _, stewBuff in pairs(foodConfig.stewBuffs) do
+                common.helper.restoreFatigue()
+                for _, stewBuff in pairs(foodConfig.getStewBuffList()) do
                     mwscript.removeSpell({ reference = reference, spell = stewBuff.id})
                 end
                 tes3.messageBox("Stew effect has worn off.")
-                common.helper.restoreFatigue()
+                
 
                 reference.data.stewBuffTimeLeft = nil
                 reference.data.lastStewBuffUpdated = nil

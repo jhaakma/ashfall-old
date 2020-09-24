@@ -13,7 +13,7 @@ local overrides = {
         weight = 1.0,
         value = 3,
     },
-    ["ingred_ash_yam"] = {
+    ["ingred_ash_yam_01"] = {
         weight = 0.5,
         value = 3
     },
@@ -37,7 +37,7 @@ local overrides = {
         weight = 0.5,
         value = 10
     },
-    ["scuttle"] = {
+    ["ingred_scuttle_01"] = {
         weight = 0.5,
         value = 10,
     }, 

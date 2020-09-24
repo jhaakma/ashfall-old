@@ -59,6 +59,9 @@ return {
     showWetness = false,
     showSickness = true,
 
+    modifierHotKey = {
+        keyCode = tes3.scanCode.lShift
+    },
     enableBranchPlacement = true,
     needsCanKill = false,
     showFrostBreath = true,

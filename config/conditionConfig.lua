@@ -9,7 +9,7 @@ conditions.hunger = Condition:new{
     min = 0,
     max = 100,
     minDebuffState = "peckish",
-    states = {
+    states = { 
         starving = { 
             text = "Starving", 
             min = 80, max = 100, 
@@ -120,7 +120,7 @@ conditions.tiredness = Condition:new{
             spell = "fw_s_exhausted",
             effects = { 
                 { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.6 },
-                { id = tes3.effect.weaknesstoCommonDisease, amount = 0.5}
+                { id = tes3.effect.weaknesstoCommonDisease, amount = 80}
             }
         },
         veryTired = { 
@@ -129,7 +129,7 @@ conditions.tiredness = Condition:new{
             spell = "fw_s_veryTired",
             effects = { 
                 { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.4 },
-                { id = tes3.effect.weaknesstoCommonDisease, amount = 0.3}
+                { id = tes3.effect.weaknesstoCommonDisease, amount = 40}
             }
         },
         tired = { 
@@ -137,7 +137,8 @@ conditions.tiredness = Condition:new{
             min = 40, max = 60, 
             spell = "fw_s_tired",
             effects = { 
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.2 }
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.intelligence, amount = 0.2 },
+                { id = tes3.effect.weaknesstoCommonDisease, amount = 10}
             }
         },
         rested = { 
@@ -321,13 +322,21 @@ conditions.blightness = Condition:new{
     conditionChanged = function(self)
         local stateData =  self:getCurrentStateData()
         if stateData.blights then
-            if not self:hasBlight() then 
-                local newBlight = table.choice(stateData.blights)
-                mwscript.addSpell({ reference = tes3.player, spell = newBlight })
+            if not self:hasSpell() then
+                --get blight chance for this weather
+                local blightDiseaseChance = 10
                 
-                stateData.spell = newBlight
-                self:showUpdateMessages()
-                --stateData.spell = nil
+                local rollForDisease = math.random(100)
+                if rollForDisease < blightDiseaseChance then
+                    local rollForResist = math.random(100)
+                    if rollForResist > tes3.mobilePlayer.resistBlightDisease then
+                        local newBlight = table.choice(stateData.blights)
+                        mwscript.addSpell({ reference = tes3.player, spell = newBlight })
+                        
+                        stateData.spell = newBlight
+                        self:showUpdateMessages()
+                    end
+                end
                 self:setValue(0)
             end
         end
@@ -339,7 +348,7 @@ conditions.blightness = Condition:new{
         end
     end,
     updateConditionEffects = function() return end,
-    hasBlight = function(self)
+    hasSpell = function(self)
         if not self.blights then
             self.blights = self:getBlights()
         end
@@ -361,6 +370,7 @@ conditions.blightness = Condition:new{
     end
 }
 
+local fluDiseaseChance = 10000--10
 conditions.flu = Condition:new{
     id = "flu",
     default = "noFlu",
@@ -381,6 +391,41 @@ conditions.flu = Condition:new{
         },
         noFlu = { text = "You no longer have the flu.", min = 0, max = 80, spell = nil },
     },
+    conditionChanged = function(self)
+        tes3.messageBox("Flu Condition changed")
+        local stateData =  self:getCurrentStateData()
+        if stateData.spell then
+            if not self:hasSpell() then
+                local doAddFlu = false
+
+                local rollForDisease = math.random(100)
+                if rollForDisease < fluDiseaseChance then
+                    local rollForResist = math.random(100)
+                    if rollForResist > tes3.mobilePlayer.resistCommonDisease then
+                        doAddFlu = true
+                    end
+                end
+                
+                if doAddFlu then
+                    local fluSpell = tes3.getObject(self.states.hasFlu.spell)
+                    self:scaleSpellValues()
+                    mwscript.addSpell({ reference = tes3.player, spell = fluSpell })
+                    self:showUpdateMessages()
+                else
+                    self:setValue(0)
+                end
+            end
+        else
+            if self:hasSpell() then
+                mwscript.removeSpell({ reference = tes3.player, spell = tes3.getObject(self.states.hasFlu.spell) })
+                tes3.messageBox("You no longer have the flu.")
+            end
+        end
+    end,
+    updateConditionEffects = function() return end,
+    hasSpell = function(self)
+        return self:isAffected(self.states.hasFlu)
+    end,
     getCurrentStateMessage = function(self)
         return self:getCurrentStateData().text
     end,

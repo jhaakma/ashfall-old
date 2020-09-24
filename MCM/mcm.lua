@@ -98,6 +98,7 @@ local function registerModConfig()
                     end
                 end
             }
+
         end
 
         do --Survival Mechanics Category
@@ -177,13 +178,21 @@ local function registerModConfig()
         end --\Condition Updates Category
 
         do --Miscellanious Category
+            
             local categoryMisc = pageGeneral:createCategory{ 
                 label = "Miscellanious",
                 description = "Ashfall features not directly related to survival mechanics.",
             }
 
+            categoryMisc:createKeyBinder{
+                label = "Assign Modifier Hotkey",
+                description = "Key Modifier for accessing special options. For example, hold down this key while activating a water bottle to open the water menu (to empty or drink from the bottle directly). Default: Left Shift.",
+                allowCombinations = false,
+                variable = createTableVar("modifierHotKey"),
+            }
+
             categoryMisc:createYesNoButton{
-                label = "Hunger/Thirst can kill you",
+                label = "Hunger/Thirst can Kill",
                 description = (
                     "When enabled, you can die of hunger or thirst. Otherwise you will drop to 1 health."
                 ),

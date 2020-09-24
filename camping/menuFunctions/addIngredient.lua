@@ -21,7 +21,7 @@ return {
                     filter = function(e)
                         return (
                             e.item.objectType == tes3.objectType.ingredient and
-                            foodConfig.ingredTypes[e.item.id] == foodType
+                            foodConfig.getFoodTypeResolveMeat(e.item.id) == foodType
                             --Can only grill meat and veges
                         )
                     end,
@@ -63,7 +63,7 @@ return {
             end)
         end
         local ingredButtons = {
-            { text = foodConfig.TYPE.protein, callback = function() ingredientSelect(foodConfig.TYPE.protein) end },
+            { text = foodConfig.TYPE.meat, callback = function() ingredientSelect(foodConfig.TYPE.meat) end },
             { text = foodConfig.TYPE.vegetable, callback = function() ingredientSelect(foodConfig.TYPE.vegetable) end },
             { text = foodConfig.TYPE.mushroom, callback = function() ingredientSelect(foodConfig.TYPE.mushroom) end },
             { text = foodConfig.TYPE.seasoning, callback = function() ingredientSelect(foodConfig.TYPE.seasoning) end },
@@ -83,7 +83,7 @@ return {
             if hasCapacityForIngred then
                 local hasIngredient = false
                 for _, stack in pairs(tes3.player.object.inventory) do
-                    if foodConfig.ingredTypes[stack.object.id] == foodType then
+                    if foodConfig.getFoodTypeResolveMeat(stack.object.id) == foodType then
                         hasIngredient = true
                         break
                     end

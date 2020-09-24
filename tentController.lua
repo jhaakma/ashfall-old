@@ -2,8 +2,8 @@ local common = require("mer.ashfall.common.common")
 
 local this = {}
 local temperatureController = require("mer.ashfall.temperatureController")
-temperatureController.registerExternalHeatSource{ id = "tentTemp", coldOnly = true }
-
+--temperatureController.registerExternalHeatSource{ id = "tentTemp" }
+temperatureController.registerBaseTempMultiplier{ id = "tentTempMulti"}
 local skipActivate
 
 --When sleeping in a tent, you can't be woken up by creatures
@@ -16,21 +16,10 @@ end
 event.register("calcRestInterrupt", calcRestInterrupt)
 
 
-local function triggerInTent()
-    common.helper.setInTent(true)
-    event.trigger("Ashfall:updateTemperature", { source = "triggerInTent" } )
-    common.data.isSheltered = true
-    timer.delayOneFrame(function()
-        common.helper.setInTent(false)
-    end)
-end
-
-
-
 local function getPlacementBlocked()
     return (
         tes3.player.cell.restingIsIllegal or
-        tes3.player.cell.isInterior
+        common.helper.getInside(tes3.player)
     )
 end
 
@@ -43,7 +32,11 @@ local function unpackTent(miscRef)
         timer.delayOneFrame(function()
             tes3.createReference {
                 object = common.helper.getTentActiveFromMisc(miscRef),
-                position = miscRef.position:copy(),
+                position = {
+                    miscRef.position.x,
+                    miscRef.position.y,
+                    miscRef.position.z - 10,
+                },
                 orientation = miscRef.orientation:copy(),
                 cell = miscRef.cell
             }
@@ -51,7 +44,7 @@ local function unpackTent(miscRef)
             tes3.runLegacyScript{ command = 'Player->Drop "ashfall_resetlight" 1'}
 
             common.helper.yeet(miscRef)
-        end)
+        end) 
     end
 end
 
@@ -64,12 +57,12 @@ local function packTent(activeRef)
         --     cell = activeRef.cell
         -- }
         -- tes3.runLegacyScript{ command = 'Player->Drop "ashfall_resetlight" 1'}
-        tes3.addItem{
+        mwscript.addItem{
             reference = tes3.player,
             item = common.helper.getTentMiscFromActive(activeRef),
-            updateGUI = true,
             count =  1
         }
+        tes3.playSound{ reference = tes3.player, sound = "Item Misc Up"  }
         common.helper.yeet(activeRef)
     end)
 end

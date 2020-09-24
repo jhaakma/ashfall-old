@@ -166,14 +166,7 @@ local function getInternalHeat()
         end
     end
     return result
-    --[[
-        common.data.wetTemp
-        common.data.warmthRating
-        common.data.bedTemp
-        common.data.tentTemp
-        common.data.furTemp
-        common.data.stewWarmEffect
-    ]]
+
 end
 
 local function getBaseTempMultiplier()

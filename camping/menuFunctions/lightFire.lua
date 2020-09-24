@@ -9,12 +9,12 @@ return {
             campfire.data.fuelLevel and
             campfire.data.fuelLevel > 0.5
         )
-    end,
+    end, 
     callback = function(campfire)
         tes3.playSound{ reference = tes3.player, sound = "ashfall_light_fire"  }
+        common.log:debug("Lighting Fire %s", campfire.object.id)
         tes3.playSound{ sound = "Fire", reference = campfire, loop = true }
-        local lightNode = campfire.sceneNode:getObjectByName("AttachLight")
-        lightNode.translation.z = 25
+        event.trigger("Ashfall:Campfire_Enablelight", { campfire = campfire})
         campfire.data.fuelLevel = campfire.data.fuelLevel - 0.5
         common.skills.survival:progressSkill( skillSurvivalLightFireIncrement)
         campfire.data.isLit = true

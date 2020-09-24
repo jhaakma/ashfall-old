@@ -1,7 +1,6 @@
 local this = {}
 local common = require("mer.ashfall.common.common")
 local conditionsCommon = require("mer.ashfall.conditionController")
-local needsUI = require("mer.ashfall.needs.needsUI")
 local hud = require("mer.ashfall.ui.hud")
 
 local meals = require("mer.ashfall.cooking.meals")
@@ -34,11 +33,12 @@ function this.getBurnLimit()
     return burnLimit
 end
 
-function this.getFoodValue(object, itemData)
-    local ingredType = foodConfig.ingredTypes[object.id] or foodConfig.TYPE.misc
-    local value = foodConfig.nutrition[ingredType] 
+function this.getNutrition(object, itemData)
+    local foodData = foodConfig.getFoodData(object.id)
+
+    local foodValue = foodData.nutrition
     --scale by weight
-    value = value * math.remap(object.weight, 1, 2, 1, 1.5)
+    foodValue = foodValue * math.remap(object.weight, 1, 2, 1, 1.5)
 
     local cookedAmount = itemData and itemData.data.cookedAmount
     if cookedAmount then
@@ -46,22 +46,22 @@ function this.getFoodValue(object, itemData)
         local survivalEffect = math.remap(
             survival, 
             common.skillStartValue, 100, 
-            foodConfig.grillValues[ingredType].min, foodConfig.grillValues[ingredType].max
+            foodData.grillValues.min, foodData.grillValues.max
         )
 
-        local min = value
-        local max = math.ceil(value * survivalEffect)
+        local min = foodValue
+        local max = math.ceil(foodValue * survivalEffect)
 
         if cookedAmount < this.getBurnLimit() then
             --value based on how cooked it is
             cookedAmount = math.min(cookedAmount, 100)
-            value = math.remap(cookedAmount, 0, 100, min, max)
+            foodValue = math.remap(cookedAmount, 0, 100, min, max)
         else
-            --half value when burned
-            value = ( ( max - min ) / 2 ) + min
+            --half foodValue when burned
+            foodValue = ( ( max - min ) / 2 ) + min
         end
     end
-    return value
+    return foodValue
 end
 
 
@@ -88,7 +88,7 @@ function this.eatAmount( amount )
     conditionsCommon.updateCondition("hunger")
     this.update()
     event.trigger("Ashfall:updateTemperature", { source = "eatAmount" })
-    needsUI.updateNeedsUI()
+    event.trigger("Ashfall:updateNeedsUI")
     hud.updateHUD()
     return amountAte
 end
@@ -108,7 +108,10 @@ function this.processMealBuffs(scriptInterval)
 end
 
 
-
+local function checkWerewolfKill()
+    --TODO: recover hunger after making a kill as a werewolf
+    return
+end
 
 function this.calculate(scriptInterval, forceUpdate)
     if scriptInterval == 0 and not forceUpdate then return end
@@ -150,6 +153,8 @@ function this.calculate(scriptInterval, forceUpdate)
     end
     hunger:setValue(newHunger)
 
+    checkWerewolfKill()
+
 
     --The hungrier you are, the more extreme cold temps are
     local hungerEffect = math.remap( newHunger, 0, 100, HUNGER_EFFECT_HIGH, HUNGER_EFFECT_LOW )
@@ -171,7 +176,7 @@ end
 
 local function addFoodPoisoning(e)
     --Check for food poisoning
-    if foodConfig.ingredTypes[e.item.id] == foodConfig.TYPE.protein then
+    if foodConfig.getFoodType(e.item.id) == foodConfig.TYPE.meat then
         local cookedAmount = e.itemData and e.itemData.data.cookedAmount or 0
         local foodPoison = common.staticConfigs.conditionConfig.foodPoison
         local poisonAmount = math.random(100 - cookedAmount)
@@ -201,7 +206,7 @@ local function onEquipFood(e)
     end
     if e.item.objectType == tes3.objectType.ingredient then
         common.log:debug("Is ingredient")
-        this.eatAmount(this.getFoodValue(e.item, e.itemData))
+        this.eatAmount(this.getNutrition(e.item, e.itemData))
         applyFoodBuff(e.item.id)
         addFoodPoisoning(e)
         addDisease(e)

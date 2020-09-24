@@ -18,7 +18,7 @@ Condition.fields = {
     getCurrentSpellObj = true,
     conditionChanged = true,
     updateConditionEffects = true,
-    hasBlight = true,
+    hasSpell = true,
     getBlights = true,
 }
 

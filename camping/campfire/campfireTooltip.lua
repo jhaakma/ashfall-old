@@ -1,4 +1,5 @@
 local common = require ("mer.ashfall.common.common")
+local foodConfig = common.staticConfigs.foodConfig
 local teaConfig = common.staticConfigs.teaConfig
 ------------------
 --Tooltips
@@ -29,7 +30,7 @@ local function updateTooltip(e)
     end
 
     --Add special fields
-    if label.text == "Campfire" then
+    if label.text == "Campfire" and campfire.data.dynamicConfig and campfire.data.dynamicConfig.campfire == "dynamic" then
         local fuelLevel = campfire.data.fuelLevel or 0
         if fuelLevel > 0 then
             local fuelLabel = labelBorder:createLabel{
@@ -46,17 +47,17 @@ local function updateTooltip(e)
                 text = string.format(
                     "Water: %d/%d %s| Heat: %d/100", 
                     math.ceil(waterAmount), 
-                    common.staticConfigs.capacities.cookingPot, 
-                    ( campfire.data.waterDirty and "(Dirty) " or ""),
+                    common.staticConfigs.capacities[campfire.data.utensil], 
+                    ( campfire.data.waterType == "dirty" and "(Dirty) " or ""),
                     waterHeat)
             }
             centerText(waterLabel)
 
-            if campfire.data.teaType then
+            if teaConfig.teaTypes[campfire.data.waterType] then
                 local progress = campfire.data.teaProgress or 0
-                local tea = teaConfig.teaTypes[campfire.data.teaType]
+                local teaData = teaConfig.teaTypes[campfire.data.waterType]
                 labelBorder:createDivider()
-                local teaLabelText = tea.teaName
+                local teaLabelText = teaData.teaName
                 if campfire.data.waterHeat < common.staticConfigs.hotWaterHeatValue then
                     teaLabelText = teaLabelText .. " (Cold)"
                 elseif progress < 100 then
@@ -67,17 +68,21 @@ local function updateTooltip(e)
                 teaLabel.color = tes3ui.getPalette("header_color")
                 centerText(teaLabel)
                 if progress >= 100 then
-                    local effectLabelText = tea.effectDescription
-                    -- if tea.duration then
-                    --     effectLabelText = string.format("%s for %d hour%s",
-                    --         tea.effectDescription,
-                    --         tea.duration,
-                    --         tea.duration > 1 and "s" or ""
-                    --     )
-                    -- end
+                    local effectBlock = labelBorder:createBlock{}
+                    effectBlock.childAlignX = 0.5
+                    effectBlock.autoHeight = true
+                    effectBlock.autoWidth = true
+                    effectBlock.flowDirection = "left_to_right"
 
-                    local effectLabel = labelBorder:createLabel{ text = effectLabelText }
-                    centerText(effectLabel)
+                    local icon = effectBlock:createImage{ path = "Icons/ashfall/spell/teaBuff.dds" }
+                    icon.height = 16
+                    icon.width = 16
+                    icon.scaleMode = true
+                    icon.borderAllSides = 1
+                    
+                    local effectLabelText = teaData.effectDescription
+                    local effectLabel = effectBlock:createLabel{ text = effectLabelText }
+                    effectLabel.borderLeft = 4
                 end
             end
 
@@ -100,13 +105,13 @@ local function updateTooltip(e)
                 centerText(stewProgressLabel)
 
                 
-                for name, ingredLevel in pairs(campfire.data.stewLevels) do
+                for foodType, ingredLevel in pairs(campfire.data.stewLevels) do
                     local value = math.min(ingredLevel, 100)
-                    local stewBuff = common.staticConfigs.foodConfig.stewBuffs[name]
+                    local stewBuff = foodConfig.getStewBuffForFoodType(foodType)
                     local spell = tes3.getObject(stewBuff.id)
                     local effect = spell.effects[1]
 
-                    local ingredText = string.format("(%d%% %s)", value, name )
+                    local ingredText = string.format("(%d%% %s)", value, foodType )
                     local ingredLabel
 
                     if progress >= 100 then

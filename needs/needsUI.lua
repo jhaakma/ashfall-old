@@ -3,6 +3,7 @@
 ]]--
 local this = {}
 local common = require("mer.ashfall.common.common")
+local config = common.config.getConfig()
 local conditionConfig = common.staticConfigs.conditionConfig
 
 local function rgbToColor(r, g, b)
@@ -11,22 +12,22 @@ end
 
 function this.showThirst()
     return (
-        common.config.getConfig().enableThirst and 
-        common.config.getConfig().thirstRate > 0
+        config.enableThirst and 
+        config.thirstRate > 0
     )
 end
 
 function this.showHunger()
     return (
-        common.config.getConfig().enableHunger and 
-        common.config.getConfig().hungerRate > 0
+        config.enableHunger and 
+        config.hungerRate > 0
     )
 end
 
 function this.showTiredness()
     return (
-        common.config.getConfig().enableTiredness and 
-        common.config.getConfig().loseSleepRate > 0
+        config.enableTiredness and 
+        config.loseSleepRate > 0
     )
 end
 
@@ -40,6 +41,16 @@ this.UIData = {
         defaultCondition = "wellFed",
         need = "hunger",
         color = rgbToColor(230, 92, 0),
+        name = "Hunger",
+        getTooltip = function()
+            return string.format (
+                ( "Hunger drains faster when the player is cold. " ..
+                "Eat food to reduce your hunger. Cook meat and vegetables on a " .. 
+                "grill to increase their satiation value. " ..
+                "\n\nYour current hunger level is %d%%. %s" ),
+                conditionConfig.hunger:getValue(), 
+                conditionConfig.hunger:getCurrentStateMessage())
+        end,
     },
     thirst = {
         blockID = tes3ui.registerID("Ashfall:thirstUIBlock"),
@@ -47,9 +58,17 @@ this.UIData = {
         conditionID = tes3ui.registerID("Ashfall:thirstConditionId"),
         showUIFunction = this.showThirst,
         conditionTypes = conditionConfig.thirst.states,
-        defaultCondition = "hydrated",
         need = "thirst",
         color = rgbToColor(0, 143, 179),
+        name = "Thirst",
+        getTooltip = function()
+            return string.format(
+                ("Thirst drains faster when the player is hot. " ..
+                "Drink water to reduce your thirst. Make sure to boil dirty water before consuming. " ..
+                "\n\nYour current thirst level is %d%%. %s"),
+                conditionConfig.thirst:getValue(), 
+                conditionConfig.thirst:getCurrentStateMessage())
+        end,
     },
     tiredness = {
         blockID = tes3ui.registerID("Ashfall:sleepUIBlock"),
@@ -57,19 +76,27 @@ this.UIData = {
         conditionID = tes3ui.registerID("Ashfall:sleepConditionId"),
         showUIFunction = this.showTiredness,
         conditionTypes = conditionConfig.tiredness.states,
-        defaultCondition = "rested",
         need = "tiredness",
         color = rgbToColor(0, 204, 0),
+        name = "Tiredness",
+        getTooltip = function()
+            return string.format(
+                ("Tiredness drains over time, and recovers while resting. " ..
+                "Sleep in a bed or bedroll to recover tiredness faster. " ..
+                "Your current tiredness level is %d%%. %s"), 
+                conditionConfig.tiredness:getValue(), 
+                conditionConfig.tiredness:getCurrentStateMessage())
+        end,
     },
-    needsBlock = tes3ui.registerID("Ashfall:needsBlock"),
 }
+local needsBlockId = tes3ui.registerID("Ashfall:needsBlock")
 
 local function updateNeedsBlock(menu, data)
     local need = conditionConfig[data.need]
 
     local block = menu:findChild(data.blockID)
     
-    if not data.showUIFunction() then
+    if not need:isActive() then
         block.visible = false
     else
         if block and block.visible == false then
@@ -92,31 +119,12 @@ local function updateNeedsBlock(menu, data)
     end
 end
 
-function this.updateNeedsUI()
-    if not common.data then return end
-    local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
-
-    if inventoryMenu then   
-        --Check Ashfall active
-        local needsBlock = inventoryMenu:findChild(this.UIData.needsBlock)
-        local needsActive = (
-            common.config.getConfig().enableHunger or
-            common.config.getConfig().enableThirst or
-            common.config.getConfig().enableTiredness 
-        )
-        needsBlock.visible = needsActive
-        --Update UIs
-        updateNeedsBlock(inventoryMenu, this.UIData.hunger)
-        updateNeedsBlock(inventoryMenu, this.UIData.thirst)
-        updateNeedsBlock(inventoryMenu, this.UIData.tiredness)
-
-        inventoryMenu:updateLayout()
-    end
-end
 
 local function setupNeedsBlock(element)
-    element.borderAllSides = 4
-    element.borderTop = 0
+    element.borderAllSides = -5
+    element.borderLeft = 4
+    element.borderRight = 4
+    element.borderBottom = 4
     element.paddingTop = 0
     element.paddingLeft = 0
     element.paddingRight = 0
@@ -131,7 +139,7 @@ end
 local function setupNeedsElementBlock(element)
     element.autoHeight = true
     element.autoWidth = true
-
+    
     element.paddingBottom = 1
     element.widthProportional = 1
     element.flowDirection = "left_to_right"
@@ -139,13 +147,13 @@ end
 
 local function setupNeedsBar(element)
     element.widget.showText = false
-    element.height = 20
+    element.height = 17
     element.widthProportional = 1.0
 end
 
 local function setupConditionLabel(element)
     element.absolutePosAlignX = 0.5
-    element.borderLeft = 2
+    element.borderAllSides = -2
     element.absolutePosAlignY = 0.0
     element.widthProportional = 1.0
 end
@@ -153,11 +161,12 @@ end
 local function createNeedsUI(e)
     local startingBlock = e.element:findChild(tes3ui.registerID("MenuInventory_character_box")).parent
     ---Needs Block
-    local needsBlock = startingBlock:findChild(this.UIData.needsBlock)
+    
+    local needsBlock = startingBlock:findChild(needsBlockId)
     if needsBlock then
         needsBlock:destroyChildren()
     else
-        needsBlock = startingBlock:createThinBorder({id = this.UIData.needsBlock})
+        needsBlock = startingBlock:createThinBorder({id = needsBlockId})
     end  
 
     setupNeedsBlock(needsBlock)
@@ -176,53 +185,46 @@ local function createNeedsUI(e)
     
         local conditionLabel = block:createLabel({ id = data.conditionID, text = need.states[need.default].text})
         setupConditionLabel(conditionLabel)
+
+        fillBar:register("help", function()
+            common.helper.createTooltip(data.name, data.getTooltip() )
+        end)
+        conditionLabel:register("help", function()
+            common.helper.createTooltip(data.name, data.getTooltip() )
+        end)
     end
 
-
-    -- --Hunger
-    -- local hungerBlock = needsBlock:createBlock({id = this.UIData.hunger.blockID})
-    -- setupNeedsElementBlock(hungerBlock)
-
-    -- local hungerBar = hungerBlock:createFillBar({ id = this.UIData.hunger.fillBarID, current = 100, max = 100 })
-    -- setupNeedsBar(hungerBar)
-    -- hungerBar.widget.fillColor = this.UIData.hunger.color
-
-    -- local hungerConditionLabel = hungerBlock:createLabel({ id = this.UIData.hunger.conditionID, text = ""})
-    -- setupConditionLabel(hungerConditionLabel)
-
-
-    -- --Thirst
-    -- local thirstBlock = needsBlock:createBlock({id = this.UIData.thirst.blockID})
-    -- setupNeedsElementBlock(thirstBlock)
-
-    -- local thirstBar = thirstBlock:createFillBar({ id = this.UIData.thirst.fillBarID, current = 100, max = 100 })
-    -- setupNeedsBar(thirstBar)
-    -- thirstBar.widget.fillColor = this.UIData.thirst.color
-
-
-    -- local thirstConditionLabel = thirstBlock:createLabel({ id = this.UIData.thirst.conditionID, text = "Hydrated"})
-    -- setupConditionLabel(thirstConditionLabel)
-
-
-    -- --Sleep
-    -- local sleepBlock = needsBlock:createBlock({id = this.UIData.tiredness.blockID})
-    -- setupNeedsElementBlock(sleepBlock)
-
-    -- local sleepBar = sleepBlock:createFillBar({ id = this.UIData.tiredness.fillBarID, current = 100, max = 100})
-    -- setupNeedsBar(sleepBar)
-    -- sleepBar.widget.fillColor = this.UIData.tiredness.color
-
-    -- local sleepConditionLabel = sleepBlock:createLabel({ id = this.UIData.tiredness.conditionID, text = "Rested"})
-    -- setupConditionLabel(sleepConditionLabel)
-
-    this.updateNeedsUI()
+    event.trigger("Ashfall:updateNeedsUI")
 end
+event.register("uiCreated", createNeedsUI, { filter = "MenuInventory" } )
 
+
+local function updateNeedsUI(e)
+    if not common.data then return end
+    local inventoryMenu = tes3ui.findMenu(tes3ui.registerID("MenuInventory"))
+    if inventoryMenu then   
+        --Check Ashfall active
+        local needsBlock = inventoryMenu:findChild(needsBlockId)
+        local needsActive = (
+            conditionConfig.hunger:isActive() or
+            conditionConfig.thirst:isActive() or
+            conditionConfig.tiredness:isActive()
+        )
+        needsBlock.visible = needsActive
+        --Update UIs
+        updateNeedsBlock(inventoryMenu, this.UIData.hunger)
+        updateNeedsBlock(inventoryMenu, this.UIData.thirst)
+        updateNeedsBlock(inventoryMenu, this.UIData.tiredness)
+
+        inventoryMenu:updateLayout()
+    end
+end
+event.register("Ashfall:updateNeedsUI", updateNeedsUI)
 
 function this.addNeedsBlockToMenu(e, needId)
     local need = conditionConfig[needId]
     local data = this.UIData[needId]
-    if not data.showUIFunction() then
+    if not not need:isActive() then
         --this need is disabled
         return
     end
@@ -244,15 +246,6 @@ function this.addNeedsBlockToMenu(e, needId)
     setupConditionLabel(conditionLabel)
     updateNeedsBlock(e.element, data)
 end
-
-
-
-event.register("uiCreated", createNeedsUI, { filter = "MenuInventory" } )
-
-
-
-
-
 
 
 return this

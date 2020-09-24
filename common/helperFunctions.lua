@@ -59,8 +59,10 @@ function this.getInTent()
 end
 
 function this.setInTent(inTent)
-    tes3.player.data.Ashfall.tentTemp = inTent and 20 or 0
+   --tes3.player.data.Ashfall.tentTemp = inTent and 20 or 0
+    tes3.player.data.Ashfall.tentTempMulti = inTent and 0.7 or 1.0
 end
+
 
 function this.getTentActiveFromMisc(miscRef)
     return staticConfigs.tentMiscToActiveMap[miscRef.object.id:lower()]
@@ -76,7 +78,7 @@ function this.checkRefSheltered(reference)
     local inTent
     reference = reference or tes3.player
 
-    if reference.cell and reference.cell.isInterior then
+    if this.getInside(reference) then
         return true
     end
 
@@ -113,16 +115,23 @@ function this.checkRefSheltered(reference)
     return sheltered
 end
 
+function this.getInside(reference)
+    return (
+        reference.cell and
+        reference.cell.isInterior and 
+        not reference.cell.behavesAsExterior
+    )
+end
+
+
+--TODO: Null needs to fix collision crashes on Disable/Delete
 function this.yeet(reference)
-    tes3.positionCell{
-        reference = reference, 
-        position = { 0, 0, 10000, },
-    }
     reference:disable()
     timer.delayOneFrame(function()
-        mwscript.setDelete{ reference = reference}
+       mwscript.setDelete{ reference = reference}
     end)
 end
+
 
 
 function this.isStack(reference)
@@ -163,6 +172,36 @@ function this.messageBox(params)
         buttons = buttonStrings,
         callback = callback
     })
+end
+
+--Generic Tooltip with header and description
+function this.createTooltip(thisHeader, thisLabel)
+    local tooltip = tes3ui.createTooltipMenu()
+    
+    local outerBlock = tooltip:createBlock({ id = tes3ui.registerID("Ashfall:temperatureIndicator_outerBlock") })
+    outerBlock.flowDirection = "top_to_bottom"
+    outerBlock.paddingTop = 6
+    outerBlock.paddingBottom = 12
+    outerBlock.paddingLeft = 6
+    outerBlock.paddingRight = 6
+    outerBlock.width = 300
+    outerBlock.autoHeight = true    
+    
+    local headerText = thisHeader
+    local headerLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:temperatureIndicator_header"), text = headerText })
+    headerLabel.autoHeight = true
+    headerLabel.width = 285
+    headerLabel.color = tes3ui.getPalette("header_color")
+    headerLabel.wrapText = true
+    --header.justifyText = "center"
+    
+    local descriptionText = thisLabel
+    local descriptionLabel = outerBlock:createLabel({ id = tes3ui.registerID("Ashfall:temperatureIndicator_description"), text = descriptionText })
+    descriptionLabel.autoHeight = true
+    descriptionLabel.width = 285
+    descriptionLabel.wrapText = true   
+    
+    tooltip:updateLayout()
 end
 
 --[[
@@ -303,17 +342,13 @@ end
 function this.restoreFatigue()
     
     local previousFatigue = tes3.mobilePlayer.fatigue.current
-    timer.start{
-        type = timer.real,
-        iterations = 1,
-        duration = 0.02,
-        callback = function()
-            local newFatigue = tes3.mobilePlayer.fatigue.current
-            if previousFatigue >= 0 and newFatigue < 0 then
-                tes3.mobilePlayer.fatigue.current = previousFatigue
-            end
+    timer.delayOneFrame(function()
+        local newFatigue = tes3.mobilePlayer.fatigue.current
+        if previousFatigue >= 0 and newFatigue < 0 then
+            mwse.log("Restoring fatigue")
+            tes3.mobilePlayer.fatigue.current = previousFatigue
         end
-    }
+    end)
 end
  
 --[[
@@ -391,9 +426,7 @@ end
 
 function this.addDecal(reference, texturePath)
     for node in this.traverseRoots{reference.sceneNode} do
-        mwse.log("traversing")
         if node.RTTI.name == "NiTriShape" then
-            mwse.log("found tri shape")
             local texturing_property = node:getProperty(0x4)
             local base_map = texturing_property.maps[3]
             base_map.texture = niSourceTexture.createFromPath(texturePath)
@@ -438,6 +471,7 @@ function this.getGroundBelowRef(ref, ignoreList)
     return result
 end
 
+
 function this.orientRefToGround(params)
     local ref = params.ref
     local maxSteepness = params.maxSteepness
@@ -447,12 +481,13 @@ function this.orientRefToGround(params)
     if not result then 
         --This only happens when the ref is 
         --beyond the edge of the active cells
-        return false 
+        mwse.log("Orienting %s no ground found", ref.object.id)
+        return false
     end
+
     --mwse.log("Setting Z pos to %s", result.intersection.z)
     ref.position = { ref.position.x, ref.position.y, result.intersection.z }
     local UP = tes3vector3.new(0,0,1)
-    
     
     local newOrientation = this.rotationDifference(UP, result.normal)
     
@@ -460,10 +495,9 @@ function this.orientRefToGround(params)
         --mwse.log("Applying max steepness of %s", maxSteepness)
         newOrientation.x = math.clamp(newOrientation.x, (0-maxSteepness), maxSteepness)
         newOrientation.y = math.clamp(newOrientation.y, (0-maxSteepness), maxSteepness)
-        newOrientation.z = ref.orientation.z
+        
     end
-
-    --mwse.log("Setting orientation to %s", newOrientation)
+    newOrientation.z = ref.orientation.z
 
     ref.orientation = newOrientation
     return true

@@ -12,7 +12,7 @@ temperatureController.registerBaseTempMultiplier{ id = "vampireColdEffect", cold
 temperatureController.registerBaseTempMultiplier{ id = "vampireWarmEffect", warmOnly = true }
 temperatureController.registerInternalHeatSource{ id = "furTemp", warmOnly = true }
 
-local werewolfWarmth = 40
+local werewolfWarmth = 30
 local khajiitWarmth = 15
 local vampireColdMultiplier = 0.1
 local vampireWarmMultiplier = 1.3
@@ -26,8 +26,8 @@ function this.calculateRaceEffects()
     end
 
     --being werewolf overrides khajiit
-    local PCWerewolf = tes3.getGlobal("PCWerewolf")
-    if PCWerewolf == 1 then
+    
+    if tes3.mobilePlayer.werewolf then
         common.data.furTemp = werewolfWarmth
     end
 

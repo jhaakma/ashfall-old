@@ -3,7 +3,12 @@ return {
     text = "Add Supports (requires 3 wood)",
     requirements = function(campfire)
         local numWood = mwscript.getItemCount{ reference = tes3.player, item = common.staticConfigs.objectIds.firewood}
-        return not campfire.data.hasSupports and numWood >= 3
+        return (
+            campfire.data.hasSupports ~= true and 
+            numWood >= 3 and
+            campfire.data.dynamicConfig and
+            campfire.data.dynamicConfig.supports == "dynamic"
+        )
     end,
     callback = function(campfire)
         mwscript.removeItem{

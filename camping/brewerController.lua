@@ -13,8 +13,8 @@ local updateInterval = 0.001
 
 local function removeTeaEffect(teaData)
     if teaData.spell then
-        mwscript.removeSpell({ reference = tes3.player, spell = teaData.spell.id})
         common.helper.restoreFatigue()
+        mwscript.removeSpell({ reference = tes3.player, spell = teaData.spell.id})
     elseif teaData.offCallback then
         teaData.offCallback()
     end
@@ -50,13 +50,18 @@ local function onDrinkTea(e)
     local teaData = teaConfig.teaTypes[teaType]
     local amount = e.amountDrank
     tes3.messageBox("Drank %s.", teaData.teaName)
-    if teaData.spell then
-        --remove previous tea
-        if common.data.teaDrank then
-            local previousTeaData = teaConfig.teaTypes[common.data.teaDrank]
-            removeTeaEffect(previousTeaData)
-        end
+    --remove previous tea
+    if common.data.teaDrank then
+        local previousTeaData = teaConfig.teaTypes[common.data.teaDrank]
+        removeTeaEffect(previousTeaData)
+    end
 
+    if teaData.duration then
+        common.data.teaBuffTimeLeft = common.helper.calculateTeaBuffDuration(amount,teaData.duration)
+        common.data.teaDrank = teaType
+    end
+
+    if teaData.spell then
         local teaSpell = tes3.getObject(teaData.spell.id)
         if not teaSpell then 
             teaSpell = tes3spell.create(teaData.spell.id, teaData.teaName)
@@ -78,10 +83,8 @@ local function onDrinkTea(e)
     elseif teaData.onCallback then
         teaData.onCallback()
     end
-    if teaData.duration then
-        common.data.teaBuffTimeLeft = common.helper.calculateTeaBuffDuration(amount,teaData.duration)
-        common.data.teaDrank = teaType
-    end
+
+
 end
 event.register("Ashfall:DrinkTea", onDrinkTea)
 
@@ -93,8 +96,8 @@ local function updateBrewers(e)
             brewerRef.data.waterHeat =  brewerRef.data.waterHeat  or 0
             local hasWater = brewerRef.data.waterAmount and brewerRef.data.waterAmount > 0
             local waterIsBoiling = brewerRef.data.waterHeat >= common.staticConfigs.hotWaterHeatValue
-            local teaLeaf = brewerRef.data.teaType
-            if hasWater and waterIsBoiling and teaLeaf then
+            local hasTea = teaConfig.teaTypes[brewerRef.data.waterType]
+            if hasWater and waterIsBoiling and hasTea then
                 brewerRef.data.lastBrewUpdated = e.timestamp
                 --Brew the Tea
                 brewerRef.data.teaProgress = brewerRef.data.teaProgress or 0

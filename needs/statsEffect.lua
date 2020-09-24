@@ -1,10 +1,11 @@
 local this = {}
 local common = require("mer.ashfall.common.common")
+local config = common.config.getConfig()
 local conditionConfig = common.staticConfigs.conditionConfig
 
 
 local function getMaxHealth()
-    local minHeath = common.data and common.config.getConfig().needsCanKill and 0 or 1
+    local minHeath = common.data and config.needsCanKill and 0 or 1
     local multiplier = conditionConfig.hunger:getStatMultiplier()
     local maxHealth = math.max( minHeath, math.floor(tes3.mobilePlayer.health.base * multiplier ) )
     return maxHealth
@@ -40,6 +41,12 @@ local function calcHealth()
                     current = max,
                     name = "health"
                 })
+                if tes3.mobilePlayer.health.current <= 0 then
+                    if not common.data.diedOfHunger then
+                        common.data.diedOfHunger = true
+                        tes3.messageBox{ message = "You have died of hunger", buttons = { "Okay" } }
+                    end
+                end
             end
         end
     end
@@ -57,14 +64,32 @@ local function calcMagicka()
 end
 
 local function calcFatigue()
-    local max = getMaxFatigue() 
-    if tes3.mobilePlayer.fatigue.current > max then
-        tes3.setStatistic({
-            reference = tes3.mobilePlayer,
-            current = max,
-            name = "fatigue"
-        })
-    end 
+    if not tes3ui.menuMode() then
+        local max = getMaxFatigue() 
+        if tes3.mobilePlayer.fatigue.current > max then
+            tes3.setStatistic({
+                reference = tes3.mobilePlayer,
+                current = max,
+                name = "fatigue"
+            })
+        end 
+    end
+end
+
+local function calcThirst()
+    if config.needsCanKill then
+        if conditionConfig.thirst:getValue() >= 100 then
+            if not common.data.killedByThirst then
+                common.data.killedByThirst = true
+                tes3.setStatistic({
+                    reference = tes3.mobilePlayer,
+                    current = -1,
+                    name = "health"
+                })
+                tes3.messageBox{ message = "You have died of thirst", buttons = { "Okay" } }
+            end
+        end
+    end
 end
 
 local doInJail
@@ -88,6 +113,7 @@ function this.calculate()
     calcHealth()
     calcMagicka()
     calcFatigue()
+    calcThirst()
     checkJail()
 end
 

@@ -8,6 +8,7 @@
 
 local thirstController = require("mer.ashfall.needs.thirstController")
 local common = require("mer.ashfall.common.common")
+local teaConfig = common.staticConfigs.teaConfig
 local activatorConfig = common.staticConfigs.activatorConfig
 
 local thirst = common.staticConfigs.conditionConfig.thirst
@@ -109,10 +110,10 @@ end
 event.register("keyDown", checkDrinkRain )
 
 
-local function handleEmpties(e)
-    if e.itemData.data.waterAmount <= 0 then
-        e.itemData.data.waterDirty = nil
-        e.itemData.data.waterAmount = nil
+local function handleEmpties(data)
+    if data.waterAmount <= 0 then
+        data.waterType = nil
+        data.waterAmount = nil
         --restack
         tes3ui.updateInventoryTiles()
     end
@@ -120,21 +121,22 @@ end
 
 
 --Player activates a bottle with water in it
-local function doDrinkWater(e)
+local function doDrinkWater(data)
     --Only drink as much in bottle
-    local thisSipSize = math.min( 100, e.itemData.data.waterAmount )
+    local thisSipSize = math.min( 100, data.waterAmount )
 
     --Only drink as much as player needs
     local hydrationNeeded = thirst:getValue()
     thisSipSize = math.min( hydrationNeeded, thisSipSize)
 
-    --Reduce liquid in bottle
-    e.itemData.data.waterAmount = e.itemData.data.waterAmount - thisSipSize
-    handleEmpties(e)
-    local amountDrank = thirstController.drinkAmount(thisSipSize, e.itemData.data.waterDirty)
-    if e.itemData.data.teaType and hydrationNeeded > 0.1 then
-        event.trigger("Ashfall:DrinkTea", { teaType = e.itemData.data.teaType, amountDrank = amountDrank})
+    local amountDrank = thirstController.drinkAmount(thisSipSize, data.waterType)
+    --Tea effects if you drank enough
+    if teaConfig.teaTypes[data.waterType] and hydrationNeeded > 0.1 then
+        event.trigger("Ashfall:DrinkTea", { teaType = data.waterType, amountDrank = amountDrank})
     end
+    --Reduce liquid in bottle
+    data.waterAmount = data.waterAmount - thisSipSize
+    handleEmpties(data)
 end
 
 
@@ -148,27 +150,29 @@ local function drinkFromContainer(e)
         thirstController.drinkAmount(thisSipSize)
     
     else
-
-        local itemData = e.itemData and e.itemData.data
         local liquidLevel = (
-            itemData and
-            itemData.waterAmount
+            e.itemData and
+            e.itemData.data.waterAmount
         )
         local doDrink = (
             common.config.getConfig().enableThirst and
             liquidLevel
         )
         if doDrink then
-            if itemData.waterDirty then
+            --If fully hydrated, bring up option to empty bottle
+            if thirst:getValue() < 0.1 then
+                local waterName = "Water"
+                if e.itemData.data.waterType == "dirty" then
+                    waterName = "Dirty Water"
+                elseif teaConfig.teaTypes[e.itemData.data.waterType] then
+                    waterName = teaConfig.teaTypes[e.itemData.data.waterType].teaName
+                end
+
                 common.helper.messageBox{
-                    message = "This water is dirty.",
+                    message = "You are fully hydrated.",
                     buttons = {
                         { 
-                            text = "Drink Dirty Water", 
-                            callback = function() doDrinkWater(e) end 
-                        },
-                        { 
-                            text = "Empty Container", 
+                            text = string.format("Empty %s", waterName), 
                             callback = function()
                                 e.itemData.data.waterAmount = 0
                                 handleEmpties(e)
@@ -178,8 +182,29 @@ local function drinkFromContainer(e)
                         { text = tes3.findGMST(tes3.gmst.sCancel).value }
                     }
                 }
+            --If water is dirty, give option to drink or empty
+            elseif e.itemData.data.waterType == "dirty" then
+                common.helper.messageBox{
+                    message = "Dirty Water",
+                    buttons = {
+                        { 
+                            text = "Drink", 
+                            callback = function() doDrinkWater(e.itemData.data) end 
+                        },
+                        { 
+                            text = "Empty", 
+                            callback = function()
+                                e.itemData.data.waterAmount = 0
+                                handleEmpties(e)
+                                tes3.playSound({reference = tes3.player, sound = "Swim Left"})
+                            end
+                        },
+                        { text = tes3.findGMST(tes3.gmst.sCancel).value }
+                    }
+                }
+            --Otherwise drink straight away
             else
-                doDrinkWater(e)
+                doDrinkWater(e.itemData.data)
             end
         end
     end
@@ -187,8 +212,63 @@ end
 event.register("equip", drinkFromContainer, { filter = tes3.player, priority = -100 } )
 
 
+local skipActivate
+local function onShiftActivateWater(e)
+    if skipActivate then
+        skipActivate = false
+        return
+    end
+    if e.target.data and e.target.data.waterAmount and e.target.data.waterAmount > 0 then
+        local inputController = tes3.worldController.inputController
+        local isModifierKeyPressed = (
+            inputController:isKeyDown(common.config.getConfig().modifierHotKey.keyCode)
+        )
+        local hasAccess = tes3.hasOwnershipAccess{ target = e.target }
+        if hasAccess and isModifierKeyPressed then
+            local message = "Water"
+            if e.target.data.waterType == "dirty" then
+                message = "Dirty Water"
+            elseif teaConfig.teaTypes[e.target.data.waterType] then
+                message = teaConfig.teaTypes[e.target.data.waterType].teaName
+            end
+            local bottleType = common.staticConfigs.bottleList[e.target.object.id:lower()]
+            message = string.format("%s (%d/%d)", message, math.ceil(e.target.data.waterAmount), bottleType.capacity)
+            local buttons = {
+                {
+                    text = "Drink",
+                    callback = function()
+                        doDrinkWater(e.target.data)
+                    end
+                },
+                {
+                    text = "Empty",
+                    callback = function()
+                        e.target.data.waterAmount = 0
+                        handleEmpties(e.target.data)
+                        tes3.playSound({reference = tes3.player, sound = "Swim Left"})
+                    end
+                },
+                {
+                    text = "Pick Up",
+                    callback = function()
+                        timer.delayOneFrame(function()
+                            skipActivate = true
+                            tes3.player:activate(e.target)
+                        end)
+                    end
+                },
+                { text = tes3.findGMST(tes3.gmst.sCancel).value }
+            }
+            common.helper.messageBox{ message = message, buttons = buttons }
+            return true
+        end
+    end
+end
+event.register("activate", onShiftActivateWater, { filter = tes3.player })
+
 --First time entering a cell, add water to random bottles/containers
 local chanceToFill = 0.2
+local teaChance = 0.1
 local fillMin = 5
 local function addWaterToWorld(e)
     local wateredCells = common.data.wateredCells
@@ -201,6 +281,15 @@ local function addWaterToWorld(e)
                 if math.random() < chanceToFill then
                     local fillAmount = math.random(fillMin, bottleData.capacity)
                     ref.data.waterAmount = fillAmount
+                    
+                    if math.random() < teaChance then
+                        local teaType = table.choice(teaConfig.validTeas)
+                        --Make sure it's not a tea added by a mod the player doesn't have
+                        if tes3.getObject(teaType) then
+                            ref.data.waterType = teaType
+                        end
+                    end
+
                     ref.modified = true
                 end
             end

@@ -13,7 +13,7 @@ local function getCache()
     --     armor = {},
     --     clothing = {}
     -- }
-end
+end 
 
 local function saveCache(newCache) 
     common.config.saveConfigValue("warmthCache", newCache)

@@ -94,7 +94,7 @@ function this.calculateWetTemp(timeSinceLastRan)
     
     local coverage = math.remap( common.data.coverageRating, 0, 1,  0, 0.85 )    
 
-    local isSheltered = common.data.isSheltered or cell.isInterior
+    local isSheltered = common.data.isSheltered or common.helper.getInside(tes3.player)
     local isRaining = weather and weather.rainActive == true
 
     --Drying off

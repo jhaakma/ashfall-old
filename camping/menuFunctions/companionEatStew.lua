@@ -1,5 +1,5 @@
 local common = require ("mer.ashfall.common.common")
-
+local foodConfig = common.staticConfigs.foodConfig
 local nearbyCompanions
 local function getNearbyCompanions()
     nearbyCompanions = {}
@@ -27,18 +27,19 @@ return {
         local maxAvailable = math.min(campfire.data.waterAmount, 25 * #nearbyCompanions)
         local stewPerCompanion = maxAvailable / #nearbyCompanions
 
+        local stewBuffs = foodConfig.getStewBuffList()
         for _, companion in ipairs(nearbyCompanions) do
             --remove old sbuffs
-            for name, buff in pairs(common.staticConfigs.foodConfig.stewBuffs) do
+            for name, buff in pairs(stewBuffs) do
                 if campfire.data.stewLevels[name] == nil then
                     mwscript.removeSpell{ reference = companion, spell = buff.id }
                 end
             end
             
             --Add buffs and set duration
-            for name, ingredLevel in pairs(campfire.data.stewLevels) do
+            for foodType, ingredLevel in pairs(campfire.data.stewLevels) do
                 --add spell
-                local stewBuff = common.staticConfigs.foodConfig.stewBuffs[name]
+                local stewBuff = stewBuffs[foodType]
                 local effectStrength = common.helper.calculateStewBuffStrength(math.min(ingredLevel, 100), stewBuff.min, stewBuff.max)
                 timer.delayOneFrame(function()
                     local spell = tes3.getObject(stewBuff.id)

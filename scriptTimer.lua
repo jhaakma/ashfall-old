@@ -20,7 +20,6 @@ local tentController = require("mer.ashfall.tentController")
 local activators = require("mer.ashfall.activators.activatorController")
 
 --Needs
-local needsUI = require("mer.ashfall.needs.needsUI")
 local needs = {
     thirst = require("mer.ashfall.needs.thirstController"),
     hunger = require("mer.ashfall.needs.hungerController"),
@@ -35,6 +34,8 @@ local function callUpdates()
     local hoursPassed = ( tes3.worldController.daysPassed.value * 24 ) + tes3.worldController.hour.value
     lastTime = lastTime or hoursPassed
     local interval = math.abs(hoursPassed - lastTime)
+    --limit to 8 hours in case some crazy time leap
+    interval = math.min(interval, 8.0)
     lastTime = hoursPassed
    
     
@@ -66,7 +67,7 @@ local function callUpdates()
 
     tes3.player.data.Ashfall.valuesInitialised = true
     temperatureController.calculate(interval)
-    needsUI.updateNeedsUI()
+    event.trigger("Ashfall:updateNeedsUI")
 end
 
 event.register("enterFrame", callUpdates)
@@ -79,7 +80,7 @@ local function dataLoaded()
         function()
             --Use game timer when sleeping
             timer.start({
-                duration =  0.5, 
+                duration =  0.1, 
                 callback = function()
                     if tes3.player and tes3.menuMode() then
                         callUpdates()
