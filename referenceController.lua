@@ -47,8 +47,7 @@ this.controllers = {
     boiler = ReferenceController:new{
         requirements = function(self, ref)
             return (
-                ref.data and 
-                ref.data.waterAmount and
+                ref.data and
                 ref.data.utensil
         )
         end

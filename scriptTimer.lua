@@ -74,29 +74,29 @@ event.register("enterFrame", callUpdates)
 
 
 
-local function dataLoaded()
+-- local function dataLoaded()
     
-    timer.delayOneFrame(
-        function()
-            --Use game timer when sleeping
-            timer.start({
-                duration =  0.1, 
-                callback = function()
-                    if tes3.player and tes3.menuMode() then
-                        callUpdates()
-                    end 
-                end, 
-                type = timer.game, 
-                iterations = -1
-            })
-        end
+--     timer.delayOneFrame(
+--         function()
+--             --Use game timer when sleeping
+--             timer.start({
+--                 duration =  0.1, 
+--                 callback = function()
+--                     if tes3.player and tes3.menuMode() then
+--                         callUpdates()
+--                     end 
+--                 end, 
+--                 type = timer.game, 
+--                 iterations = -1
+--             })
+--         end
         
-    )
-end
+--     )
+-- end
 
 
---Register functions
-event.register("Ashfall:dataLoadedOnce", dataLoaded)
+-- --Register functions
+-- event.register("Ashfall:dataLoadedOnce", dataLoaded)
 
 local function resetTime()
     lastTime = nil

@@ -28,13 +28,7 @@ local vanillaCampfires = {
     --No Supports
     furn_de_firepit_f_01 = { supports = false },
     furn_de_firepit_f_01_400 = { supports = false },
-
-}
-
---Meshes which, if found near a fire, should
---prevent it from being replaced
-local ignoreMeshes = {
-    in_nord_fireplace_01 = true
+    
 }
 
 --A list of shit that campfires can be composed of
@@ -44,20 +38,19 @@ local kitBashObjects = {
     furn_log_02 = true,
     furn_log_03 = true,
     furn_log_04 = true,
-    furn_de_minercave_grill_01 = true,
     misc_com_wood_spoon_02 = true,
     misc_com_iron_ladle = true,
     dark_64 = true,
-    furn_com_cauldron_01 = true,
-    furn_com_cauldron_02 = true,
     t_de_var_logpileweathered_01 = true,
-    misc_com_bucket_metal = true,
-    furn_coals_hot = true   
+    furn_coals_hot = true,
+    furn_de_shack_hook = true,
+    chimney_smoke_small = true,
 }
 
 local cauldrons = {
     furn_com_cauldron_01 = true,
     furn_com_cauldron_02 = true,
+    misc_com_bucket_metal = true,
     pot_01 = true
 }
 local grills = {
@@ -93,6 +86,7 @@ local function attachRandomStuff(campfire)
 
     --Initialise static utensils
     if campfire.data.dynamicConfig.supports == "static" then
+        common.log:debug("Setting hasSupports to true")
         campfire.data.hasSupports = true
     end
     if campfire.data.dynamicConfig.kettle == "static" then
@@ -156,13 +150,13 @@ end
 local function setInitialState(campfire, vanillaRef, data, hasSupports)
 
     if hasSupports == true then
+        common.log:debug("setting dynamicConfig.supports to static")
         --prevent removal of supports for kitbashing reasons
         campfire.data.dynamicConfig.supports = "static"
         if data.hasCookingPot then
             campfire.data.utensil = "cookingPot"
         end
     elseif data.hasPlatform == true then
-        mwse.log("HASPLATFORM %s", data.hasPlatform)
        campfire.data.dynamicConfig.supports = "none"
     end
 
@@ -181,6 +175,15 @@ local function setInitialState(campfire, vanillaRef, data, hasSupports)
     end
 end
 
+local function getCloseEnough(e)
+    local pos1 = tes3vector3.new(e.ref1.position.x, e.ref1.position.y, 0)
+    local pos2 = tes3vector3.new(e.ref2.position.x, e.ref2.position.y, 0)
+    local distHorizontal = pos1:distance(pos2)
+    local distVertical = math.abs(e.ref1.position.z - e.ref2.position.z)
+    return (distHorizontal < e.distHorizontal and distVertical < e.distVertical)
+end
+
+
 --[[
     Finds nearby objects that might make up a campfire, 
     disables them and determines the replacement campfire
@@ -196,21 +199,20 @@ local function checkKitBashObjects(vanillaRef)
     for ref in vanillaRef.cell:iterateReferences() do
         local id = ref.object.id:lower()
         
-        if ref.position:distance(vanillaRef.position) < 75 then
+        if getCloseEnough({ref1 = ref, ref2 = vanillaRef, distHorizontal = 75, distVertical = 200}) then
             
             common.log:debug("Nearby ref: %s", ref.object.id)
 
             if ref ~= vanillaRef then
                 --don't mess with campfires that have unique things nearby
                 if string.find(id, "_unique") then
+                    common.log:debug("Found a unique mesh, ignoring campfire replacement")
                     return false
                 end
 
                 if platforms[id] then
                     common.log:debug("Has platform")
                     hasPlatform = true
-                else
-                    table.insert(ignoreList, ref)
                 end
                 
                 --if you find an existing campfire, get rid of it
@@ -219,14 +221,17 @@ local function checkKitBashObjects(vanillaRef)
                     common.helper.yeet(ref)
                 end
                 
-                if kitBashObjects[id] then      
-                    if cauldrons[id] then
-                        hasCookingPot = true
-                    end
-                    if grills[id] then
-                        hasGrill = true
-                    end
+                if cauldrons[id] then
+                    hasCookingPot = true
                     common.helper.yeet(ref)
+                end
+                if grills[id] then
+                    hasGrill = true
+                    common.helper.yeet(ref)
+                end
+                if kitBashObjects[id] then      
+                    common.helper.yeet(ref)
+                    table.insert(ignoreList, ref)
                 end
 
                 for _, pattern in ipairs(lightPatterns) do
@@ -245,7 +250,10 @@ end
 
 
 local function replaceCampfire(e)
+    local safeRef = tes3.makeSafeObjectHandle(e.reference)
     event.register("simulate", function()
+        
+        if not safeRef:valid() then return end
         if e.reference.disabled or e.reference.deleted then return end
         local vanillaConfig = vanillaCampfires[e.reference.object.id:lower()]
         local campfireReplaced = e.reference.data and e.reference.data.campfireReplaced
@@ -267,7 +275,7 @@ local function replaceCampfire(e)
                 replacement = "ashfall_campfire_static"
             end
 
-            common.log:debug("\n\n\nREPLACING %s with %s\n", e.reference.object.id, replacement)
+            common.log:debug("\n\nREPLACING %s with %s", e.reference.object.id, replacement)
             common.log:debug("position %s", e.reference.position)
             common.log:debug("hasPlatform %s", data.hasPlatform)
 
@@ -282,25 +290,31 @@ local function replaceCampfire(e)
                 cell = e.reference.cell
             }
 
-            campfire.scale = e.reference.scale
-            if vanillaConfig.scale then
-                common.log:debug("setting scale to %s", vanillaConfig.scale)
-                campfire.scale = campfire.scale * vanillaConfig.scale
-            end
-
             campfire.data.dynamicConfig = campfireConfig.getConfig(replacement)
             
             setInitialState(campfire, e.reference, data, vanillaConfig.supports)
             attachRandomStuff(campfire)
 
+            campfire.scale = e.reference.scale
+            if vanillaConfig.scale then
+                campfire.scale = campfire.scale * vanillaConfig.scale
+            end
+            --For stuff inside platforms, let the scale get smaller
+            local minScale = data.hasPlatform and 0.6 or 0.75
+            campfire.scale = math.clamp(campfire.scale, minScale, 1.3)
+            common.log:debug("setting scale to %s", campfire.scale)
+
+            table.insert(data.ignoreList, campfire)
             e.reference:disable()
-            
+            common.helper.yeet(e.reference)
+
             common.helper.orientRefToGround{ 
                 ref = campfire, 
-                maxSteepness = (data.hasPlatform and 0.0 or 0.1),
+                maxSteepness = (data.hasPlatform and 0.0 or 0.2),
                 ignoreList = data.ignoreList
             }
-            common.helper.yeet(e.reference)
+            common.log:debug("Campfire final supports: %s\n\n", campfire.data.dynamicConfig.supports)
+
         end
     end,{ doOnce = true })
 end
@@ -308,8 +322,8 @@ end
 
 
 local function replaceCampfires(e)
-    for ref in e.cell:iterateReferences() do
-        replaceCampfire{reference = ref}
-    end
+        for ref in e.cell:iterateReferences() do
+            replaceCampfire{reference = ref}
+        end
 end
 event.register("cellChanged", replaceCampfires)

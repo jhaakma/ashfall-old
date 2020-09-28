@@ -138,6 +138,22 @@ local function activateTent(e)
 end
 event.register("activate", activateTent)
 
+local tent
+local function setTent(e)
+    local insideTent = e.insideTent
+    if e.tent then tent = e.tent end
+    if (not tent) or (not tent.sceneNode) then tent = nil end
 
+    tes3.player.data.Ashfall.tentTempMulti = insideTent and 0.7 or 1.0
+    
+    if tent then
+        local switchNode = tent.sceneNode:getObjectByName("SWITCH_CANVAS")
+        if switchNode then
+        
+            switchNode.switchIndex = insideTent and 1 or 0
+        end
+    end
+end
+event.register("Ashfall:SetTent", setTent)
 
 return this

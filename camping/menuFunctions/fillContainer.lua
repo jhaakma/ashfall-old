@@ -31,6 +31,7 @@ return  {
             teaType = teaType,
             callback = function()
                 if campfire.data.waterAmount <= 0 then
+                    common.log:debug("Clearing utensil data")
                     event.trigger("Ashfall:Campfire_clear_utensils", { campfire = campfire})
                 end
             end

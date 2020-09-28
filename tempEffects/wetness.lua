@@ -31,8 +31,15 @@ local soakedHeight = 110
 --How Cold 100% wetness is
 local wetTempMax = -25
 
+
 function this.checkForShelter()
     local sheltered = common.helper.checkRefSheltered()
+    local inTentGlobal = tes3.findGlobal("a_inside_tent").value
+    if inTentGlobal == 1 then 
+        common.log:debug("Inside Covered Bedroll")
+        sheltered = true 
+    end
+
     if sheltered ~= nil then
         common.data.isSheltered = sheltered
     end
@@ -44,14 +51,9 @@ end
     Called by tempTimer
 ]]--
 function this.calculateWetTemp(timeSinceLastRan)
-    if not common.data then 
-        --mwse.log("no copmmon.datya")
+    if not common.data then
         return 
     end
-    -- if tes3ui.menuMode() then 
-    --     mwse.log("Why did we block menuMOde???")
-    --     return 
-    -- end
     this.checkForShelter()
     --Check if Ashfall is disabled
     if not common.config.getConfig().enableTemperatureEffects then

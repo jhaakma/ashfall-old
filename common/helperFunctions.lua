@@ -6,7 +6,7 @@ local refController = require("mer.ashfall.referenceController")
     Returns a human readable timestamp of the given time (or else the current time)
 ]]
 function this.hourToClockTime ( time )
-    local gameTime = time or tes3.getGlobal("GameHour")
+    local gameTime = time or tes3.findGlobal("GameHour").value
     local formattedTime
     
     local isPM = false
@@ -58,10 +58,6 @@ function this.getInTent()
     return tes3.player.data.Ashfall.tentTemp > 0
 end
 
-function this.setInTent(inTent)
-   --tes3.player.data.Ashfall.tentTemp = inTent and 20 or 0
-    tes3.player.data.Ashfall.tentTempMulti = inTent and 0.7 or 1.0
-end
 
 
 function this.getTentActiveFromMisc(miscRef)
@@ -75,7 +71,8 @@ end
 function this.checkRefSheltered(reference)
 
     local sheltered = false
-    local inTent
+
+    local tent
     reference = reference or tes3.player
 
     if this.getInside(reference) then
@@ -101,7 +98,7 @@ function this.checkRefSheltered(reference)
 
                 if this.getTentMiscFromActive(result.reference) then
                     --We're covered by a tent, so we are a bit warmer
-                    inTent = true
+                    tent = result.reference
                 end
                 --this looks weird but it makes sense because we don't break out 
                 --of the for loop if sheletered is false
@@ -110,7 +107,10 @@ function this.checkRefSheltered(reference)
         end
     end
     if reference == tes3.player then
-        this.setInTent(inTent)
+        event.trigger("Ashfall:SetTent", {
+            insideTent = (tent ~= nil) and true or false,
+            tent = tent
+        })
     end
     return sheltered
 end
@@ -126,9 +126,9 @@ end
 
 --TODO: Null needs to fix collision crashes on Disable/Delete
 function this.yeet(reference)
-    reference:disable()
     timer.delayOneFrame(function()
-       mwscript.setDelete{ reference = reference}
+        reference:disable()
+        mwscript.setDelete{ reference = reference}
     end)
 end
 
@@ -345,7 +345,6 @@ function this.restoreFatigue()
     timer.delayOneFrame(function()
         local newFatigue = tes3.mobilePlayer.fatigue.current
         if previousFatigue >= 0 and newFatigue < 0 then
-            mwse.log("Restoring fatigue")
             tes3.mobilePlayer.fatigue.current = previousFatigue
         end
     end)
@@ -460,7 +459,7 @@ end
 
 function this.getGroundBelowRef(ref, ignoreList)
     if not ref then return end
-    local height = 50
+    local height = 100
     local result = tes3.rayTest{
         position = {ref.position.x, ref.position.y, ref.position.z + height}, 
         direction = {0, 0, -1},
@@ -475,17 +474,21 @@ end
 function this.orientRefToGround(params)
     local ref = params.ref
     local maxSteepness = params.maxSteepness
-    local ignoreList = params.ignoreList
+    local ignoreList = params.ignoreList or {}
+
+    for thisRef in ref.cell:iterateReferences() do
+        if thisRef.object.objectType ~= tes3.objectType.static then
+            table.insert(ignoreList, thisRef)
+        end
+    end
 
     local result = this.getGroundBelowRef(ref, ignoreList)
     if not result then 
         --This only happens when the ref is 
         --beyond the edge of the active cells
-        mwse.log("Orienting %s no ground found", ref.object.id)
         return false
     end
 
-    --mwse.log("Setting Z pos to %s", result.intersection.z)
     ref.position = { ref.position.x, ref.position.y, result.intersection.z }
     local UP = tes3vector3.new(0,0,1)
     

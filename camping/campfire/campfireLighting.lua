@@ -81,7 +81,6 @@ event.register("loaded", loaded)
 
 -- Extinguish the campfire
 local function extinguish(e)
-    mwse.log("extinguish")
     local campfire = e.fuelConsumer
     local playSound = e.playSound ~= nil and e.playSound or true
 
@@ -139,7 +138,6 @@ local function addLighting(e)
     campfire.sceneNode:updateNodeEffects()
     campfire:deleteDynamicLightAttachment()
     campfire:getOrCreateAttachedDynamicLight(lightNode, 1.0)
-    mwse.log("Added dynamic lighting")
 end
 event.register("Ashfall:Campfire_Enablelight", addLighting)
 

@@ -295,7 +295,6 @@ this.teaTypes["ingred_moon_sugar_01"] = {
     onCallback = function()
         local currentTiredness = conditions.tiredness:getValue()
         tes3.player.data.Ashfall.coffeePrevTiredness = currentTiredness
-        mwse.log("Setting previous Tiredness to %s", currentTiredness)
         conditions.tiredness:setValue(0)
     end,
     offCallback = function()
@@ -303,7 +302,6 @@ this.teaTypes["ingred_moon_sugar_01"] = {
         if previousTiredness then
             local sleepLossRate = config.getConfig().loseSleepRate
             local penalty = sleepLossRate * tes3.player.data.Ashfall.teaBuffTimeLeft * 0.8
-            mwse.log("Previous Tiredness: %s", previousTiredness)
             conditions.tiredness:setValue( previousTiredness + penalty)
             tes3.player.data.Ashfall.coffeePrevTiredness = nil
         end

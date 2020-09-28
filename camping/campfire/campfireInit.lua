@@ -36,7 +36,9 @@ local function registerCampfire(e)
         campfire.data.campfireInitialised = true
         campfire.data.dynamicConfig = dynamicConfig
 
+        local safeRef = tes3.makeSafeObjectHandle(campfire)
         event.register("simulate", function()
+            if not safeRef:valid() then return end
             registerDataValues(campfire)
             event.trigger("Ashfall:Campfire_Update_Visuals", { campfire = campfire, all = true})
             event.trigger("Ashfall:registerReference", { reference = campfire})

@@ -45,20 +45,17 @@ end
 event.register("itemDropped", onDropGear)
 
 
+
 --[[
     For any mesh with the "verticalise" flag, find nodes to set to vertical
 ]]
 local function verticaliseNodes(e)
-    -- local ref = e.reference
-    -- local refTable = {
-    --     [ref] = ref
-    -- }
+    local safeRef = tes3.makeSafeObjectHandle(e.reference)
     local function f() 
+        if not safeRef:valid() then return end
         if e.reference.disabled then return end
-        local reference = e.reference
-        if reference.sceneNode and reference.sceneNode:hasStringDataWith("verticalise") then
-            mwse.log("Verticalising %s", e.reference.object.id)
-            local vertNode = reference.sceneNode:getObjectByName("ALIGN_VERTICAL")
+        if e.reference.sceneNode and e.reference.sceneNode:hasStringDataWith("verticalise") then
+            local vertNode = e.reference.sceneNode:getObjectByName("ALIGN_VERTICAL")
             local function verticalise(node)
                 local z = node.worldTransform.rotation:copy()
                 z:toRotationZ(z:toEulerXYZ().z)
@@ -68,7 +65,7 @@ local function verticaliseNodes(e)
             if vertNode then
                 verticalise(vertNode)
             end
-            local collisionNode = reference.sceneNode:getObjectByName("COLLISION_VERTICAL")
+            local collisionNode = e.reference.sceneNode:getObjectByName("COLLISION_VERTICAL")
             if collisionNode then
                 verticalise(collisionNode)
             end

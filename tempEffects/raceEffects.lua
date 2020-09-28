@@ -31,7 +31,7 @@ function this.calculateRaceEffects()
         common.data.furTemp = werewolfWarmth
     end
 
-    local PCVampire = tes3.getGlobal("PCVampire")
+    local PCVampire = tes3.findGlobal("PCVampire").value
     if PCVampire == 1 then
         common.data.vampireColdEffect = vampireColdMultiplier
         common.data.vampireWarmEffect = vampireWarmMultiplier

@@ -104,6 +104,7 @@ local function ingredPlaced(e)
         e.reference.baseObject.objectType == tes3.objectType.ingredient)
     )
     if isIngredient then
+        common.log:debug("Updating decals for %s", e.reference.object.id)
         updateIngredient{ reference = e.reference}
     end
 end

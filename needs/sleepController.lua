@@ -22,7 +22,7 @@ local tiredness = conditionConfig.tiredness
 
 local function setInBed(inBed)
     common.data.usingBed = inBed
-    common.data.bedTempMulti = inBed and 0.8 or 1.0
+    common.data.bedTempMulti = inBed and bedTempMulti or 1.0
 end
 
 
@@ -168,14 +168,21 @@ local function checkSleeping(interval)
             --Message PC
             tes3.messageBox({ message = "You are exhausted.", buttons = { "Okay" } }) 
         end
-    end
-    
-    if tes3.mobilePlayer.sleeping and isUsingBed then
-        setInBed(true)
-    end 
 
-    --Reset the bedTemp when player wakes up
-    event.register("simulate", function()setInBed(false) end, {doOnce=true})
+        if tes3.mobilePlayer.sleeping and isUsingBed then
+            if not common.data.usingBed then
+                common.log:debug("setting inBed to true")
+                setInBed(true)
+            end
+        end 
+    end
+    if not tes3ui.menuMode() then
+        --Reset the bedTemp when player wakes up
+        if common.data.usingBed then
+            common.log:debug("setting inBed to false")
+            setInBed(false) 
+        end
+     end
 end
 
 

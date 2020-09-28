@@ -11,7 +11,7 @@ local drainRateSick = 3
 local blightGainRate = 200
 local blightDrainRate = 100
 
-local fluIncreaseRate = 500
+local fluIncreaseRate = 300
 local fluDecreaseRate = 200
 
 

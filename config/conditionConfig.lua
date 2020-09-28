@@ -169,7 +169,8 @@ conditions.temp = Condition:new{
             min = 80, max = 100, 
             spell = "fw_cond_scorching",
             effects = { 
-                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.endurance, amount = 0.6 }
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.endurance, amount = 0.6 },
+                { id = tes3.effect.drainAttribute, attribute = tes3.attribute.strength, amount = 0.1 }
             }            
         },
         veryHot = { 
@@ -370,7 +371,7 @@ conditions.blightness = Condition:new{
     end
 }
 
-local fluDiseaseChance = 10000--10
+local fluDiseaseChance = 10
 conditions.flu = Condition:new{
     id = "flu",
     default = "noFlu",
@@ -392,7 +393,6 @@ conditions.flu = Condition:new{
         noFlu = { text = "You no longer have the flu.", min = 0, max = 80, spell = nil },
     },
     conditionChanged = function(self)
-        tes3.messageBox("Flu Condition changed")
         local stateData =  self:getCurrentStateData()
         if stateData.spell then
             if not self:hasSpell() then

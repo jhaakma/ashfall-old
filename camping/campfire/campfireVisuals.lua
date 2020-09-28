@@ -106,18 +106,16 @@ end
 local function updateWaterHeight(campfire)
     local scaleMax = 1.3
     local heightMax = 28
-    if campfire.data.waterAmount then
-        local waterLevel = campfire.data.waterAmount or 0
-        local scale = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 1, scaleMax), scaleMax )
-        local height = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 0, heightMax), heightMax)
+    local waterLevel = campfire.data.waterAmount or 0
+    local scale = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 1, scaleMax), scaleMax )
+    local height = math.min(math.remap(waterLevel, 0, common.staticConfigs.capacities.cookingPot, 0, heightMax), heightMax)
 
-        local waterNode = campfire.sceneNode:getObjectByName("POT_WATER")
-        waterNode.translation.z = height
-        waterNode.scale = scale
-        local stewnode = campfire.sceneNode:getObjectByName("POT_STEW")
-        stewnode.translation.z = height
-        stewnode.scale = scale
-    end
+    local waterNode = campfire.sceneNode:getObjectByName("POT_WATER")
+    waterNode.translation.z = height
+    waterNode.scale = scale
+    local stewnode = campfire.sceneNode:getObjectByName("POT_STEW")
+    stewnode.translation.z = height
+    stewnode.scale = scale
 end
 
 --Update the size of the steam coming off a cooking pot

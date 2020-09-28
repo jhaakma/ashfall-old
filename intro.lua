@@ -2,7 +2,7 @@ local common = require("mer.ashfall.common.common")
 local overrides = require("mer.ashfall.config.overrides")
 local tempUI = require("mer.ashfall.ui.tempUI")
 local this = {}
-
+local config = common.config.getConfig()
 local newGame
 local checkingChargen
 local charGen
@@ -116,7 +116,8 @@ end
 
 
 function this.startAshfall()
-    if common.config.getConfig().doIntro == true then
+    
+    if config.doIntro == true then
         local introMessage = (
             "Welcome to Ashfall! \n"..
             "Please take a moment to configure the start-up options. \n"..
@@ -170,6 +171,11 @@ local function checkCharGen()
             duration = 2.0, --If clashes with char backgrounds, mess with this
             callback = this.startAshfall
         }
+        if config.startingEquipment then
+            mwscript.addItem{reference=tes3.player, item="ashfall_cooking_pot"}
+            mwscript.addItem{reference=tes3.player, item="ashfall_bedroll"}
+            mwscript.addItem{reference=tes3.player, item="ashfall_woodaxe"}
+        end
     end
 end
 

@@ -111,7 +111,7 @@ event.register("keyDown", checkDrinkRain )
 
 
 local function handleEmpties(data)
-    if data.waterAmount <= 0 then
+    if data.waterAmount and data.waterAmount <= 0 then
         data.waterType = nil
         data.waterAmount = nil
         --restack
@@ -175,7 +175,7 @@ local function drinkFromContainer(e)
                             text = string.format("Empty %s", waterName), 
                             callback = function()
                                 e.itemData.data.waterAmount = 0
-                                handleEmpties(e)
+                                handleEmpties(e.itemData.data)
                                 tes3.playSound({reference = tes3.player, sound = "Swim Left"})
                             end
                         },
@@ -195,7 +195,7 @@ local function drinkFromContainer(e)
                             text = "Empty", 
                             callback = function()
                                 e.itemData.data.waterAmount = 0
-                                handleEmpties(e)
+                                handleEmpties(e.itemData.data)
                                 tes3.playSound({reference = tes3.player, sound = "Swim Left"})
                             end
                         },

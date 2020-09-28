@@ -29,7 +29,7 @@ local config =  {
     ["ashfall_campfire_sup"] = {
         campfire = attachType.static,
         supports = attachType.static,
-        cookingPot = attachType.dynamic,
+        cookingPot = attachType.static,
         kettle = attachType.dynamic,
         grill = attachType.none,
     },
@@ -46,7 +46,7 @@ local this = {}
 
 function this.getConfig(id)
     local thisConfig = config[id:lower()]
-    return thisConfig
+    if thisConfig then return table.copy(thisConfig) end
 end
 
 return this

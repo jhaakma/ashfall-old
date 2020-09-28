@@ -8,7 +8,7 @@ return {
             campfire.data.utensil == "kettle" and
             campfire.data.waterAmount and
             campfire.data.waterAmount > 0 and
-            teaConfig.teaTypes[campfire.data.waterType] == nil
+            campfire.data.waterType == nil
         )
     end,
     callback = function(campfire)

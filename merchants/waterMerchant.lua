@@ -97,24 +97,23 @@ local function makeTooltip(e)
     tooltipText.wrapText = true
 end
 
+local skipUpdateWaterServiceButtonCallback = false
 local function updateWaterServiceButton(e)
-    if e and e.source then
-        e.source:forwardEvent()
-    end
-    if skipUpdate then
-        skipUpdate = false
+    if (skipUpdateWaterServiceButtonCallback) then
+        skipUpdateWaterServiceButtonCallback = false
         return
     end
-    skipUpdate = true
-    local menuDialog = tes3ui.findMenu(GUID_MenuDialog)
-    if not menuDialog then return end
-    local topicsScrollPane = menuDialog:findChild(GUID_MenuDialog_TopicList)
-    local waterServiceButton = menuDialog:findChild(GUID_MenuDialog_WaterService)
-    if not ( topicsScrollPane and waterServiceButton ) then
-        return 
-    end
-    local merchant = menuDialog:getPropertyObject("PartHyperText_actor")
 
+    local menuDialog = e.source
+    if not menuDialog then return end
+
+    local topicsScrollPane = menuDialog:findChild(GUID_MenuDialog_TopicList)
+    local waterServiceButton = topicsScrollPane:findChild(GUID_MenuDialog_WaterService)
+    if not ( topicsScrollPane and waterServiceButton ) then
+        return
+    end
+
+    local merchant = menuDialog:getPropertyObject("PartHyperText_actor")
     local cost = getWaterCost(merchant.object)
     if getDisabled(cost) then
         waterServiceButton.disabled = true
@@ -123,12 +122,18 @@ local function updateWaterServiceButton(e)
         waterServiceButton.disabled = false
         waterServiceButton.color = tes3ui.getPalette("normal_color")
     end
+
     common.log:debug("Updating Water Service Button")
     waterServiceButton.text = getWaterText(merchant.object)
+
+    -- Reshow the button.
     waterServiceButton.visible = true
     topicsScrollPane.widget:contentsChanged()
-    menuDialog:updateLayout()
 
+    -- The UI here is really borked. The only fix found is to update the top-level element.
+    -- We want to block this from causing an infinite loop though, so we block the next call to this callback.
+    skipUpdateWaterServiceButtonCallback = true
+    menuDialog:updateLayout()
 end
 
 
@@ -158,9 +163,8 @@ local function onMenuDialogActivated(e)
         
         topicsList:reorderChildren(divider, waterServiceButton, 1)
         waterServiceButton:register("mouseClick", onWaterServiceClick)
-        menuDialog:register("update", updateWaterServiceButton)
+        menuDialog:registerAfter("update", updateWaterServiceButton)
         waterServiceButton:register("help", makeTooltip)
-        updateWaterServiceButton()
     end
 end
 event.register("uiActivated", onMenuDialogActivated, { filter = "MenuDialog", priority = -100 } )

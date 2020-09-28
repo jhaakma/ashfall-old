@@ -46,7 +46,6 @@ local function placeCampfire(e)
     common.helper.yeet(e.target)
     campfire:deleteDynamicLightAttachment()
     campfire.data.fuelLevel = e.target.stackSize or 1
-    mwse.log("fuel level = %s", campfire.data.fuelLevel)
 end
 
 

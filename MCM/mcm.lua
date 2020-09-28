@@ -192,6 +192,12 @@ local function registerModConfig()
             }
 
             categoryMisc:createYesNoButton{
+                label = "Start New Games with Survival Gear",
+                description = "Start new games with a wood axe, bedroll and cooking pot.",
+                variable = createTableVar("startingEquipment")
+            }
+
+            categoryMisc:createYesNoButton{
                 label = "Hunger/Thirst can Kill",
                 description = (
                     "When enabled, you can die of hunger or thirst. Otherwise you will drop to 1 health."

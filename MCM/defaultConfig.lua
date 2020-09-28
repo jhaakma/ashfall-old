@@ -59,6 +59,7 @@ return {
     showWetness = false,
     showSickness = true,
 
+    startingEquipment = false,
     modifierHotKey = {
         keyCode = tes3.scanCode.lShift
     },
