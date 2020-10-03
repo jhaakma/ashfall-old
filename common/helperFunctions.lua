@@ -136,6 +136,7 @@ end
 
 function this.isStack(reference)
     return ( 
+        reference.attachments and
         reference.attachments.variables and 
         reference.attachments.variables.count > 1 
     )
